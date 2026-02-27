@@ -3,7 +3,7 @@
 
 import { useState, useMemo, useEffect } from "react";
 import Image from "next/image";
-import { Users, Plus, Edit2, Trash2, Search, FileText, Loader2, AlertCircle, Upload, Crown, Mail, Hash, Building, ChevronDown, Check, X } from "lucide-react";
+import { Users, Plus, Edit2, Trash2, Search, FileText, Loader2, AlertCircle, Upload, Crown, Mail, Hash, Building } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -33,14 +33,10 @@ import {
 } from "@/components/ui/select";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Badge } from "@/components/ui/badge";
 import { useMemoFirebase, useCollection, useFirestore, addDocumentNonBlocking, updateDocumentNonBlocking, deleteDocumentNonBlocking, setDocumentNonBlocking } from "@/firebase";
 import { collection, doc, serverTimestamp } from "firebase/firestore";
 import { Funcionario, Setor } from "@/types";
 import { useToast } from "@/hooks/use-toast";
-import { cn } from "@/lib/utils";
 import * as XLSX from "xlsx";
 
 export default function FuncionariosPage() {
@@ -53,7 +49,6 @@ export default function FuncionariosPage() {
   const [excelFile, setExcelFile] = useState<File | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [isLiderChecked, setIsLiderChecked] = useState(false);
-  const [selectedSectorIds, setSelectedSectorIds] = useState<string[]>([]);
 
   const employeesRef = useMemoFirebase(() => collection(firestore, "employees"), [firestore]);
   const sectorsRef = useMemoFirebase(() => collection(firestore, "sectors"), [firestore]);
@@ -61,15 +56,12 @@ export default function FuncionariosPage() {
   const { data: employees, isLoading: loadingEmployees } = useCollection<Funcionario>(employeesRef);
   const { data: sectors } = useCollection<Setor>(sectorsRef);
 
-  // Sync state when editing starts or dialog opens
   useEffect(() => {
     if (isDialogOpen) {
       if (editingFunc) {
         setIsLiderChecked(!!editingFunc.is_lider);
-        setSelectedSectorIds(editingFunc.setor_ids || []);
       } else {
         setIsLiderChecked(false);
-        setSelectedSectorIds([]);
       }
     }
   }, [editingFunc, isDialogOpen]);
@@ -89,16 +81,11 @@ export default function FuncionariosPage() {
 
   const handleSave = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (selectedSectorIds.length === 0) {
-      toast({ variant: "destructive", title: "Erro", description: "Selecione pelo menos um setor." });
-      return;
-    }
-
     const formData = new FormData(e.currentTarget);
     const data = {
       nome: formData.get("nome") as string,
       cargo: formData.get("cargo") as string,
-      setor_ids: selectedSectorIds,
+      setor_id: formData.get("setor_id") as string,
       status: formData.get("status") as "ativo" | "inativo",
       is_lider: isLiderChecked,
       titulo_lider: isLiderChecked ? (formData.get("titulo_lider") as string || "Líder de Setor") : "",
@@ -159,24 +146,19 @@ export default function FuncionariosPage() {
           const unidade = row.Unidade || row.unidade || row.UNIDADE;
 
           if (nome && cargo) {
-            const rowSectorNames = setorString.toString().split(/[,;]/).map((s: string) => s.trim().toLowerCase()).filter(Boolean);
-            const targetSectorIds: string[] = [];
+            const sName = setorString.toString().trim().toLowerCase();
+            let targetSectorId = sectorMap.get(sName);
 
-            for (const sName of rowSectorNames) {
-              const existingId = sectorMap.get(sName);
-              if (existingId) {
-                targetSectorIds.push(existingId);
-              } else {
-                const newSectorRef = doc(collection(firestore, "sectors"));
-                const sectorNameRaw = sName.charAt(0).toUpperCase() + sName.slice(1);
-                targetSectorIds.push(newSectorRef.id);
-                setDocumentNonBlocking(newSectorRef, {
-                  nome: sectorNameRaw,
-                  data_criacao: new Date().toISOString(),
-                  createdAt: serverTimestamp(),
-                }, { merge: true });
-                sectorMap.set(sName, newSectorRef.id);
-              }
+            if (!targetSectorId && sName) {
+              const newSectorRef = doc(collection(firestore, "sectors"));
+              const sectorNameRaw = sName.charAt(0).toUpperCase() + sName.slice(1);
+              targetSectorId = newSectorRef.id;
+              setDocumentNonBlocking(newSectorRef, {
+                nome: sectorNameRaw,
+                data_criacao: new Date().toISOString(),
+                createdAt: serverTimestamp(),
+              }, { merge: true });
+              sectorMap.set(sName, targetSectorId);
             }
 
             const status = (statusRaw?.toString().toLowerCase() === 'inativo') ? 'inativo' : 'ativo';
@@ -186,7 +168,7 @@ export default function FuncionariosPage() {
             addDocumentNonBlocking(employeesRef, {
               nome,
               cargo,
-              setor_ids: targetSectorIds,
+              setor_id: targetSectorId || "",
               status,
               is_lider: !!isLider,
               titulo_lider: isLider ? (tituloLider?.toString() || "Líder de Setor") : "",
@@ -220,12 +202,6 @@ export default function FuncionariosPage() {
       deleteDocumentNonBlocking(doc(firestore, "employees", id));
       toast({ title: "Excluído", description: "Colaborador removido com sucesso." });
     }
-  };
-
-  const toggleSectorSelection = (id: string, checked: boolean) => {
-    setSelectedSectorIds(prev => 
-      checked ? [...prev, id] : prev.filter(sId => sId !== id)
-    );
   };
 
   if (loadingEmployees) {
@@ -316,56 +292,13 @@ export default function FuncionariosPage() {
                       <Input id="cargo" name="cargo" defaultValue={editingFunc?.cargo} required />
                     </div>
                     <div className="grid gap-2">
-                      <Label>Setores (Múltipla Seleção)</Label>
-                      <Popover>
-                        <PopoverTrigger asChild>
-                          <Button 
-                            type="button" 
-                            variant="outline" 
-                            className="w-full justify-between font-normal text-left h-auto min-h-[40px] py-2"
-                          >
-                            <div className="flex flex-wrap gap-1 max-w-[200px]">
-                              {selectedSectorIds.length > 0 ? (
-                                selectedSectorIds.map(id => (
-                                  <Badge key={id} variant="secondary" className="text-[10px] px-2 py-0 h-5">
-                                    {sectors?.find(s => s.id === id)?.nome}
-                                  </Badge>
-                                ))
-                              ) : (
-                                <span className="text-muted-foreground">Selecione...</span>
-                              )}
-                            </div>
-                            <ChevronDown className="h-4 w-4 opacity-50 shrink-0" />
-                          </Button>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-[300px] p-0" align="start">
-                          <ScrollArea className="h-60">
-                            <div className="p-2 space-y-1">
-                              {sectors?.map((s) => (
-                                <div 
-                                  key={s.id} 
-                                  className="flex items-center space-x-2 px-3 py-2 rounded-md hover:bg-slate-50 transition-colors"
-                                >
-                                  <Checkbox 
-                                    id={`sector-${s.id}`}
-                                    checked={selectedSectorIds.includes(s.id)} 
-                                    onCheckedChange={(checked) => toggleSectorSelection(s.id, !!checked)}
-                                  />
-                                  <label 
-                                    htmlFor={`sector-${s.id}`}
-                                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 flex-1 cursor-pointer py-1"
-                                  >
-                                    {s.nome}
-                                  </label>
-                                </div>
-                              ))}
-                              {(!sectors || sectors.length === 0) && (
-                                <p className="text-xs text-muted-foreground p-4 text-center">Nenhum setor cadastrado.</p>
-                              )}
-                            </div>
-                          </ScrollArea>
-                        </PopoverContent>
-                      </Popover>
+                      <Label htmlFor="setor_id">Setor</Label>
+                      <Select name="setor_id" defaultValue={editingFunc?.setor_id}>
+                        <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
+                        <SelectContent>
+                          {sectors?.map(s => <SelectItem key={s.id} value={s.id}>{s.nome}</SelectItem>)}
+                        </SelectContent>
+                      </Select>
                     </div>
                   </div>
 
@@ -452,61 +385,61 @@ export default function FuncionariosPage() {
             <TableRow className="bg-slate-50">
               <TableHead>Colaborador</TableHead>
               <TableHead>Cargo</TableHead>
-              <TableHead>Setores</TableHead>
+              <TableHead>Setor</TableHead>
               <TableHead>Status</TableHead>
               <TableHead className="text-right">Ações</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {filteredEmployees.map((f) => {
-              const employeeSectors = sectors?.filter(s => f.setor_ids?.includes(s.id));
-              return (
-                <TableRow key={f.id} className="group">
-                  <TableCell>
-                    <div className="flex items-center gap-3">
-                      <div className="h-16 w-12 relative rounded-sm overflow-hidden border bg-slate-50 shrink-0">
-                        <Image src={f.foto_url} alt={f.nome} fill className="object-cover" />
-                      </div>
-                      <span className="font-semibold text-sm flex items-center gap-1">
-                        {f.nome}
-                        {f.is_lider && <Crown size={12} className="text-amber-500" />}
-                      </span>
+            {filteredEmployees.map((f) => (
+              <TableRow key={f.id} className="group">
+                <TableCell>
+                  <div className="flex items-center gap-3">
+                    <div className="h-16 w-12 relative rounded-sm overflow-hidden border bg-slate-50 shrink-0">
+                      <Image 
+                        src={f.foto_url || "https://picsum.photos/seed/placeholder/400/533"} 
+                        alt={f.nome} 
+                        fill 
+                        className="object-cover" 
+                      />
                     </div>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex flex-col">
-                      <span className="text-sm">{f.cargo}</span>
-                      {f.is_lider && <span className="text-[9px] font-bold text-amber-600 uppercase">{f.titulo_lider}</span>}
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex flex-wrap gap-1">
-                      {employeeSectors?.map(s => (
-                        <span key={s.id} className="text-[9px] bg-slate-100 px-1.5 py-0.5 rounded font-bold uppercase">{s.nome}</span>
-                      ))}
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant={f.status === 'ativo' ? 'default' : 'secondary'} className="text-[10px] uppercase">
-                      {f.status}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => {
-                        setEditingFunc(f);
-                        setIsDialogOpen(true);
-                      }}>
-                        <Edit2 className="h-4 w-4" />
-                      </Button>
-                      <Button variant="ghost" size="icon" className="h-8 w-8 hover:text-destructive" onClick={() => handleDelete(f.id)}>
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              );
-            })}
+                    <span className="font-semibold text-sm flex items-center gap-1">
+                      {f.nome}
+                      {f.is_lider && <Crown size={12} className="text-amber-500" />}
+                    </span>
+                  </div>
+                </TableCell>
+                <TableCell>
+                  <div className="flex flex-col">
+                    <span className="text-sm">{f.cargo}</span>
+                    {f.is_lider && <span className="text-[9px] font-bold text-amber-600 uppercase">{f.titulo_lider}</span>}
+                  </div>
+                </TableCell>
+                <TableCell>
+                  <span className="text-xs font-medium">
+                    {sectors?.find(s => s.id === f.setor_id)?.nome || "-"}
+                  </span>
+                </TableCell>
+                <TableCell>
+                  <Badge variant={f.status === 'ativo' ? 'default' : 'secondary'} className="text-[10px] uppercase">
+                    {f.status}
+                  </Badge>
+                </TableCell>
+                <TableCell className="text-right">
+                  <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => {
+                      setEditingFunc(f);
+                      setIsDialogOpen(true);
+                    }}>
+                      <Edit2 className="h-4 w-4" />
+                    </Button>
+                    <Button variant="ghost" size="icon" className="h-8 w-8 hover:text-destructive" onClick={() => handleDelete(f.id)}>
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </TableCell>
+              </TableRow>
+            ))}
           </TableBody>
         </Table>
       </div>

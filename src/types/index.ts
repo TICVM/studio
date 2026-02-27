@@ -10,7 +10,7 @@ export interface Funcionario {
   nome: string;
   cargo: string;
   foto_url: string;
-  setor_ids: string[]; // Suporte a múltiplos setores
+  setor_id: string; // Voltando para setor único
   status: 'ativo' | 'inativo';
   is_lider?: boolean;
   titulo_lider?: string; // Título personalizado (ex: Coordenador, Diretor)

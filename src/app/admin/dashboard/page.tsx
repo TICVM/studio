@@ -92,11 +92,12 @@ export default function DashboardPage() {
                     <div key={f.id} className="flex items-center justify-between group">
                       <div className="flex items-center gap-4">
                         <div className="h-12 w-9 rounded-sm bg-slate-100 flex-shrink-0 overflow-hidden relative border border-slate-200">
-                          {f.foto_url ? (
-                            <img src={f.foto_url} alt={f.nome} className="object-cover w-full h-full" />
-                          ) : (
-                            <Users size={20} className="m-auto mt-2 text-slate-300" />
-                          )}
+                          <Image 
+                            src={f.foto_url || "https://picsum.photos/seed/placeholder/400/533"} 
+                            alt={f.nome} 
+                            fill 
+                            className="object-cover" 
+                          />
                         </div>
                         <div>
                           <p className="font-semibold text-sm group-hover:text-primary transition-colors">{f.nome}</p>
@@ -128,7 +129,7 @@ export default function DashboardPage() {
             <div className="space-y-6">
               {setores && setores.length > 0 ? (
                 setores.map(s => {
-                  const count = funcionarios?.filter(f => f.setor_ids && f.setor_ids.includes(s.id)).length || 0;
+                  const count = funcionarios?.filter(f => f.setor_id === s.id).length || 0;
                   const total = funcionarios?.length || 1;
                   const percentage = (count / total) * 100;
                   return (

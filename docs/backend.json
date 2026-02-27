@@ -31,7 +31,7 @@
       "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "Employee",
       "type": "object",
-      "description": "Represents a staff member within the company, associated with one or more sectors.",
+      "description": "Represents a staff member within the company, associated with one sector.",
       "properties": {
         "id": {
           "type": "string",
@@ -63,10 +63,9 @@
           "description": "URL pointing to the employee's profile photo.",
           "format": "uri"
         },
-        "setor_ids": {
-          "type": "array",
-          "items": { "type": "string" },
-          "description": "References to the Sectors the employee belongs to."
+        "setor_id": {
+          "type": "string",
+          "description": "Reference to the Sector the employee belongs to."
         },
         "status": {
           "type": "string",
@@ -91,7 +90,7 @@
         "fullName",
         "jobTitle",
         "photoUrl",
-        "setor_ids",
+        "setor_id",
         "createdAt"
       ]
     },

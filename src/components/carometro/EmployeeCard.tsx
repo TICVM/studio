@@ -11,8 +11,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { useMemoFirebase, useCollection, useFirestore } from "@/firebase";
-import { collection } from "firebase/firestore";
 import { useState } from "react";
 
 interface EmployeeCardProps {
@@ -22,11 +20,6 @@ interface EmployeeCardProps {
 
 export function EmployeeCard({ funcionario, setor }: EmployeeCardProps) {
   const [isOpen, setIsOpen] = useState(false);
-  const firestore = useFirestore();
-  const sectorsRef = useMemoFirebase(() => collection(firestore, "sectors"), [firestore]);
-  const { data: allSectors } = useCollection<Setor>(sectorsRef);
-
-  const employeeSectors = allSectors?.filter(s => funcionario.setor_ids?.includes(s.id)) || [];
 
   return (
     <>
@@ -112,12 +105,10 @@ export function EmployeeCard({ funcionario, setor }: EmployeeCardProps) {
             </div>
 
             <div className="space-y-4">
-              <div className="flex flex-wrap gap-2 justify-center mb-4">
-                {employeeSectors.map(s => (
-                  <span key={s.id} className="text-[10px] bg-slate-100 text-slate-700 px-2 py-1 rounded font-bold uppercase border">
-                    {s.nome}
-                  </span>
-                ))}
+              <div className="flex justify-center mb-4">
+                <span className="text-[10px] bg-slate-100 text-slate-700 px-2 py-1 rounded font-bold uppercase border">
+                  {setor?.nome || "Setor não informado"}
+                </span>
               </div>
 
               {funcionario.email && (
