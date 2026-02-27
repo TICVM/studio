@@ -1,4 +1,3 @@
-
 "use client"
 
 import { useState } from "react";
@@ -66,7 +65,7 @@ export default function FuncionariosPage() {
       cargo: formData.get("cargo") as string,
       setor_id: formData.get("setor_id") as string,
       status: formData.get("status") as "ativo" | "inativo",
-      foto_url: (formData.get("foto_url") as string) || `https://picsum.photos/seed/${Math.random()}/400/400`,
+      foto_url: (formData.get("foto_url") as string) || `https://picsum.photos/seed/${Math.random()}/400/533`,
     };
 
     if (editingFunc) {
@@ -94,18 +93,14 @@ export default function FuncionariosPage() {
     }
 
     let successCount = 0;
-    
-    // Cache de setores para evitar buscas repetitivas em memória
     const sectorMap = new Map<string, string>();
     sectors?.forEach(s => sectorMap.set(s.nome.toLowerCase(), s.id));
 
     lines.forEach(line => {
-      // Formato esperado: Nome;Cargo;Setor;Status;FotoURL
       const parts = line.split(';').map(s => s.trim());
       
       if (parts.length >= 2) {
         const [nome, cargo, setorNome, statusStr, fotoUrl] = parts;
-        
         let targetSectorId = "";
         
         if (setorNome) {
@@ -113,7 +108,6 @@ export default function FuncionariosPage() {
           if (existingId) {
             targetSectorId = existingId;
           } else {
-            // Criar novo setor se não existir
             const newSectorRef = doc(collection(firestore, "sectors"));
             targetSectorId = newSectorRef.id;
             setDocumentNonBlocking(newSectorRef, {
@@ -121,13 +115,12 @@ export default function FuncionariosPage() {
               data_criacao: new Date().toISOString(),
               createdAt: serverTimestamp(),
             }, { merge: true });
-            // Adicionar ao cache local para as próximas linhas
             sectorMap.set(setorNome.toLowerCase(), targetSectorId);
           }
         }
 
         const status = (statusStr?.toLowerCase() === 'inativo') ? 'inativo' : 'ativo';
-        const finalFotoUrl = fotoUrl || `https://picsum.photos/seed/${Math.random()}/400/400`;
+        const finalFotoUrl = fotoUrl || `https://picsum.photos/seed/${Math.random()}/400/533`;
 
         addDocumentNonBlocking(employeesRef, {
           nome,
@@ -316,9 +309,9 @@ export default function FuncionariosPage() {
                 <TableRow key={f.id} className="group">
                   <TableCell>
                     <div className="flex items-center gap-3">
-                      <div className="h-10 w-10 relative rounded-full overflow-hidden border">
+                      <div className="h-12 w-9 relative rounded-sm overflow-hidden border bg-slate-50">
                         <Image 
-                          src={f.foto_url || "https://picsum.photos/seed/placeholder/400/400"} 
+                          src={f.foto_url || "https://picsum.photos/seed/placeholder/400/533"} 
                           alt={f.nome} 
                           fill 
                           className="object-cover" 

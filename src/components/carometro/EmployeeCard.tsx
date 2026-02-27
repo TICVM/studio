@@ -1,4 +1,3 @@
-
 import Image from "next/image";
 import { Funcionario, Setor } from "@/types";
 import { Card, CardContent } from "@/components/ui/card";
@@ -12,7 +11,7 @@ export function EmployeeCard({ funcionario, setor }: EmployeeCardProps) {
   return (
     <Card className="overflow-hidden group hover:shadow-xl transition-all duration-300 border-none bg-white">
       <CardContent className="p-6 flex flex-col items-center text-center space-y-4">
-        <div className="relative w-32 h-32 rounded-full overflow-hidden border-4 border-muted group-hover:border-primary transition-colors duration-300">
+        <div className="relative w-36 aspect-[3/4] rounded-lg overflow-hidden border-2 border-muted group-hover:border-primary transition-all duration-300 shadow-sm">
           <Image
             src={funcionario.foto_url}
             alt={funcionario.nome}

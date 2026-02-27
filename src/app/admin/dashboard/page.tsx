@@ -1,4 +1,3 @@
-
 "use client"
 
 import { useMemo } from "react";
@@ -91,7 +90,7 @@ export default function DashboardPage() {
                   .map(f => (
                     <div key={f.id} className="flex items-center justify-between group">
                       <div className="flex items-center gap-4">
-                        <div className="h-10 w-10 rounded-full bg-slate-100 flex-shrink-0 overflow-hidden relative border border-slate-200">
+                        <div className="h-12 w-9 rounded-sm bg-slate-100 flex-shrink-0 overflow-hidden relative border border-slate-200">
                           {f.foto_url ? (
                             <img src={f.foto_url} alt={f.nome} className="object-cover w-full h-full" />
                           ) : (
