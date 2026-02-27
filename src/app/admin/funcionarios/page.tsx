@@ -3,7 +3,7 @@
 
 import { useState } from "react";
 import Image from "next/image";
-import { Users, Plus, Edit2, Trash2, Search, FileText, Loader2, AlertCircle, Upload } from "lucide-react";
+import { Users, Plus, Edit2, Trash2, Search, FileText, Loader2, AlertCircle, Upload, Crown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -32,6 +32,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Checkbox } from "@/components/ui/checkbox";
 import { useMemoFirebase, useCollection, useFirestore, addDocumentNonBlocking, updateDocumentNonBlocking, deleteDocumentNonBlocking, setDocumentNonBlocking } from "@/firebase";
 import { collection, doc, serverTimestamp } from "firebase/firestore";
 import { Funcionario, Setor } from "@/types";
@@ -47,6 +48,7 @@ export default function FuncionariosPage() {
   const [editingFunc, setEditingFunc] = useState<Funcionario | null>(null);
   const [excelFile, setExcelFile] = useState<File | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [isLiderChecked, setIsLiderChecked] = useState(false);
 
   const employeesRef = useMemoFirebase(() => collection(firestore, "employees"), [firestore]);
   const sectorsRef = useMemoFirebase(() => collection(firestore, "sectors"), [firestore]);
@@ -57,7 +59,12 @@ export default function FuncionariosPage() {
   const filteredEmployees = employees?.filter(f => 
     f.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
     f.cargo.toLowerCase().includes(searchTerm.toLowerCase())
-  ) || [];
+  ).sort((a, b) => {
+    // Ordenação administrativa: Líderes primeiro, depois alfabética
+    if (a.is_lider && !b.is_lider) return -1;
+    if (!a.is_lider && b.is_lider) return 1;
+    return a.nome.localeCompare(b.nome);
+  }) || [];
 
   const handleSave = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -67,6 +74,7 @@ export default function FuncionariosPage() {
       cargo: formData.get("cargo") as string,
       setor_id: formData.get("setor_id") as string,
       status: formData.get("status") as "ativo" | "inativo",
+      is_lider: isLiderChecked,
       foto_url: (formData.get("foto_url") as string) || `https://picsum.photos/seed/${Math.random()}/400/533`,
     };
 
@@ -84,6 +92,7 @@ export default function FuncionariosPage() {
 
     setIsDialogOpen(false);
     setEditingFunc(null);
+    setIsLiderChecked(false);
   };
 
   const handleExcelUpload = async () => {
@@ -120,6 +129,7 @@ export default function FuncionariosPage() {
           const setorNome = row.Setor || row.setor || row.SETOR;
           const statusRaw = row.Status || row.status || row.STATUS;
           const fotoUrl = row.Foto || row.foto || row.FOTO || row.FotoURL || row.foto_url;
+          const liderRaw = row.Lider || row.Líder || row.lider || row.lideranca;
 
           if (nome && cargo) {
             let targetSectorId = "";
@@ -143,6 +153,7 @@ export default function FuncionariosPage() {
             }
 
             const status = (statusRaw?.toString().toLowerCase() === 'inativo') ? 'inativo' : 'ativo';
+            const isLider = liderRaw?.toString().toLowerCase() === 'sim' || liderRaw === true || liderRaw === 1;
             const finalFotoUrl = fotoUrl || `https://picsum.photos/seed/${Math.random()}/400/533`;
 
             addDocumentNonBlocking(employeesRef, {
@@ -150,6 +161,7 @@ export default function FuncionariosPage() {
               cargo,
               setor_id: targetSectorId,
               status,
+              is_lider: isLider,
               foto_url: finalFotoUrl,
               data_criacao: new Date().toISOString(),
               createdAt: serverTimestamp(),
@@ -192,7 +204,7 @@ export default function FuncionariosPage() {
       <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center">
         <div>
           <h1 className="text-3xl font-bold tracking-tight text-primary">Funcionários</h1>
-          <p className="text-muted-foreground">Gerencie sua equipe via cadastro manual ou planilha Excel.</p>
+          <p className="text-muted-foreground">Gerencie sua equipe. Líderes aparecem primeiro na listagem.</p>
         </div>
         
         <div className="flex gap-2">
@@ -214,9 +226,9 @@ export default function FuncionariosPage() {
               <Alert className="bg-blue-50 border-blue-200">
                 <AlertCircle className="h-4 w-4 text-blue-600" />
                 <AlertDescription className="text-xs text-blue-800">
-                  A planilha deve conter as colunas:<br/>
-                  <b>Nome | Cargo | Setor | Status | Foto</b><br/>
-                  <i>* Setores novos serão criados automaticamente.</i>
+                  Colunas esperadas:<br/>
+                  <b>Nome | Cargo | Setor | Status | Líder | Foto</b><br/>
+                  <i>* Na coluna Líder use "Sim" para destacar o funcionário.</i>
                 </AlertDescription>
               </Alert>
 
@@ -246,7 +258,10 @@ export default function FuncionariosPage() {
 
           <Dialog open={isDialogOpen} onOpenChange={(open) => {
             setIsDialogOpen(open);
-            if (!open) setEditingSector(null);
+            if (!open) {
+              setEditingFunc(null);
+              setIsLiderChecked(false);
+            }
           }}>
             <DialogTrigger asChild>
               <Button className="h-11">
@@ -286,21 +301,35 @@ export default function FuncionariosPage() {
                       </Select>
                     </div>
                   </div>
-                  <div className="grid gap-2">
-                    <Label htmlFor="status">Status</Label>
-                    <Select name="status" defaultValue={editingFunc?.status || "ativo"}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Status" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="ativo">Ativo</SelectItem>
-                        <SelectItem value="inativo">Inativo</SelectItem>
-                      </SelectContent>
-                    </Select>
+                  
+                  <div className="flex items-center space-x-2 bg-slate-50 p-3 rounded-lg border">
+                    <Checkbox 
+                      id="is_lider" 
+                      checked={isLiderChecked} 
+                      onCheckedChange={(checked) => setIsLiderChecked(!!checked)} 
+                    />
+                    <Label htmlFor="is_lider" className="text-sm font-semibold cursor-pointer">
+                      Líder de Setor (Aparece no topo)
+                    </Label>
                   </div>
-                  <div className="grid gap-2">
-                    <Label htmlFor="foto_url">URL da Foto</Label>
-                    <Input id="foto_url" name="foto_url" defaultValue={editingFunc?.foto_url} placeholder="https://..." />
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="grid gap-2">
+                      <Label htmlFor="status">Status</Label>
+                      <Select name="status" defaultValue={editingFunc?.status || "ativo"}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Status" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="ativo">Ativo</SelectItem>
+                          <SelectItem value="inativo">Inativo</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="grid gap-2">
+                      <Label htmlFor="foto_url">URL da Foto</Label>
+                      <Input id="foto_url" name="foto_url" defaultValue={editingFunc?.foto_url} placeholder="https://..." />
+                    </div>
                   </div>
                 </div>
                 <DialogFooter>
@@ -315,7 +344,7 @@ export default function FuncionariosPage() {
       </div>
 
       <div className="bg-white rounded-xl shadow-sm border overflow-hidden">
-        <div className="p-4 border-b flex flex-col sm:flex-row items-center gap-4">
+        <div className="p-4 border-b">
           <div className="relative w-full max-w-sm">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input 
@@ -333,6 +362,7 @@ export default function FuncionariosPage() {
               <TableHead>Colaborador</TableHead>
               <TableHead>Cargo</TableHead>
               <TableHead>Setor</TableHead>
+              <TableHead>Hierarquia</TableHead>
               <TableHead>Status</TableHead>
               <TableHead className="text-right">Ações</TableHead>
             </TableRow>
@@ -344,7 +374,7 @@ export default function FuncionariosPage() {
                 <TableRow key={f.id} className="group">
                   <TableCell>
                     <div className="flex items-center gap-3">
-                      <div className="h-16 w-12 relative rounded-sm overflow-hidden border bg-slate-50 shadow-sm">
+                      <div className="h-16 w-12 relative rounded-sm overflow-hidden border bg-slate-50 shadow-sm shrink-0">
                         <Image 
                           src={f.foto_url || "https://picsum.photos/seed/placeholder/400/533"} 
                           alt={f.nome} 
@@ -362,6 +392,13 @@ export default function FuncionariosPage() {
                     </span>
                   </TableCell>
                   <TableCell>
+                    {f.is_lider && (
+                      <span className="inline-flex items-center gap-1 text-[10px] font-bold text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-200 uppercase">
+                        <Crown size={10} /> Líder
+                      </span>
+                    )}
+                  </TableCell>
+                  <TableCell>
                     <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${
                       f.status === 'ativo' ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-500'
                     }`}>
@@ -372,6 +409,7 @@ export default function FuncionariosPage() {
                     <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                       <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => {
                         setEditingFunc(f);
+                        setIsLiderChecked(!!f.is_lider);
                         setIsDialogOpen(true);
                       }}>
                         <Edit2 className="h-4 w-4 text-slate-500" />

@@ -12,6 +12,7 @@ export interface Funcionario {
   foto_url: string;
   setor_id: string;
   status: 'ativo' | 'inativo';
+  is_lider?: boolean;
   data_criacao: string;
 }
 

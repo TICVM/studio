@@ -1,3 +1,4 @@
+
 "use client"
 
 import { useState, useMemo } from "react";
@@ -21,7 +22,6 @@ export default function Home() {
   const [selectedSetor, setSelectedSetor] = useState("all");
   const firestore = useFirestore();
 
-  // Buscar apenas funcionários ativos (respeitando as regras de segurança)
   const activeEmployeesQuery = useMemoFirebase(() => {
     return query(collection(firestore, "employees"), where("status", "==", "ativo"));
   }, [firestore]);
@@ -49,10 +49,24 @@ export default function Home() {
       ? sectors 
       : sectors.filter(s => s.id === selectedSetor);
 
-    return relevantSectors.map(sector => ({
-      ...sector,
-      funcionarios: filteredEmployees.filter(f => f.setor_id === sector.id)
-    })).filter(group => group.funcionarios.length > 0);
+    // Ordenar setores alfabeticamente
+    const sortedSectors = [...relevantSectors].sort((a, b) => a.nome.localeCompare(b.nome));
+
+    return sortedSectors.map(sector => {
+      const sectorFuncs = filteredEmployees.filter(f => f.setor_id === sector.id);
+      
+      // Ordenação Crítica: Líderes primeiro, depois alfabética
+      const sortedFuncs = sectorFuncs.sort((a, b) => {
+        if (a.is_lider && !b.is_lider) return -1;
+        if (!a.is_lider && b.is_lider) return 1;
+        return a.nome.localeCompare(b.nome);
+      });
+
+      return {
+        ...sector,
+        funcionarios: sortedFuncs
+      };
+    }).filter(group => group.funcionarios.length > 0);
   }, [filteredEmployees, sectors, selectedSetor]);
 
   return (
@@ -63,7 +77,7 @@ export default function Home() {
         <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
           <div className="space-y-1 text-center md:text-left">
             <h1 className="text-3xl font-bold text-primary tracking-tight">Carômetro</h1>
-            <p className="text-muted-foreground">Conheça nossa equipe e colaboradores.</p>
+            <p className="text-muted-foreground">Colaboradores organizados por hierarquia e setor.</p>
           </div>
           
           <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
@@ -106,12 +120,12 @@ export default function Home() {
               groupedEmployees.map(group => (
                 <section key={group.id} className="space-y-6">
                   <div className="flex items-center gap-4">
-                    <h2 className="text-xl font-bold text-primary pr-4 whitespace-nowrap">
+                    <h2 className="text-xl font-bold text-primary pr-4 whitespace-nowrap uppercase tracking-wider">
                       {group.nome}
                     </h2>
-                    <div className="h-px w-full bg-border" />
-                    <span className="text-sm font-medium text-muted-foreground px-4 bg-background">
-                      {group.funcionarios.length}
+                    <div className="h-px w-full bg-slate-200" />
+                    <span className="text-xs font-bold text-muted-foreground px-3 py-1 bg-slate-50 border rounded-full">
+                      {group.funcionarios.length} MEMBROS
                     </span>
                   </div>
                   

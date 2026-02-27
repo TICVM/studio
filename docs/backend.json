@@ -1,3 +1,4 @@
+
 {
   "entities": {
     "Sector": {
@@ -46,16 +47,20 @@
         },
         "photoUrl": {
           "type": "string",
-          "description": "URL pointing to the employee's profile photo. (Stored via Supabase Storage)",
+          "description": "URL pointing to the employee's profile photo.",
           "format": "uri"
         },
         "sectorId": {
           "type": "string",
-          "description": "Reference to the Sector the employee belongs to. (Relationship: Sector 1:N Employee)"
+          "description": "Reference to the Sector the employee belongs to."
         },
         "status": {
           "type": "string",
           "description": "The current employment status of the employee (e.g., 'active', 'inactive')."
+        },
+        "is_lider": {
+          "type": "boolean",
+          "description": "Indicates if the employee is a leader in their sector."
         },
         "createdAt": {
           "type": "string",
@@ -76,11 +81,11 @@
       "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "AdministratorProfile",
       "type": "object",
-      "description": "Represents an administrative user with privileges to manage sectors and employees. Authentication details are handled by an external system.",
+      "description": "Represents an administrative user with privileges to manage sectors and employees.",
       "properties": {
         "id": {
           "type": "string",
-          "description": "Unique identifier for the AdministratorProfile entity, typically matching the external authentication system's user ID."
+          "description": "Unique identifier for the AdministratorProfile entity."
         },
         "fullName": {
           "type": "string",
@@ -88,12 +93,12 @@
         },
         "email": {
           "type": "string",
-          "description": "The email address of the administrator, used for identification and external authentication.",
+          "description": "The email address of the administrator.",
           "format": "email"
         },
         "role": {
           "type": "string",
-          "description": "The role of the user within the system (e.g., 'admin'), defining their access privileges."
+          "description": "The role of the user within the system."
         }
       },
       "required": [
@@ -119,13 +124,7 @@
           "schema": {
             "$ref": "#/backend/entities/AdministratorProfile"
           },
-          "description": "Stores administrator profiles for role-based access control. The `adminId` parameter corresponds to the Firebase Authentication UID. The existence of a document at this path for `request.auth.uid` grants administrative privileges, explicitly enabling Authorization Independence.",
-          "params": [
-            {
-              "name": "adminId",
-              "description": "The unique identifier of the administrator, matching the Firebase Authentication UID."
-            }
-          ]
+          "description": "Stores administrator profiles."
         }
       },
       {
@@ -135,13 +134,7 @@
           "schema": {
             "$ref": "#/backend/entities/Sector"
           },
-          "description": "Stores information about company sectors. These documents are exclusively managed (CRUD) by authenticated administrators.",
-          "params": [
-            {
-              "name": "sectorId",
-              "description": "The unique identifier for a specific sector."
-            }
-          ]
+          "description": "Stores information about company sectors."
         }
       },
       {
@@ -151,16 +144,9 @@
           "schema": {
             "$ref": "#/backend/entities/Employee"
           },
-          "description": "Stores employee records, including their full name, job title, photo URL, and the `sectorId` they belong to. The `status` field ('active', 'inactive') is crucial for public visibility. Administrators have full CRUD access. Public users can only read documents where `status` is 'active', directly supporting QAPs by requiring clients to query for active employees.",
-          "params": [
-            {
-              "name": "employeeId",
-              "description": "The unique identifier for a specific employee."
-            }
-          ]
+          "description": "Stores employee records."
         }
       }
-    ],
-    "reasoning": "The Firestore structure is designed to be secure, scalable, and debuggable, adhering strictly to the provided core design principles. \n\n**Authorization Independence (CRITICAL):**\n1.  **Administrator Role:** The 'AdministratorProfile' entity is stored in a dedicated top-level collection, `/admin_profiles/{adminId}`. Each document's `id` field explicitly matches the Firebase `request.auth.uid`. Authorization rules for administrative actions (managing sectors and employees) will directly check the existence of `request.auth.uid` in this collection (e.g., `exists(/databases/$(database)/documents/admin_profiles/$(request.auth.uid))`). This design completely eliminates hierarchical authorization dependencies, ensuring that administrative access is atomic and does not require `get()` operations on parent documents for role verification.\n2.  **Sectors and Employees:** Since the system specifies a single 'Administrator' role with global management rights over all sectors and employees, there is no need to denormalize owner or member fields into `Sector` or `Employee` documents for *admin* access. Their authorization is entirely dependent on their `admin_profile` status, which is checked at the root level.\n\n**QAPs (Rules are not Filters):**\n1.  **Public Employee Data:** The `employees/{employeeId}` collection is structured to support QAPs for public access. The `status` field within each `Employee` document (e.g., `resource.data.status == 'active'`) is a key authorization attribute. A public read rule would be `allow read: if resource.data.status == 'active';`. This approach perfectly supports QAPs because the `status` field is an intrinsic attribute of the `Employee` document itself, allowing the rule to be evaluated without any additional lookups. Clients querying for public employee data are required to include `where('status', '==', 'active')` in their queries. The Firestore security rules will *enforce* that *only* documents matching this criterion are returned; any query attempting to retrieve documents that include inactive ones (without explicitly filtering by `status: 'active'`) will be rejected. This ensures data integrity and predictable security enforcement.\n2.  **Structural Segregation:** The `/admin_profiles` collection is a clear example of structural segregation, isolating administrative role data from all other application data. While `Employee` data for active/inactive employees resides in one collection, the explicit use of the `status` field in security rules for public reads effectively creates a logical segregation of publicly visible (active) versus privately visible (all, by admin) data within the same collection. This simplifies management for administrators while maintaining strict control over public access, aligning with the homogeneous security posture principle.\n\n**Overall Structure:**\n-   `/admin_profiles/{adminId}`: Stores administrator profiles for role-based access, where `adminId` matches the Firebase Authentication UID.\n-   `/sectors/{sectorId}`: Stores all sector information, managed solely by administrators.\n-   `/employees/{employeeId}`: Stores all employee information. Administrators have full CRUD access. Public users can only read 'active' employees based on the `status` field."
+    ]
   }
 }
