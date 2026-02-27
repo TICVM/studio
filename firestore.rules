@@ -1,0 +1,111 @@
+rules_version = '2';
+
+/**
+ * FIRESTORE SECURITY RULES
+ * 
+ * Core Philosophy:
+ * This ruleset implements a Role-Based Access Control (RBAC) model centered around an administrative tier. 
+ * Authorization is "independent," meaning administrative privileges are determined by the existence of 
+ * a profile document in a dedicated root collection, avoiding nested dependency lookups.
+ * 
+ * Data Structure:
+ * - /admin_profiles/{adminId}: Root collection for administrative users. UIDs here match Firebase Auth.
+ * - /sectors/{sectorId}: Company departments managed by administrators.
+ * - /employees/{employeeId}: Staff records. Publicly accessible if 'active', otherwise admin-only.
+ * 
+ * Key Security Decisions:
+ * 1. Global Admin Check: Uses the `exists()` function to verify if the current user has an entry in 
+ *    the `admin_profiles` collection.
+ * 2. Public Read/Private Write: Employees are readable by the public to facilitate directory lookups, 
+ *    but only 'active' status records are permitted for non-admins.
+ * 3. Relational Integrity: On creation, documents must have an internal 'id' field that matches 
+ *    the document ID in the path to ensure data consistency.
+ * 
+ * Denormalization for Authorization:
+ * Administrative roles are centralized in the `/admin_profiles` collection. While standard sectors 
+ * and employees don't require individual owner IDs (due to global admin management), the 
+ * `status` field in the Employee entity is used as a critical authorization attribute for public visibility.
+ */
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // --- GLOBAL HELPER FUNCTIONS ---
+
+    /** @description Checks if the user is authenticated with Firebase Auth. */
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    /** @description Checks if the authenticated user's UID matches a specific ID. */
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    /** @description Verifies if the authenticated user has an administrator profile. */
+    function isAdmin() {
+      return isSignedIn() && exists(/databases/$(database)/documents/admin_profiles/$(request.auth.uid));
+    }
+
+    /** @description Combines admin check with existence check for updates and deletes. */
+    function isExistingAdmin() {
+      return isAdmin() && resource != null;
+    }
+
+    // --- COLLECTION RULES ---
+
+    /**
+     * @description Administrative profiles. Users can manage their own profile; admins can manage all.
+     * @path /admin_profiles/{adminId}
+     * @allow (create) User 'abc' creates profile 'abc'.
+     * @deny (update) User 'abc' attempts to modify profile 'xyz'.
+     * @principle Ownership for self-management and global admin for system oversight.
+     */
+    match /admin_profiles/{adminId} {
+      allow get: if isOwner(adminId) || isAdmin();
+      allow list: if isAdmin();
+      allow create: if isOwner(adminId) && request.resource.data.id == adminId;
+      allow update: if isOwner(adminId) && resource != null && request.resource.data.id == resource.data.id;
+      allow delete: if isAdmin() && resource != null;
+    }
+
+    /**
+     * @description Company sectors. Exclusively managed and viewed by administrators.
+     * @path /sectors/{sectorId}
+     * @allow (create) Authenticated Admin creates a new 'Marketing' sector.
+     * @deny (get) Unauthenticated user attempts to read sector details.
+     * @principle Administrative lockdown for organizational metadata.
+     */
+    match /sectors/{sectorId} {
+      allow get, list: if isAdmin();
+      allow create: if isAdmin() && request.resource.data.id == sectorId;
+      allow update: if isExistingAdmin() && request.resource.data.id == resource.data.id;
+      allow delete: if isExistingAdmin();
+    }
+
+    /**
+     * @description Employee records. Public can read 'active' employees; admins have full control.
+     * @path /employees/{employeeId}
+     * @allow (get) Public user views an 'active' employee.
+     * @deny (get) Public user views an 'inactive' employee.
+     * @principle Public read with attribute-based filtering (status) and admin-only writes.
+     */
+    match /employees/{employeeId} {
+      // Get allows public access ONLY if the employee is active. Admins bypass this.
+      allow get: if isAdmin() || (resource != null && resource.data.status == 'active');
+      
+      // FIX: The original `allow list: if isAdmin() || true;` incorrectly allowed any user to list ALL documents
+      // in the collection, including inactive employees, which contradicts the 'get' rule's restriction
+      // to 'active' employees for non-admins. Firestore `list` operations cannot filter based on
+      // `resource.data` properties for all documents in a collection. To enforce security and align
+      // with the principle of only 'active' employees being publicly readable, `list` access
+      // is now restricted to administrators only. This prevents unauthorized listing of inactive
+      // employees while still allowing public `get` access to specific active employee profiles.
+      allow list: if isAdmin();
+      
+      allow create: if isAdmin() && request.resource.data.id == employeeId;
+      allow update: if isExistingAdmin() && request.resource.data.id == resource.data.id;
+      allow delete: if isExistingAdmin();
+    }
+  }
+}
