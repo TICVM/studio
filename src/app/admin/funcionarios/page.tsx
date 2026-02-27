@@ -115,7 +115,6 @@ export default function FuncionariosPage() {
         let successCount = 0;
 
         for (const row of jsonData) {
-          // Mapeamento flexível de colunas (case insensitive e suportando variações de nome)
           const nome = row.Nome || row.nome || row.NOME;
           const cargo = row.Cargo || row.cargo || row.CARGO;
           const setorNome = row.Setor || row.setor || row.SETOR;
@@ -159,10 +158,7 @@ export default function FuncionariosPage() {
           }
         }
 
-        toast({ 
-          title: "Sucesso", 
-          description: `${successCount} colaboradores importados da planilha.` 
-        });
+        toast({ title: "Sucesso", description: `${successCount} colaboradores importados.` });
         setIsBulkDialogOpen(false);
         setExcelFile(null);
       } catch (error) {
@@ -196,7 +192,7 @@ export default function FuncionariosPage() {
       <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center">
         <div>
           <h1 className="text-3xl font-bold tracking-tight text-primary">Funcionários</h1>
-          <p className="text-muted-foreground">Gerencie sua equipe via cadastro manual ou planilha.</p>
+          <p className="text-muted-foreground">Gerencie sua equipe via cadastro manual ou planilha Excel.</p>
         </div>
         
         <div className="flex gap-2">
@@ -209,7 +205,7 @@ export default function FuncionariosPage() {
             </DialogTrigger>
             <DialogContent className="sm:max-w-[500px]">
               <DialogHeader>
-                <DialogTitle>Importar Planilha de Funcionários</DialogTitle>
+                <DialogTitle>Importar Planilha</DialogTitle>
                 <DialogDescription>
                   Selecione um arquivo .xlsx ou .xls para importar.
                 </DialogDescription>
@@ -218,7 +214,7 @@ export default function FuncionariosPage() {
               <Alert className="bg-blue-50 border-blue-200">
                 <AlertCircle className="h-4 w-4 text-blue-600" />
                 <AlertDescription className="text-xs text-blue-800">
-                  Sua planilha deve conter as colunas:<br/>
+                  A planilha deve conter as colunas:<br/>
                   <b>Nome | Cargo | Setor | Status | Foto</b><br/>
                   <i>* Setores novos serão criados automaticamente.</i>
                 </AlertDescription>
@@ -226,35 +222,23 @@ export default function FuncionariosPage() {
 
               <div className="grid gap-4 py-6">
                 <div className="grid gap-2">
-                  <Label htmlFor="excel-file">Selecione o arquivo</Label>
-                  <div className="flex items-center gap-2">
-                    <Input 
-                      id="excel-file" 
-                      type="file" 
-                      accept=".xlsx, .xls, .csv"
-                      onChange={(e) => setExcelFile(e.target.files?.[0] || null)}
-                      className="cursor-pointer"
-                    />
-                  </div>
+                  <Label htmlFor="excel-file">Arquivo Excel</Label>
+                  <Input 
+                    id="excel-file" 
+                    type="file" 
+                    accept=".xlsx, .xls"
+                    onChange={(e) => setExcelFile(e.target.files?.[0] || null)}
+                  />
                 </div>
               </div>
               <DialogFooter>
                 <Button 
                   onClick={handleExcelUpload} 
-                  className="w-full h-12"
+                  className="w-full h-11"
                   disabled={!excelFile || isProcessing}
                 >
-                  {isProcessing ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Processando Planilha...
-                    </>
-                  ) : (
-                    <>
-                      <Upload className="mr-2 h-4 w-4" />
-                      Iniciar Importação
-                    </>
-                  )}
+                  {isProcessing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Upload className="mr-2 h-4 w-4" />}
+                  {isProcessing ? "Processando..." : "Importar Planilha"}
                 </Button>
               </DialogFooter>
             </DialogContent>
@@ -262,7 +246,7 @@ export default function FuncionariosPage() {
 
           <Dialog open={isDialogOpen} onOpenChange={(open) => {
             setIsDialogOpen(open);
-            if (!open) setEditingFunc(null);
+            if (!open) setEditingSector(null);
           }}>
             <DialogTrigger asChild>
               <Button className="h-11">
@@ -360,7 +344,7 @@ export default function FuncionariosPage() {
                 <TableRow key={f.id} className="group">
                   <TableCell>
                     <div className="flex items-center gap-3">
-                      <div className="h-14 w-10 relative rounded-sm overflow-hidden border bg-slate-50 shadow-sm">
+                      <div className="h-16 w-12 relative rounded-sm overflow-hidden border bg-slate-50 shadow-sm">
                         <Image 
                           src={f.foto_url || "https://picsum.photos/seed/placeholder/400/533"} 
                           alt={f.nome} 
