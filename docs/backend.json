@@ -63,7 +63,7 @@
           "description": "URL pointing to the employee's profile photo.",
           "format": "uri"
         },
-        "sectorIds": {
+        "setor_ids": {
           "type": "array",
           "items": { "type": "string" },
           "description": "References to the Sectors the employee belongs to."
@@ -76,6 +76,10 @@
           "type": "boolean",
           "description": "Indicates if the employee is a leader in their sector."
         },
+        "titulo_lider": {
+          "type": "string",
+          "description": "Custom title for the leadership position (e.g., 'Coordenador', 'Diretor')."
+        },
         "createdAt": {
           "type": "string",
           "description": "Timestamp when the employee record was created.",
@@ -87,7 +91,7 @@
         "fullName",
         "jobTitle",
         "photoUrl",
-        "sectorIds",
+        "setor_ids",
         "createdAt"
       ]
     },

@@ -3,7 +3,7 @@
 
 import { useState, useMemo, useEffect } from "react";
 import Image from "next/image";
-import { Users, Plus, Edit2, Trash2, Search, FileText, Loader2, AlertCircle, Upload, Crown, Mail, Hash, Building, CheckCircle2 } from "lucide-react";
+import { Users, Plus, Edit2, Trash2, Search, FileText, Loader2, AlertCircle, Upload, Crown, Mail, Hash, Building, CheckCircle2, ChevronDown, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -35,6 +35,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Badge } from "@/components/ui/badge";
 import { useMemoFirebase, useCollection, useFirestore, addDocumentNonBlocking, updateDocumentNonBlocking, deleteDocumentNonBlocking, setDocumentNonBlocking } from "@/firebase";
 import { collection, doc, serverTimestamp } from "firebase/firestore";
 import { Funcionario, Setor } from "@/types";
@@ -68,16 +69,20 @@ export default function FuncionariosPage() {
       setIsLiderChecked(false);
       setSelectedSectorIds([]);
     }
-  }, [editingFunc]);
+  }, [editingFunc, isDialogOpen]);
 
-  const filteredEmployees = employees?.filter(f => 
-    f.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    f.cargo.toLowerCase().includes(searchTerm.toLowerCase())
-  ).sort((a, b) => {
-    if (a.is_lider && !b.is_lider) return -1;
-    if (!a.is_lider && b.is_lider) return 1;
-    return a.nome.localeCompare(b.nome);
-  }) || [];
+  const filteredEmployees = useMemo(() => {
+    return (employees || [])
+      .filter(f => 
+        f.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        f.cargo.toLowerCase().includes(searchTerm.toLowerCase())
+      )
+      .sort((a, b) => {
+        if (a.is_lider && !b.is_lider) return -1;
+        if (!a.is_lider && b.is_lider) return 1;
+        return a.nome.localeCompare(b.nome);
+      });
+  }, [employees, searchTerm]);
 
   const handleSave = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -145,7 +150,7 @@ export default function FuncionariosPage() {
           const statusRaw = row.Status || row.status || row.STATUS;
           const fotoUrl = row.Foto || row.foto || row.FOTO || row.FotoURL || row.foto_url;
           const liderRaw = row.Lider || row.Líder || row.lider || row.lideranca;
-          const tituloLider = row.TituloLider || row.titulo_lider || row.Titulo_Lider;
+          const tituloLider = row.TituloLider || row.titulo_lider || row.Titulo_Lider || row.cargo_lider;
           const email = row.Email || row.email || row.EMAIL || row.Correio;
           const ramal = row.Ramal || row.ramal || row.RAMAL || row.Extensao;
           const unidade = row.Unidade || row.unidade || row.UNIDADE || row.Filial;
@@ -172,7 +177,7 @@ export default function FuncionariosPage() {
             }
 
             const status = (statusRaw?.toString().toLowerCase() === 'inativo') ? 'inativo' : 'ativo';
-            const isLider = liderRaw?.toString().toLowerCase() === 'sim' || liderRaw === true || liderRaw === 1;
+            const isLider = liderRaw?.toString().toLowerCase() === 'sim' || liderRaw === true || liderRaw === 1 || liderRaw === 'S';
             const finalFotoUrl = fotoUrl || `https://picsum.photos/seed/${Math.random()}/400/533`;
 
             addDocumentNonBlocking(employeesRef, {
@@ -180,7 +185,7 @@ export default function FuncionariosPage() {
               cargo,
               setor_ids: targetSectorIds,
               status,
-              is_lider: isLider,
+              is_lider: !!isLider,
               titulo_lider: isLider ? (tituloLider?.toString() || "Líder de Setor") : "",
               foto_url: finalFotoUrl,
               email: email?.toString() || "",
@@ -239,7 +244,7 @@ export default function FuncionariosPage() {
         <div className="flex gap-2">
           <Dialog open={isBulkDialogOpen} onOpenChange={setIsBulkDialogOpen}>
             <DialogTrigger asChild>
-              <Button variant="outline" className="h-11">
+              <Button variant="outline" className="h-11 shadow-sm">
                 <FileText className="mr-2 h-4 w-4" />
                 Importar Excel
               </Button>
@@ -291,7 +296,7 @@ export default function FuncionariosPage() {
             }
           }}>
             <DialogTrigger asChild>
-              <Button className="h-11">
+              <Button className="h-11 shadow-md">
                 <Plus className="mr-2 h-4 w-4" />
                 Novo Funcionário
               </Button>
@@ -318,15 +323,27 @@ export default function FuncionariosPage() {
                       <Label>Setores (Múltipla Escolha)</Label>
                       <Popover>
                         <PopoverTrigger asChild>
-                          <Button variant="outline" className="w-full justify-start font-normal text-left overflow-hidden">
-                            {selectedSectorIds.length > 0 
-                              ? `${selectedSectorIds.length} selecionado(s)` 
-                              : "Selecione setores..."}
+                          <Button variant="outline" className="w-full justify-between font-normal text-left h-auto py-2">
+                            <div className="flex flex-wrap gap-1 items-center max-w-[200px]">
+                              {selectedSectorIds.length > 0 ? (
+                                selectedSectorIds.map(id => {
+                                  const s = sectors?.find(sec => sec.id === id);
+                                  return (
+                                    <Badge key={id} variant="secondary" className="text-[9px] px-1 py-0 h-4">
+                                      {s?.nome}
+                                    </Badge>
+                                  );
+                                })
+                              ) : (
+                                <span className="text-muted-foreground">Selecione...</span>
+                              )}
+                            </div>
+                            <ChevronDown className="h-4 w-4 opacity-50 shrink-0" />
                           </Button>
                         </PopoverTrigger>
                         <PopoverContent className="w-[280px] p-0" align="start">
                           <ScrollArea className="h-60 p-4">
-                            <div className="space-y-4">
+                            <div className="space-y-3">
                               {sectors?.map((s) => (
                                 <div key={s.id} className="flex items-center space-x-2">
                                   <Checkbox 
@@ -336,12 +353,13 @@ export default function FuncionariosPage() {
                                   />
                                   <label 
                                     htmlFor={`sector-${s.id}`}
-                                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                                    className="text-sm font-medium leading-none cursor-pointer flex-1"
                                   >
                                     {s.nome}
                                   </label>
                                 </div>
                               ))}
+                              {sectors?.length === 0 && <p className="text-xs text-muted-foreground p-2">Nenhum setor cadastrado.</p>}
                             </div>
                           </ScrollArea>
                         </PopoverContent>
@@ -387,7 +405,7 @@ export default function FuncionariosPage() {
                     </div>
                     {isLiderChecked && (
                       <div className="grid gap-2 pl-6 animate-in fade-in slide-in-from-top-2">
-                        <Label htmlFor="titulo_lider">Título da Liderança</Label>
+                        <Label htmlFor="titulo_lider">Título da Liderança Personalizado</Label>
                         <Input 
                           id="titulo_lider" 
                           name="titulo_lider" 
