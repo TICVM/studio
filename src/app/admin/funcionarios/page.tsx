@@ -1,8 +1,9 @@
+
 "use client"
 
 import { useState } from "react";
 import Image from "next/image";
-import { Users, Plus, Edit2, Trash2, Search, FileText, Loader2 } from "lucide-react";
+import { Users, Plus, Edit2, Trash2, Search, FileText, Loader2, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -31,7 +32,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useMemoFirebase, useCollection, useFirestore, addDocumentNonBlocking, updateDocumentNonBlocking, deleteDocumentNonBlocking } from "@/firebase";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { useMemoFirebase, useCollection, useFirestore, addDocumentNonBlocking, updateDocumentNonBlocking, deleteDocumentNonBlocking, setDocumentNonBlocking } from "@/firebase";
 import { collection, doc, serverTimestamp } from "firebase/firestore";
 import { Funcionario, Setor } from "@/types";
 import { useToast } from "@/hooks/use-toast";
@@ -44,7 +46,6 @@ export default function FuncionariosPage() {
   const [isBulkDialogOpen, setIsBulkDialogOpen] = useState(false);
   const [editingFunc, setEditingFunc] = useState<Funcionario | null>(null);
   const [bulkText, setBulkText] = useState("");
-  const [targetSector, setTargetSector] = useState("");
 
   const employeesRef = useMemoFirebase(() => collection(firestore, "employees"), [firestore]);
   const sectorsRef = useMemoFirebase(() => collection(firestore, "sectors"), [firestore]);
@@ -85,11 +86,6 @@ export default function FuncionariosPage() {
   };
 
   const handleBulkSave = () => {
-    if (!targetSector) {
-      toast({ variant: "destructive", title: "Erro", description: "Selecione um setor de destino." });
-      return;
-    }
-
     const lines = bulkText.split('\n').map(l => l.trim()).filter(l => l.length > 0);
     
     if (lines.length === 0) {
@@ -98,17 +94,47 @@ export default function FuncionariosPage() {
     }
 
     let successCount = 0;
+    
+    // Cache de setores para evitar buscas repetitivas em memória
+    const sectorMap = new Map<string, string>();
+    sectors?.forEach(s => sectorMap.set(s.nome.toLowerCase(), s.id));
+
     lines.forEach(line => {
-      // Formato esperado: Nome;Cargo
-      const [nome, cargo] = line.split(';').map(s => s.trim());
+      // Formato esperado: Nome;Cargo;Setor;Status;FotoURL
+      const parts = line.split(';').map(s => s.trim());
       
-      if (nome && cargo) {
+      if (parts.length >= 2) {
+        const [nome, cargo, setorNome, statusStr, fotoUrl] = parts;
+        
+        let targetSectorId = "";
+        
+        if (setorNome) {
+          const existingId = sectorMap.get(setorNome.toLowerCase());
+          if (existingId) {
+            targetSectorId = existingId;
+          } else {
+            // Criar novo setor se não existir
+            const newSectorRef = doc(collection(firestore, "sectors"));
+            targetSectorId = newSectorRef.id;
+            setDocumentNonBlocking(newSectorRef, {
+              nome: setorNome,
+              data_criacao: new Date().toISOString(),
+              createdAt: serverTimestamp(),
+            }, { merge: true });
+            // Adicionar ao cache local para as próximas linhas
+            sectorMap.set(setorNome.toLowerCase(), targetSectorId);
+          }
+        }
+
+        const status = (statusStr?.toLowerCase() === 'inativo') ? 'inativo' : 'ativo';
+        const finalFotoUrl = fotoUrl || `https://picsum.photos/seed/${Math.random()}/400/400`;
+
         addDocumentNonBlocking(employeesRef, {
           nome,
           cargo,
-          setor_id: targetSector,
-          status: 'ativo',
-          foto_url: `https://picsum.photos/seed/${Math.random()}/400/400`,
+          setor_id: targetSectorId,
+          status,
+          foto_url: finalFotoUrl,
           data_criacao: new Date().toISOString(),
           createdAt: serverTimestamp(),
         });
@@ -118,7 +144,7 @@ export default function FuncionariosPage() {
 
     toast({ 
       title: "Sucesso", 
-      description: `${successCount} colaboradores cadastrados em massa no setor selecionado.` 
+      description: `${successCount} colaboradores processados. Setores novos foram criados automaticamente.` 
     });
     setIsBulkDialogOpen(false);
     setBulkText("");
@@ -155,43 +181,37 @@ export default function FuncionariosPage() {
                 Cadastro em Massa
               </Button>
             </DialogTrigger>
-            <DialogContent className="sm:max-w-[600px]">
+            <DialogContent className="sm:max-w-[700px]">
               <DialogHeader>
-                <DialogTitle>Cadastro em Massa de Funcionários</DialogTitle>
+                <DialogTitle>Importação Completa de Colaboradores</DialogTitle>
                 <DialogDescription>
-                  Insira os colaboradores no formato <b>Nome;Cargo</b> (um por linha).
+                  Copie e cole os dados de sua planilha seguindo o formato abaixo.
                 </DialogDescription>
               </DialogHeader>
-              <div className="grid gap-6 py-4">
+              
+              <Alert className="bg-blue-50 border-blue-200">
+                <AlertCircle className="h-4 w-4 text-blue-600" />
+                <AlertDescription className="text-xs text-blue-800">
+                  Formato: <b>Nome;Cargo;Setor;Status;Link_da_Foto</b><br/>
+                  Exemplo: João Silva;Desenvolvedor;TI;ativo;https://link.com/foto.jpg<br/>
+                  <i>* Se o setor não existir, ele será criado automaticamente.</i>
+                </AlertDescription>
+              </Alert>
+
+              <div className="grid gap-4 py-4">
                 <div className="grid gap-2">
-                  <Label htmlFor="bulk-sector">Setor de Destino</Label>
-                  <Select value={targetSector} onValueChange={setTargetSector}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione o setor para todos..." />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {sectors?.map(s => (
-                        <SelectItem key={s.id} value={s.id}>{s.nome}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="grid gap-2">
-                  <Label htmlFor="bulk-csv">Lista de Colaboradores (Nome;Cargo)</Label>
+                  <Label htmlFor="bulk-csv">Cole os dados aqui (ponto e vírgula como separador)</Label>
                   <Textarea 
                     id="bulk-csv" 
-                    placeholder="Ex:&#10;João Silva;Desenvolvedor&#10;Maria Santos;Designer&#10;Carlos Souza;Gerente" 
-                    className="min-h-[200px]"
+                    placeholder="João Silva;Desenvolvedor;TI;ativo;https://...&#10;Maria Santos;Designer;Marketing;ativo;https://..." 
+                    className="min-h-[250px] font-mono text-xs"
                     value={bulkText}
                     onChange={(e) => setBulkText(e.target.value)}
                   />
-                  <p className="text-[10px] text-muted-foreground">
-                    Certifique-se de usar o ponto e vírgula (;) para separar o nome do cargo.
-                  </p>
                 </div>
               </div>
               <DialogFooter>
-                <Button onClick={handleBulkSave} className="w-full">Importar Colaboradores</Button>
+                <Button onClick={handleBulkSave} className="w-full h-12">Processar Planilha</Button>
               </DialogFooter>
             </DialogContent>
           </Dialog>
@@ -217,12 +237,12 @@ export default function FuncionariosPage() {
                 <div className="grid gap-6 py-4">
                   <div className="grid gap-2">
                     <Label htmlFor="nome">Nome Completo</Label>
-                    <input type="text" id="nome" name="nome" defaultValue={editingFunc?.nome} required placeholder="Ex: Roberto Justos" className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50" />
+                    <Input id="nome" name="nome" defaultValue={editingFunc?.nome} required placeholder="Ex: Roberto Justos" />
                   </div>
                   <div className="grid grid-cols-2 gap-4">
                     <div className="grid gap-2">
                       <Label htmlFor="cargo">Cargo</Label>
-                      <input type="text" id="cargo" name="cargo" defaultValue={editingFunc?.cargo} required placeholder="Ex: Desenvolvedor" className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50" />
+                      <Input id="cargo" name="cargo" defaultValue={editingFunc?.cargo} required placeholder="Ex: Desenvolvedor" />
                     </div>
                     <div className="grid gap-2">
                       <Label htmlFor="setor_id">Setor</Label>
@@ -251,8 +271,8 @@ export default function FuncionariosPage() {
                     </Select>
                   </div>
                   <div className="grid gap-2">
-                    <Label htmlFor="foto_url">URL da Foto (Opcional)</Label>
-                    <input type="text" id="foto_url" name="foto_url" defaultValue={editingFunc?.foto_url} placeholder="https://..." className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50" />
+                    <Label htmlFor="foto_url">URL da Foto</Label>
+                    <Input id="foto_url" name="foto_url" defaultValue={editingFunc?.foto_url} placeholder="https://..." />
                   </div>
                 </div>
                 <DialogFooter>

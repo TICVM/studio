@@ -1,7 +1,8 @@
+
 "use client"
 
 import { useState } from "react";
-import { Grid, Plus, Edit2, Trash2, Search, Loader2, FileText } from "lucide-react";
+import { Grid, Plus, Edit2, Trash2, Search, Loader2, FileText, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -23,6 +24,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useMemoFirebase, useCollection, useFirestore, addDocumentNonBlocking, updateDocumentNonBlocking, deleteDocumentNonBlocking } from "@/firebase";
 import { collection, doc, serverTimestamp } from "firebase/firestore";
 import { Setor, Funcionario } from "@/types";
@@ -69,22 +71,28 @@ export default function SetoresPage() {
   };
 
   const handleBulkSave = () => {
-    const names = bulkText.split('\n').map(n => n.trim()).filter(n => n.length > 0);
+    const lines = bulkText.split('\n').map(n => n.trim()).filter(n => n.length > 0);
     
-    if (names.length === 0) {
+    if (lines.length === 0) {
       toast({ variant: "destructive", title: "Erro", description: "Insira ao menos um nome de setor." });
       return;
     }
 
-    names.forEach(nome => {
-      addDocumentNonBlocking(sectorsRef, {
-        nome,
-        data_criacao: new Date().toISOString(),
-        createdAt: serverTimestamp(),
-      });
+    let count = 0;
+    lines.forEach(line => {
+      // Aceita formato simples (Nome) ou Nome;Data
+      const [nome] = line.split(';').map(s => s.trim());
+      if (nome) {
+        addDocumentNonBlocking(sectorsRef, {
+          nome,
+          data_criacao: new Date().toISOString(),
+          createdAt: serverTimestamp(),
+        });
+        count++;
+      }
     });
 
-    toast({ title: "Sucesso", description: `${names.length} setores cadastrados em massa.` });
+    toast({ title: "Sucesso", description: `${count} setores cadastrados em massa.` });
     setIsBulkDialogOpen(false);
     setBulkText("");
   };
@@ -126,19 +134,25 @@ export default function SetoresPage() {
                 Cadastro em Massa
               </Button>
             </DialogTrigger>
-            <DialogContent>
+            <DialogContent className="sm:max-w-[500px]">
               <DialogHeader>
                 <DialogTitle>Cadastro em Massa de Setores</DialogTitle>
                 <DialogDescription>
-                  Insira um nome de setor por linha para cadastrar vários de uma vez.
+                  Cole os nomes dos setores abaixo.
                 </DialogDescription>
               </DialogHeader>
+              <Alert className="bg-amber-50 border-amber-200">
+                <AlertCircle className="h-4 w-4 text-amber-600" />
+                <AlertDescription className="text-xs text-amber-800">
+                  Formato: <b>Nome_do_Setor</b> (um por linha).
+                </AlertDescription>
+              </Alert>
               <div className="grid gap-4 py-4">
                 <div className="grid gap-2">
-                  <Label htmlFor="bulk-names">Nomes dos Setores (um por linha)</Label>
+                  <Label htmlFor="bulk-names">Lista de Setores</Label>
                   <Textarea 
                     id="bulk-names" 
-                    placeholder="Ex:&#10;Marketing&#10;Vendas&#10;Logística" 
+                    placeholder="Recursos Humanos&#10;Marketing&#10;Tecnologia" 
                     className="min-h-[200px]"
                     value={bulkText}
                     onChange={(e) => setBulkText(e.target.value)}
@@ -146,7 +160,7 @@ export default function SetoresPage() {
                 </div>
               </div>
               <DialogFooter>
-                <Button onClick={handleBulkSave}>Cadastrar Todos</Button>
+                <Button onClick={handleBulkSave} className="w-full">Cadastrar Todos</Button>
               </DialogFooter>
             </DialogContent>
           </Dialog>
@@ -176,7 +190,7 @@ export default function SetoresPage() {
                   </div>
                 </div>
                 <DialogFooter>
-                  <Button type="submit">Salvar Setor</Button>
+                  <Button type="submit" className="w-full">Salvar Setor</Button>
                 </DialogFooter>
               </form>
             </DialogContent>
