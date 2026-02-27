@@ -2,10 +2,9 @@
 "use client"
 
 import { useState } from "react";
-import { Grid, Plus, Edit2, Trash2, Search, Loader2, FileText, AlertCircle } from "lucide-react";
+import { Grid, Plus, Edit2, Trash2, Search, Loader2, FileText, AlertCircle, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import {
   Table,
   TableBody,
@@ -29,6 +28,7 @@ import { useMemoFirebase, useCollection, useFirestore, addDocumentNonBlocking, u
 import { collection, doc, serverTimestamp } from "firebase/firestore";
 import { Setor, Funcionario } from "@/types";
 import { useToast } from "@/hooks/use-toast";
+import * as XLSX from "xlsx";
 
 export default function SetoresPage() {
   const firestore = useFirestore();
@@ -37,7 +37,8 @@ export default function SetoresPage() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isBulkDialogOpen, setIsBulkDialogOpen] = useState(false);
   const [editingSector, setEditingSector] = useState<Setor | null>(null);
-  const [bulkText, setBulkText] = useState("");
+  const [excelFile, setExcelFile] = useState<File | null>(null);
+  const [isProcessing, setIsProcessing] = useState(false);
 
   const sectorsRef = useMemoFirebase(() => collection(firestore, "sectors"), [firestore]);
   const employeesRef = useMemoFirebase(() => collection(firestore, "employees"), [firestore]);
@@ -70,31 +71,61 @@ export default function SetoresPage() {
     setEditingSector(null);
   };
 
-  const handleBulkSave = () => {
-    const lines = bulkText.split('\n').map(n => n.trim()).filter(n => n.length > 0);
-    
-    if (lines.length === 0) {
-      toast({ variant: "destructive", title: "Erro", description: "Insira ao menos um nome de setor." });
+  const handleExcelUpload = async () => {
+    if (!excelFile) {
+      toast({ variant: "destructive", title: "Erro", description: "Selecione um arquivo Excel." });
       return;
     }
 
-    let count = 0;
-    lines.forEach(line => {
-      // Aceita formato simples (Nome) ou Nome;Data
-      const [nome] = line.split(';').map(s => s.trim());
-      if (nome) {
-        addDocumentNonBlocking(sectorsRef, {
-          nome,
-          data_criacao: new Date().toISOString(),
-          createdAt: serverTimestamp(),
-        });
-        count++;
-      }
-    });
+    setIsProcessing(true);
+    const reader = new FileReader();
 
-    toast({ title: "Sucesso", description: `${count} setores cadastrados em massa.` });
-    setIsBulkDialogOpen(false);
-    setBulkText("");
+    reader.onload = async (e) => {
+      try {
+        const data = new Uint8Array(e.target?.result as ArrayBuffer);
+        const workbook = XLSX.read(data, { type: "array" });
+        const firstSheetName = workbook.SheetNames[0];
+        const worksheet = workbook.Sheets[firstSheetName];
+        const jsonData = XLSX.utils.sheet_to_json(worksheet) as any[];
+
+        if (jsonData.length === 0) {
+          toast({ variant: "destructive", title: "Erro", description: "A planilha está vazia." });
+          setIsProcessing(false);
+          return;
+        }
+
+        let count = 0;
+        const existingSectors = new Set(sectors?.map(s => s.nome.toLowerCase()) || []);
+
+        for (const row of jsonData) {
+          const nome = row.Nome || row.nome || row.NOME || row.Setor || row.setor;
+          
+          if (nome) {
+            const normalizedName = nome.toString().trim();
+            if (!existingSectors.has(normalizedName.toLowerCase())) {
+              addDocumentNonBlocking(sectorsRef, {
+                nome: normalizedName,
+                data_criacao: new Date().toISOString(),
+                createdAt: serverTimestamp(),
+              });
+              existingSectors.add(normalizedName.toLowerCase());
+              count++;
+            }
+          }
+        }
+
+        toast({ title: "Sucesso", description: `${count} novos setores importados do Excel.` });
+        setIsBulkDialogOpen(false);
+        setExcelFile(null);
+      } catch (error) {
+        console.error("Erro ao processar Excel:", error);
+        toast({ variant: "destructive", title: "Erro", description: "Falha ao ler o arquivo Excel." });
+      } finally {
+        setIsProcessing(false);
+      }
+    };
+
+    reader.readAsArrayBuffer(excelFile);
   };
 
   const handleDelete = (id: string) => {
@@ -123,7 +154,7 @@ export default function SetoresPage() {
       <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center">
         <div>
           <h1 className="text-3xl font-bold tracking-tight text-primary">Setores</h1>
-          <p className="text-muted-foreground">Gerencie as divisões da empresa.</p>
+          <p className="text-muted-foreground">Organize os departamentos da sua empresa.</p>
         </div>
         
         <div className="flex gap-2">
@@ -131,36 +162,46 @@ export default function SetoresPage() {
             <DialogTrigger asChild>
               <Button variant="outline" className="h-11">
                 <FileText className="mr-2 h-4 w-4" />
-                Cadastro em Massa
+                Importar Excel
               </Button>
             </DialogTrigger>
-            <DialogContent className="sm:max-w-[500px]">
+            <DialogContent className="sm:max-w-[450px]">
               <DialogHeader>
-                <DialogTitle>Cadastro em Massa de Setores</DialogTitle>
+                <DialogTitle>Importar Lista de Setores</DialogTitle>
                 <DialogDescription>
-                  Cole os nomes dos setores abaixo.
+                  Carregue um arquivo Excel com a lista de novos setores.
                 </DialogDescription>
               </DialogHeader>
               <Alert className="bg-amber-50 border-amber-200">
                 <AlertCircle className="h-4 w-4 text-amber-600" />
                 <AlertDescription className="text-xs text-amber-800">
-                  Formato: <b>Nome_do_Setor</b> (um por linha).
+                  A planilha deve ter uma coluna chamada <b>Nome</b> ou <b>Setor</b>.
                 </AlertDescription>
               </Alert>
-              <div className="grid gap-4 py-4">
+              <div className="grid gap-4 py-6">
                 <div className="grid gap-2">
-                  <Label htmlFor="bulk-names">Lista de Setores</Label>
-                  <Textarea 
-                    id="bulk-names" 
-                    placeholder="Recursos Humanos&#10;Marketing&#10;Tecnologia" 
-                    className="min-h-[200px]"
-                    value={bulkText}
-                    onChange={(e) => setBulkText(e.target.value)}
+                  <Label htmlFor="excel-file-sectors">Arquivo da Planilha</Label>
+                  <Input 
+                    id="excel-file-sectors" 
+                    type="file" 
+                    accept=".xlsx, .xls, .csv"
+                    onChange={(e) => setExcelFile(e.target.files?.[0] || null)}
                   />
                 </div>
               </div>
               <DialogFooter>
-                <Button onClick={handleBulkSave} className="w-full">Cadastrar Todos</Button>
+                <Button 
+                  onClick={handleExcelUpload} 
+                  className="w-full"
+                  disabled={!excelFile || isProcessing}
+                >
+                  {isProcessing ? (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  ) : (
+                    <Upload className="mr-2 h-4 w-4" />
+                  )}
+                  Processar Planilha
+                </Button>
               </DialogFooter>
             </DialogContent>
           </Dialog>

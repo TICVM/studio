@@ -1,11 +1,11 @@
+
 "use client"
 
 import { useState } from "react";
 import Image from "next/image";
-import { Users, Plus, Edit2, Trash2, Search, FileText, Loader2, AlertCircle } from "lucide-react";
+import { Users, Plus, Edit2, Trash2, Search, FileText, Loader2, AlertCircle, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import {
   Table,
   TableBody,
@@ -36,6 +36,7 @@ import { useMemoFirebase, useCollection, useFirestore, addDocumentNonBlocking, u
 import { collection, doc, serverTimestamp } from "firebase/firestore";
 import { Funcionario, Setor } from "@/types";
 import { useToast } from "@/hooks/use-toast";
+import * as XLSX from "xlsx";
 
 export default function FuncionariosPage() {
   const firestore = useFirestore();
@@ -44,7 +45,8 @@ export default function FuncionariosPage() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isBulkDialogOpen, setIsBulkDialogOpen] = useState(false);
   const [editingFunc, setEditingFunc] = useState<Funcionario | null>(null);
-  const [bulkText, setBulkText] = useState("");
+  const [excelFile, setExcelFile] = useState<File | null>(null);
+  const [isProcessing, setIsProcessing] = useState(false);
 
   const employeesRef = useMemoFirebase(() => collection(firestore, "employees"), [firestore]);
   const sectorsRef = useMemoFirebase(() => collection(firestore, "sectors"), [firestore]);
@@ -84,63 +86,94 @@ export default function FuncionariosPage() {
     setEditingFunc(null);
   };
 
-  const handleBulkSave = () => {
-    const lines = bulkText.split('\n').map(l => l.trim()).filter(l => l.length > 0);
-    
-    if (lines.length === 0) {
-      toast({ variant: "destructive", title: "Erro", description: "Insira ao menos um colaborador." });
+  const handleExcelUpload = async () => {
+    if (!excelFile) {
+      toast({ variant: "destructive", title: "Erro", description: "Selecione um arquivo Excel." });
       return;
     }
 
-    let successCount = 0;
-    const sectorMap = new Map<string, string>();
-    sectors?.forEach(s => sectorMap.set(s.nome.toLowerCase(), s.id));
+    setIsProcessing(true);
+    const reader = new FileReader();
 
-    lines.forEach(line => {
-      const parts = line.split(';').map(s => s.trim());
-      
-      if (parts.length >= 2) {
-        const [nome, cargo, setorNome, statusStr, fotoUrl] = parts;
-        let targetSectorId = "";
-        
-        if (setorNome) {
-          const existingId = sectorMap.get(setorNome.toLowerCase());
-          if (existingId) {
-            targetSectorId = existingId;
-          } else {
-            const newSectorRef = doc(collection(firestore, "sectors"));
-            targetSectorId = newSectorRef.id;
-            setDocumentNonBlocking(newSectorRef, {
-              nome: setorNome,
+    reader.onload = async (e) => {
+      try {
+        const data = new Uint8Array(e.target?.result as ArrayBuffer);
+        const workbook = XLSX.read(data, { type: "array" });
+        const firstSheetName = workbook.SheetNames[0];
+        const worksheet = workbook.Sheets[firstSheetName];
+        const jsonData = XLSX.utils.sheet_to_json(worksheet) as any[];
+
+        if (jsonData.length === 0) {
+          toast({ variant: "destructive", title: "Erro", description: "A planilha está vazia." });
+          setIsProcessing(false);
+          return;
+        }
+
+        const sectorMap = new Map<string, string>();
+        sectors?.forEach(s => sectorMap.set(s.nome.toLowerCase(), s.id));
+
+        let successCount = 0;
+
+        for (const row of jsonData) {
+          // Mapeamento flexível de colunas (case insensitive e suportando variações de nome)
+          const nome = row.Nome || row.nome || row.NOME;
+          const cargo = row.Cargo || row.cargo || row.CARGO;
+          const setorNome = row.Setor || row.setor || row.SETOR;
+          const statusRaw = row.Status || row.status || row.STATUS;
+          const fotoUrl = row.Foto || row.foto || row.FOTO || row.FotoURL || row.foto_url;
+
+          if (nome && cargo) {
+            let targetSectorId = "";
+            
+            if (setorNome) {
+              const normalizedSetor = setorNome.toString().toLowerCase().trim();
+              const existingId = sectorMap.get(normalizedSetor);
+              
+              if (existingId) {
+                targetSectorId = existingId;
+              } else {
+                const newSectorRef = doc(collection(firestore, "sectors"));
+                targetSectorId = newSectorRef.id;
+                setDocumentNonBlocking(newSectorRef, {
+                  nome: setorNome,
+                  data_criacao: new Date().toISOString(),
+                  createdAt: serverTimestamp(),
+                }, { merge: true });
+                sectorMap.set(normalizedSetor, targetSectorId);
+              }
+            }
+
+            const status = (statusRaw?.toString().toLowerCase() === 'inativo') ? 'inativo' : 'ativo';
+            const finalFotoUrl = fotoUrl || `https://picsum.photos/seed/${Math.random()}/400/533`;
+
+            addDocumentNonBlocking(employeesRef, {
+              nome,
+              cargo,
+              setor_id: targetSectorId,
+              status,
+              foto_url: finalFotoUrl,
               data_criacao: new Date().toISOString(),
               createdAt: serverTimestamp(),
-            }, { merge: true });
-            sectorMap.set(setorNome.toLowerCase(), targetSectorId);
+            });
+            successCount++;
           }
         }
 
-        const status = (statusStr?.toLowerCase() === 'inativo') ? 'inativo' : 'ativo';
-        const finalFotoUrl = fotoUrl || `https://picsum.photos/seed/${Math.random()}/400/533`;
-
-        addDocumentNonBlocking(employeesRef, {
-          nome,
-          cargo,
-          setor_id: targetSectorId,
-          status,
-          foto_url: finalFotoUrl,
-          data_criacao: new Date().toISOString(),
-          createdAt: serverTimestamp(),
+        toast({ 
+          title: "Sucesso", 
+          description: `${successCount} colaboradores importados da planilha.` 
         });
-        successCount++;
+        setIsBulkDialogOpen(false);
+        setExcelFile(null);
+      } catch (error) {
+        console.error("Erro ao processar Excel:", error);
+        toast({ variant: "destructive", title: "Erro", description: "Falha ao ler o arquivo Excel." });
+      } finally {
+        setIsProcessing(false);
       }
-    });
+    };
 
-    toast({ 
-      title: "Sucesso", 
-      description: `${successCount} colaboradores processados. Setores novos foram criados automaticamente.` 
-    });
-    setIsBulkDialogOpen(false);
-    setBulkText("");
+    reader.readAsArrayBuffer(excelFile);
   };
 
   const handleDelete = (id: string) => {
@@ -163,7 +196,7 @@ export default function FuncionariosPage() {
       <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center">
         <div>
           <h1 className="text-3xl font-bold tracking-tight text-primary">Funcionários</h1>
-          <p className="text-muted-foreground">Cadastre e organize seus colaboradores.</p>
+          <p className="text-muted-foreground">Gerencie sua equipe via cadastro manual ou planilha.</p>
         </div>
         
         <div className="flex gap-2">
@@ -171,40 +204,58 @@ export default function FuncionariosPage() {
             <DialogTrigger asChild>
               <Button variant="outline" className="h-11">
                 <FileText className="mr-2 h-4 w-4" />
-                Cadastro em Massa
+                Importar Excel
               </Button>
             </DialogTrigger>
-            <DialogContent className="sm:max-w-[700px]">
+            <DialogContent className="sm:max-w-[500px]">
               <DialogHeader>
-                <DialogTitle>Importação Completa de Colaboradores</DialogTitle>
+                <DialogTitle>Importar Planilha de Funcionários</DialogTitle>
                 <DialogDescription>
-                  Copie e cole os dados de sua planilha seguindo o formato abaixo.
+                  Selecione um arquivo .xlsx ou .xls para importar.
                 </DialogDescription>
               </DialogHeader>
               
               <Alert className="bg-blue-50 border-blue-200">
                 <AlertCircle className="h-4 w-4 text-blue-600" />
                 <AlertDescription className="text-xs text-blue-800">
-                  Formato: <b>Nome;Cargo;Setor;Status;Link_da_Foto</b><br/>
-                  Exemplo: João Silva;Desenvolvedor;TI;ativo;https://link.com/foto.jpg<br/>
-                  <i>* Se o setor não existir, ele será criado automaticamente.</i>
+                  Sua planilha deve conter as colunas:<br/>
+                  <b>Nome | Cargo | Setor | Status | Foto</b><br/>
+                  <i>* Setores novos serão criados automaticamente.</i>
                 </AlertDescription>
               </Alert>
 
-              <div className="grid gap-4 py-4">
+              <div className="grid gap-4 py-6">
                 <div className="grid gap-2">
-                  <Label htmlFor="bulk-csv">Cole os dados aqui (ponto e vírgula como separador)</Label>
-                  <Textarea 
-                    id="bulk-csv" 
-                    placeholder="João Silva;Desenvolvedor;TI;ativo;https://...&#10;Maria Santos;Designer;Marketing;ativo;https://..." 
-                    className="min-h-[250px] font-mono text-xs"
-                    value={bulkText}
-                    onChange={(e) => setBulkText(e.target.value)}
-                  />
+                  <Label htmlFor="excel-file">Selecione o arquivo</Label>
+                  <div className="flex items-center gap-2">
+                    <Input 
+                      id="excel-file" 
+                      type="file" 
+                      accept=".xlsx, .xls, .csv"
+                      onChange={(e) => setExcelFile(e.target.files?.[0] || null)}
+                      className="cursor-pointer"
+                    />
+                  </div>
                 </div>
               </div>
               <DialogFooter>
-                <Button onClick={handleBulkSave} className="w-full h-12">Processar Planilha</Button>
+                <Button 
+                  onClick={handleExcelUpload} 
+                  className="w-full h-12"
+                  disabled={!excelFile || isProcessing}
+                >
+                  {isProcessing ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Processando Planilha...
+                    </>
+                  ) : (
+                    <>
+                      <Upload className="mr-2 h-4 w-4" />
+                      Iniciar Importação
+                    </>
+                  )}
+                </Button>
               </DialogFooter>
             </DialogContent>
           </Dialog>
@@ -309,7 +360,7 @@ export default function FuncionariosPage() {
                 <TableRow key={f.id} className="group">
                   <TableCell>
                     <div className="flex items-center gap-3">
-                      <div className="h-12 w-9 relative rounded-sm overflow-hidden border bg-slate-50">
+                      <div className="h-14 w-10 relative rounded-sm overflow-hidden border bg-slate-50 shadow-sm">
                         <Image 
                           src={f.foto_url || "https://picsum.photos/seed/placeholder/400/533"} 
                           alt={f.nome} 
