@@ -222,9 +222,9 @@ export default function FuncionariosPage() {
     }
   };
 
-  const toggleSectorSelection = (id: string) => {
+  const toggleSectorSelection = (id: string, checked: boolean) => {
     setSelectedSectorIds(prev => 
-      prev.includes(id) ? prev.filter(sId => sId !== id) : [...prev, id]
+      checked ? [...prev, id] : prev.filter(sId => sId !== id)
     );
   };
 
@@ -344,22 +344,19 @@ export default function FuncionariosPage() {
                               {sectors?.map((s) => (
                                 <div 
                                   key={s.id} 
-                                  className={cn(
-                                    "flex items-center gap-2 px-3 py-2 rounded-md cursor-pointer hover:bg-slate-50 transition-colors",
-                                    selectedSectorIds.includes(s.id) && "bg-slate-100"
-                                  )}
-                                  onClick={(e) => {
-                                    e.preventDefault();
-                                    e.stopPropagation();
-                                    toggleSectorSelection(s.id);
-                                  }}
+                                  className="flex items-center space-x-2 px-3 py-2 rounded-md hover:bg-slate-50 transition-colors"
                                 >
                                   <Checkbox 
+                                    id={`sector-${s.id}`}
                                     checked={selectedSectorIds.includes(s.id)} 
-                                    onCheckedChange={() => toggleSectorSelection(s.id)}
-                                    className="pointer-events-none"
+                                    onCheckedChange={(checked) => toggleSectorSelection(s.id, !!checked)}
                                   />
-                                  <span className="text-sm font-medium">{s.nome}</span>
+                                  <label 
+                                    htmlFor={`sector-${s.id}`}
+                                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 flex-1 cursor-pointer py-1"
+                                  >
+                                    {s.nome}
+                                  </label>
                                 </div>
                               ))}
                               {(!sectors || sectors.length === 0) && (
