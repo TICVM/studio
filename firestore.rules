@@ -1,3 +1,4 @@
+
 rules_version = '2';
 
 service cloud.firestore {
@@ -20,21 +21,28 @@ service cloud.firestore {
     // --- REGRAS DE COLEÇÃO ---
 
     match /admin_profiles/{adminId} {
+      // Permite ler o próprio perfil ou se já for admin
       allow get: if isOwner(adminId) || isAdmin();
+      // Apenas admins listam todos os perfis
       allow list: if isAdmin();
+      // Qualquer usuário logado pode criar seu próprio perfil inicial
       allow create: if isOwner(adminId);
-      allow update: if isOwner(adminId);
+      // Apenas o dono ou admin atualiza
+      allow update: if isOwner(adminId) || isAdmin();
+      // Apenas admin deleta
       allow delete: if isAdmin();
     }
 
     match /sectors/{sectorId} {
-      allow read: if true; // Setores são públicos para organização do carômetro
+      allow read: if true; 
       allow write: if isAdmin();
     }
 
     match /employees/{employeeId} {
-      // Admins podem ler tudo. Usuários anônimos/públicos só podem ler ativos.
-      // O Firestore aplicará isso como um filtro obrigatório em consultas de listagem.
+      // Regra Crítica: 
+      // 1. Admins podem ler tudo (list sem filtros ou get qualquer ID).
+      // 2. Públicos podem ler apenas se o status for 'ativo'. 
+      //    Para 'list', o cliente DEVE enviar o filtro where('status', '==', 'ativo').
       allow read: if isAdmin() || (resource.data.status == 'ativo');
       allow write: if isAdmin();
     }
