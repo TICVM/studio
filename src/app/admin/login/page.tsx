@@ -1,27 +1,45 @@
-
 "use client"
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Users, Lock, Mail, ArrowLeft } from "lucide-react";
+import { Users, Lock, Mail, ArrowLeft, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
+import { useAuth } from "@/firebase";
+import { signInWithEmailAndPassword } from "firebase/auth";
+import { useToast } from "@/hooks/use-toast";
 
 export default function LoginPage() {
   const router = useRouter();
+  const auth = useAuth();
+  const { toast } = useToast();
   const [loading, setLoading] = useState(false);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    // Simulate auth
-    setTimeout(() => {
+
+    try {
+      await signInWithEmailAndPassword(auth, email, password);
+      toast({
+        title: "Bem-vindo!",
+        description: "Login realizado com sucesso.",
+      });
       router.push("/admin/dashboard");
+    } catch (error: any) {
+      toast({
+        variant: "destructive",
+        title: "Erro no login",
+        description: "E-mail ou senha inválidos. Verifique se o usuário foi criado no Console do Firebase.",
+      });
+    } finally {
       setLoading(false);
-    }, 1000);
+    }
   };
 
   return (
@@ -40,9 +58,9 @@ export default function LoginPage() {
             <Users size={32} />
           </div>
           <div className="space-y-1">
-            <CardTitle className="text-2xl font-bold tracking-tight text-primary">Acesso Restrito</CardTitle>
+            <CardTitle className="text-2xl font-bold tracking-tight text-primary">Acesso Administrativo</CardTitle>
             <CardDescription>
-              Entre com suas credenciais de administrador.
+              Use suas credenciais do Firebase para entrar.
             </CardDescription>
           </div>
         </CardHeader>
@@ -57,6 +75,8 @@ export default function LoginPage() {
                   type="email" 
                   placeholder="admin@empresa.com" 
                   className="pl-10"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
                   required
                 />
               </div>
@@ -69,18 +89,27 @@ export default function LoginPage() {
                   id="password" 
                   type="password" 
                   className="pl-10"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
                   required
                 />
               </div>
             </div>
             <Button type="submit" className="w-full h-11" disabled={loading}>
-              {loading ? "Entrando..." : "Entrar no Painel"}
+              {loading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Autenticando...
+                </>
+              ) : (
+                "Entrar no Painel"
+              )}
             </Button>
           </form>
         </CardContent>
-        <CardFooter className="flex justify-center border-t py-4 mt-2">
+        <CardFooter className="flex flex-col gap-2 border-t py-4 mt-2">
           <p className="text-xs text-muted-foreground text-center">
-            Este sistema é de uso exclusivo da PessoasEmpresa. O acesso não autorizado é proibido.
+            Dica: Crie o usuário no Authentication do Firebase Console antes de tentar entrar.
           </p>
         </CardFooter>
       </Card>
