@@ -54,17 +54,32 @@ export default function Home() {
     return sortedSectors.map(sector => {
       const sectorFuncs = filteredEmployees.filter(f => f.setor_id === sector.id);
       
-      const sortedFuncs = sectorFuncs.sort((a, b) => {
-        if (a.is_lider && !b.is_lider) return -1;
-        if (!a.is_lider && b.is_lider) return 1;
-        return a.nome.localeCompare(b.nome);
+      // Subgrupar por subcategoria
+      const subGroupsMap = new Map<string, Funcionario[]>();
+      sectorFuncs.forEach(f => {
+        const sub = f.subcategoria || "Geral";
+        if (!subGroupsMap.has(sub)) subGroupsMap.set(sub, []);
+        subGroupsMap.get(sub)!.push(f);
+      });
+
+      const subGroups = Array.from(subGroupsMap.entries()).map(([name, funcs]) => ({
+        name,
+        funcionarios: funcs.sort((a, b) => {
+          if (a.is_lider && !b.is_lider) return -1;
+          if (!a.is_lider && b.is_lider) return 1;
+          return a.nome.localeCompare(b.nome);
+        })
+      })).sort((a, b) => {
+        if (a.name === "Geral") return -1;
+        if (b.name === "Geral") return 1;
+        return a.name.localeCompare(b.name);
       });
 
       return {
         ...sector,
-        funcionarios: sortedFuncs
+        subGroups
       };
-    }).filter(group => group.funcionarios.length > 0);
+    }).filter(group => group.subGroups.some(sg => sg.funcionarios.length > 0));
   }, [filteredEmployees, sectors, selectedSetor]);
 
   return (
@@ -75,7 +90,7 @@ export default function Home() {
         <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
           <div className="space-y-1 text-center md:text-left">
             <h1 className="text-3xl font-bold text-primary tracking-tight">Carômetro</h1>
-            <p className="text-muted-foreground">Colaboradores organizados por hierarquia e setor.</p>
+            <p className="text-muted-foreground">Colaboradores organizados por setor e subcategoria.</p>
           </div>
           
           <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
@@ -113,27 +128,38 @@ export default function Home() {
             <Loader2 className="h-10 w-10 animate-spin text-primary" />
           </div>
         ) : (
-          <div className="space-y-12">
+          <div className="space-y-16">
             {groupedEmployees.length > 0 ? (
-              groupedEmployees.map(group => (
-                <section key={group.id} className="space-y-6">
+              groupedEmployees.map(sectorGroup => (
+                <section key={sectorGroup.id} className="space-y-8">
                   <div className="flex items-center gap-4">
-                    <h2 className="text-xl font-bold text-primary pr-4 whitespace-nowrap uppercase tracking-wider">
-                      {group.nome}
+                    <h2 className="text-2xl font-black text-primary pr-4 whitespace-nowrap uppercase tracking-tighter border-b-4 border-primary/20 pb-1">
+                      {sectorGroup.nome}
                     </h2>
                     <div className="h-px w-full bg-slate-200" />
-                    <span className="text-xs font-bold text-muted-foreground px-3 py-1 bg-slate-50 border rounded-full">
-                      {group.funcionarios.length} MEMBROS
-                    </span>
                   </div>
                   
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                    {group.funcionarios.map(f => (
-                      <EmployeeCard 
-                        key={f.id} 
-                        funcionario={f} 
-                        setor={group}
-                      />
+                  <div className="space-y-12">
+                    {sectorGroup.subGroups.map(sub => (
+                      <div key={sub.name} className="space-y-6">
+                        {sub.name !== "Geral" && (
+                          <div className="flex items-center gap-3">
+                            <div className="h-2 w-2 rounded-full bg-primary" />
+                            <h3 className="text-sm font-black text-slate-500 uppercase tracking-widest">
+                              {sub.name}
+                            </h3>
+                          </div>
+                        )}
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                          {sub.funcionarios.map(f => (
+                            <EmployeeCard 
+                              key={f.id} 
+                              funcionario={f} 
+                              setor={sectorGroup}
+                            />
+                          ))}
+                        </div>
+                      </div>
                     ))}
                   </div>
                 </section>

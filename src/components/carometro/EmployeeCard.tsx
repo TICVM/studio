@@ -4,7 +4,7 @@
 import Image from "next/image";
 import { Funcionario, Setor } from "@/types";
 import { Card, CardContent } from "@/components/ui/card";
-import { Crown, Mail, Hash, Building, ArrowRight } from "lucide-react";
+import { Crown, Mail, Hash, Building, ArrowRight, Tag } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -56,9 +56,9 @@ export function EmployeeCard({ funcionario, setor }: EmployeeCardProps) {
             <p className="text-sm font-medium text-muted-foreground">
               {funcionario.cargo}
             </p>
-            {setor && !funcionario.is_lider && (
-              <span className="inline-block px-2 py-0.5 mt-2 rounded-full bg-secondary text-[10px] font-bold uppercase tracking-wider text-primary">
-                {setor.nome}
+            {funcionario.subcategoria && (
+              <span className="inline-block px-2 py-0.5 mt-2 rounded-full bg-slate-100 text-[9px] font-bold uppercase tracking-wider text-slate-500 border">
+                {funcionario.subcategoria}
               </span>
             )}
           </div>
@@ -105,10 +105,16 @@ export function EmployeeCard({ funcionario, setor }: EmployeeCardProps) {
             </div>
 
             <div className="space-y-4">
-              <div className="flex justify-center mb-4">
+              <div className="flex flex-col items-center gap-2 mb-4">
                 <span className="text-[10px] bg-slate-100 text-slate-700 px-2 py-1 rounded font-bold uppercase border">
                   {setor?.nome || "Setor não informado"}
                 </span>
+                {funcionario.subcategoria && (
+                  <div className="flex items-center gap-1 text-[10px] font-bold text-primary uppercase bg-primary/5 px-2 py-1 rounded border border-primary/10">
+                    <Tag size={10} />
+                    {funcionario.subcategoria}
+                  </div>
+                )}
               </div>
 
               {funcionario.email && (

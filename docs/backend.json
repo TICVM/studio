@@ -67,6 +67,10 @@
           "type": "string",
           "description": "Reference to the Sector the employee belongs to."
         },
+        "subcategoria": {
+          "type": "string",
+          "description": "Subcategory within the sector."
+        },
         "status": {
           "type": "string",
           "description": "The current employment status of the employee (e.g., 'active', 'inactive')."

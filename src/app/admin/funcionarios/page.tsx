@@ -38,6 +38,7 @@ import { collection, doc, serverTimestamp } from "firebase/firestore";
 import { Funcionario, Setor } from "@/types";
 import { useToast } from "@/hooks/use-toast";
 import * as XLSX from "xlsx";
+import { Badge } from "@/components/ui/badge";
 
 export default function FuncionariosPage() {
   const firestore = useFirestore();
@@ -86,6 +87,7 @@ export default function FuncionariosPage() {
       nome: formData.get("nome") as string,
       cargo: formData.get("cargo") as string,
       setor_id: formData.get("setor_id") as string,
+      subcategoria: formData.get("subcategoria") as string || "",
       status: formData.get("status") as "ativo" | "inativo",
       is_lider: isLiderChecked,
       titulo_lider: isLiderChecked ? (formData.get("titulo_lider") as string || "Líder de Setor") : "",
@@ -137,6 +139,7 @@ export default function FuncionariosPage() {
           const nome = row.Nome || row.nome || row.NOME;
           const cargo = row.Cargo || row.cargo || row.CARGO;
           const setorString = row.Setor || row.setor || row.SETOR || "";
+          const subcategoria = row.Subcategoria || row.subcategoria || "";
           const statusRaw = row.Status || row.status || row.STATUS;
           const fotoUrl = row.Foto || row.foto || row.FOTO || row.FotoURL || row.foto_url;
           const liderRaw = row.Lider || row.Líder || row.lider || row.lideranca;
@@ -169,6 +172,7 @@ export default function FuncionariosPage() {
               nome,
               cargo,
               setor_id: targetSectorId || "",
+              subcategoria: subcategoria.toString(),
               status,
               is_lider: !!isLider,
               titulo_lider: isLider ? (tituloLider?.toString() || "Líder de Setor") : "",
@@ -238,7 +242,7 @@ export default function FuncionariosPage() {
               <Alert className="bg-blue-50 border-blue-200">
                 <AlertCircle className="h-4 w-4 text-blue-600" />
                 <AlertDescription className="text-xs text-blue-800">
-                  Colunas esperadas: <b>Nome | Cargo | Setor | Status | Líder | TituloLider | Foto | Email | Ramal | Unidade</b>
+                  Colunas esperadas: <b>Nome | Cargo | Setor | Subcategoria | Status | Líder | TituloLider | Foto | Email | Ramal | Unidade</b>
                 </AlertDescription>
               </Alert>
               <div className="grid gap-4 py-6">
@@ -300,6 +304,11 @@ export default function FuncionariosPage() {
                         </SelectContent>
                       </Select>
                     </div>
+                  </div>
+
+                  <div className="grid gap-2">
+                    <Label htmlFor="subcategoria">Subcategoria (Opcional)</Label>
+                    <Input id="subcategoria" name="subcategoria" defaultValue={editingFunc?.subcategoria} placeholder="Ex: Backend, Coordenação Acadêmica..." />
                   </div>
 
                   <div className="grid grid-cols-2 gap-4">
@@ -385,7 +394,7 @@ export default function FuncionariosPage() {
             <TableRow className="bg-slate-50">
               <TableHead>Colaborador</TableHead>
               <TableHead>Cargo</TableHead>
-              <TableHead>Setor</TableHead>
+              <TableHead>Setor / Sub</TableHead>
               <TableHead>Status</TableHead>
               <TableHead className="text-right">Ações</TableHead>
             </TableRow>
@@ -416,9 +425,16 @@ export default function FuncionariosPage() {
                   </div>
                 </TableCell>
                 <TableCell>
-                  <span className="text-xs font-medium">
-                    {sectors?.find(s => s.id === f.setor_id)?.nome || "-"}
-                  </span>
+                  <div className="flex flex-col">
+                    <span className="text-xs font-medium">
+                      {sectors?.find(s => s.id === f.setor_id)?.nome || "-"}
+                    </span>
+                    {f.subcategoria && (
+                      <span className="text-[10px] text-muted-foreground italic">
+                        {f.subcategoria}
+                      </span>
+                    )}
+                  </div>
                 </TableCell>
                 <TableCell>
                   <Badge variant={f.status === 'ativo' ? 'default' : 'secondary'} className="text-[10px] uppercase">
