@@ -61,6 +61,7 @@ export default function FuncionariosPage() {
   const { data: employees, isLoading: loadingEmployees } = useCollection<Funcionario>(employeesRef);
   const { data: sectors } = useCollection<Setor>(sectorsRef);
 
+  // Sync state when editing
   useEffect(() => {
     if (isDialogOpen) {
       if (editingFunc) {
@@ -80,6 +81,7 @@ export default function FuncionariosPage() {
         f.cargo.toLowerCase().includes(searchTerm.toLowerCase())
       )
       .sort((a, b) => {
+        // Hierarchy: Leaders first, then alphabetical
         if (a.is_lider && !b.is_lider) return -1;
         if (!a.is_lider && b.is_lider) return 1;
         return a.nome.localeCompare(b.nome);
@@ -158,6 +160,7 @@ export default function FuncionariosPage() {
           const unidade = row.Unidade || row.unidade || row.UNIDADE || row.Filial;
 
           if (nome && cargo) {
+            // Split multiple sectors
             const rowSectorNames = setorString.toString().split(/[,;]/).map((s: string) => s.trim().toLowerCase()).filter(Boolean);
             const targetSectorIds: string[] = [];
 
@@ -166,6 +169,7 @@ export default function FuncionariosPage() {
               if (existingId) {
                 targetSectorIds.push(existingId);
               } else {
+                // Auto-create missing sectors
                 const newSectorRef = doc(collection(firestore, "sectors"));
                 const sectorNameRaw = sName.charAt(0).toUpperCase() + sName.slice(1);
                 targetSectorIds.push(newSectorRef.id);
@@ -255,7 +259,7 @@ export default function FuncionariosPage() {
               <DialogHeader>
                 <DialogTitle>Importar Planilha</DialogTitle>
                 <DialogDescription>
-                  Selecione um arquivo .xlsx para importar.
+                  Selecione um arquivo .xlsx para importar colaboradores em massa.
                 </DialogDescription>
               </DialogHeader>
               
@@ -264,6 +268,7 @@ export default function FuncionariosPage() {
                 <AlertDescription className="text-xs text-blue-800">
                   Colunas esperadas:<br/>
                   <b>Nome | Cargo | Setor | Status | Líder | TituloLider | Foto | Email | Ramal | Unidade</b><br/>
+                  <span className="opacity-70 mt-1 block">* O sistema cria setores automaticamente se não existirem.</span>
                 </AlertDescription>
               </Alert>
 
@@ -325,7 +330,11 @@ export default function FuncionariosPage() {
                       <Label>Setores (Múltipla Escolha)</Label>
                       <Popover>
                         <PopoverTrigger asChild>
-                          <Button variant="outline" className="w-full justify-between font-normal text-left h-auto min-h-[40px] py-2">
+                          <Button 
+                            type="button" 
+                            variant="outline" 
+                            className="w-full justify-between font-normal text-left h-auto min-h-[40px] py-2"
+                          >
                             <div className="flex flex-wrap gap-1 items-center max-w-[200px]">
                               {selectedSectorIds.length > 0 ? (
                                 selectedSectorIds.map(id => {
