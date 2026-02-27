@@ -1,8 +1,10 @@
+
 "use client"
 
+import { useMemo } from "react";
 import { useMemoFirebase, useCollection, useFirestore } from "@/firebase";
 import { collection } from "firebase/firestore";
-import { Users, Grid, UserCheck, UserX, Clock, Loader2 } from "lucide-react";
+import { Users, Grid, UserCheck, UserX, Clock, Loader2, ArrowUpRight } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Funcionario, Setor } from "@/types";
 
@@ -15,12 +17,14 @@ export default function DashboardPage() {
   const { data: funcionarios, isLoading: loadingFuncs } = useCollection<Funcionario>(funcionariosRef);
   const { data: setores, isLoading: loadingSetores } = useCollection<Setor>(setoresRef);
 
-  const stats = {
-    total: funcionarios?.length || 0,
-    ativos: funcionarios?.filter(f => f.status === 'ativo').length || 0,
-    inativos: (funcionarios?.length || 0) - (funcionarios?.filter(f => f.status === 'ativo').length || 0),
-    setores: setores?.length || 0,
-  };
+  const stats = useMemo(() => {
+    const total = funcionarios?.length || 0;
+    const ativos = funcionarios?.filter(f => f.status === 'ativo').length || 0;
+    const inativos = total - ativos;
+    const totalSetores = setores?.length || 0;
+
+    return { total, ativos, inativos, setores: totalSetores };
+  }, [funcionarios, setores]);
 
   const STATS_CONFIG = [
     { label: "Total Funcionários", value: stats.total, icon: Users, color: "text-blue-600", bg: "bg-blue-100" },
@@ -39,14 +43,20 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-8">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight text-primary">Dashboard</h1>
-        <p className="text-muted-foreground">Resumo das métricas em tempo real.</p>
+      <div className="flex justify-between items-end">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight text-primary">Dashboard</h1>
+          <p className="text-muted-foreground">Visão geral da estrutura organizacional.</p>
+        </div>
+        <div className="hidden sm:flex items-center gap-2 text-xs font-bold text-emerald-600 bg-emerald-50 px-3 py-1.5 rounded-full border border-emerald-100">
+          <ArrowUpRight size={14} />
+          Sincronizado em tempo real
+        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {STATS_CONFIG.map((stat) => (
-          <Card key={stat.label} className="border-none shadow-sm">
+          <Card key={stat.label} className="border-none shadow-sm hover:shadow-md transition-shadow">
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
@@ -64,38 +74,47 @@ export default function DashboardPage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <Card className="lg:col-span-2 border-none shadow-sm">
-          <CardHeader>
+          <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle className="text-lg">Cadastros Recentes</CardTitle>
+            <Clock size={16} className="text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="space-y-6">
               {funcionarios && funcionarios.length > 0 ? (
                 [...funcionarios]
-                  .sort((a, b) => new Date(b.data_criacao).getTime() - new Date(a.data_criacao).getTime())
+                  .sort((a, b) => {
+                    const dateA = a.data_criacao ? new Date(a.data_criacao).getTime() : 0;
+                    const dateB = b.data_criacao ? new Date(b.data_criacao).getTime() : 0;
+                    return dateB - dateA;
+                  })
                   .slice(0, 5)
                   .map(f => (
-                    <div key={f.id} className="flex items-center justify-between">
+                    <div key={f.id} className="flex items-center justify-between group">
                       <div className="flex items-center gap-4">
-                        <div className="h-10 w-10 rounded-full bg-slate-200 flex-shrink-0 overflow-hidden relative">
+                        <div className="h-10 w-10 rounded-full bg-slate-100 flex-shrink-0 overflow-hidden relative border border-slate-200">
                           {f.foto_url ? (
                             <img src={f.foto_url} alt={f.nome} className="object-cover w-full h-full" />
                           ) : (
-                            <Users size={20} className="m-auto mt-2 text-slate-400" />
+                            <Users size={20} className="m-auto mt-2 text-slate-300" />
                           )}
                         </div>
                         <div>
-                          <p className="font-semibold text-sm">{f.nome}</p>
+                          <p className="font-semibold text-sm group-hover:text-primary transition-colors">{f.nome}</p>
                           <p className="text-xs text-muted-foreground">{f.cargo}</p>
                         </div>
                       </div>
-                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                        <Clock size={12} />
-                        {new Date(f.data_criacao).toLocaleDateString('pt-BR')}
+                      <div className="text-right">
+                        <p className="text-[10px] font-bold uppercase text-muted-foreground">Cadastrado em</p>
+                        <p className="text-xs font-medium">
+                          {f.data_criacao ? new Date(f.data_criacao).toLocaleDateString('pt-BR') : '-'}
+                        </p>
                       </div>
                     </div>
                   ))
               ) : (
-                <p className="text-sm text-muted-foreground text-center py-4">Nenhum funcionário cadastrado.</p>
+                <p className="text-sm text-muted-foreground text-center py-8 bg-slate-50 rounded-lg border border-dashed">
+                  Nenhum colaborador cadastrado ainda.
+                </p>
               )}
             </div>
           </CardContent>
@@ -103,7 +122,7 @@ export default function DashboardPage() {
 
         <Card className="border-none shadow-sm">
           <CardHeader>
-            <CardTitle className="text-lg">Setores Populosos</CardTitle>
+            <CardTitle className="text-lg">Distribuição por Setor</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-6">
@@ -115,12 +134,12 @@ export default function DashboardPage() {
                   return (
                     <div key={s.id} className="space-y-2">
                       <div className="flex items-center justify-between text-sm">
-                        <span className="font-medium">{s.nome}</span>
-                        <span className="text-muted-foreground">{count}</span>
+                        <span className="font-medium text-slate-700">{s.nome}</span>
+                        <span className="text-primary font-bold">{count}</span>
                       </div>
                       <div className="h-2 w-full bg-slate-100 rounded-full overflow-hidden">
                         <div 
-                          className="h-full bg-primary" 
+                          className="h-full bg-primary transition-all duration-1000 ease-out" 
                           style={{ width: `${percentage}%` }}
                         />
                       </div>
@@ -128,7 +147,9 @@ export default function DashboardPage() {
                   );
                 })
               ) : (
-                <p className="text-sm text-muted-foreground text-center py-4">Crie setores para ver o ranking.</p>
+                <p className="text-sm text-muted-foreground text-center py-8 bg-slate-50 rounded-lg border border-dashed">
+                  Crie setores para visualizar a distribuição.
+                </p>
               )}
             </div>
           </CardContent>
