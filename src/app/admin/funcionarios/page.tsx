@@ -3,7 +3,7 @@
 
 import { useState, useMemo, useEffect } from "react";
 import Image from "next/image";
-import { Users, Plus, Edit2, Trash2, Search, FileText, Loader2, AlertCircle, Upload, Crown, Mail, Hash, Building, CheckCircle2, ChevronDown, X } from "lucide-react";
+import { Users, Plus, Edit2, Trash2, Search, FileText, Loader2, AlertCircle, Upload, Crown, Mail, Hash, Building, CheckCircle2, ChevronDown, X, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -40,6 +40,7 @@ import { useMemoFirebase, useCollection, useFirestore, addDocumentNonBlocking, u
 import { collection, doc, serverTimestamp } from "firebase/firestore";
 import { Funcionario, Setor } from "@/types";
 import { useToast } from "@/hooks/use-toast";
+import { cn } from "@/lib/utils";
 import * as XLSX from "xlsx";
 
 export default function FuncionariosPage() {
@@ -60,14 +61,15 @@ export default function FuncionariosPage() {
   const { data: employees, isLoading: loadingEmployees } = useCollection<Funcionario>(employeesRef);
   const { data: sectors } = useCollection<Setor>(sectorsRef);
 
-  // Sincroniza estados ao abrir o diálogo de edição
   useEffect(() => {
-    if (editingFunc) {
-      setIsLiderChecked(!!editingFunc.is_lider);
-      setSelectedSectorIds(editingFunc.setor_ids || []);
-    } else {
-      setIsLiderChecked(false);
-      setSelectedSectorIds([]);
+    if (isDialogOpen) {
+      if (editingFunc) {
+        setIsLiderChecked(!!editingFunc.is_lider);
+        setSelectedSectorIds(editingFunc.setor_ids || []);
+      } else {
+        setIsLiderChecked(false);
+        setSelectedSectorIds([]);
+      }
     }
   }, [editingFunc, isDialogOpen]);
 
@@ -323,43 +325,46 @@ export default function FuncionariosPage() {
                       <Label>Setores (Múltipla Escolha)</Label>
                       <Popover>
                         <PopoverTrigger asChild>
-                          <Button variant="outline" className="w-full justify-between font-normal text-left h-auto py-2">
+                          <Button variant="outline" className="w-full justify-between font-normal text-left h-auto min-h-[40px] py-2">
                             <div className="flex flex-wrap gap-1 items-center max-w-[200px]">
                               {selectedSectorIds.length > 0 ? (
                                 selectedSectorIds.map(id => {
                                   const s = sectors?.find(sec => sec.id === id);
                                   return (
-                                    <Badge key={id} variant="secondary" className="text-[9px] px-1 py-0 h-4">
+                                    <Badge key={id} variant="secondary" className="text-[10px] px-2 py-0 h-5">
                                       {s?.nome}
                                     </Badge>
                                   );
                                 })
                               ) : (
-                                <span className="text-muted-foreground">Selecione...</span>
+                                <span className="text-muted-foreground">Selecione os setores...</span>
                               )}
                             </div>
                             <ChevronDown className="h-4 w-4 opacity-50 shrink-0" />
                           </Button>
                         </PopoverTrigger>
-                        <PopoverContent className="w-[280px] p-0" align="start">
-                          <ScrollArea className="h-60 p-4">
-                            <div className="space-y-3">
+                        <PopoverContent className="w-[300px] p-0" align="start">
+                          <ScrollArea className="h-60">
+                            <div className="p-2 space-y-1">
                               {sectors?.map((s) => (
-                                <div key={s.id} className="flex items-center space-x-2">
-                                  <Checkbox 
-                                    id={`sector-${s.id}`} 
-                                    checked={selectedSectorIds.includes(s.id)}
-                                    onCheckedChange={() => toggleSectorSelection(s.id)}
-                                  />
-                                  <label 
-                                    htmlFor={`sector-${s.id}`}
-                                    className="text-sm font-medium leading-none cursor-pointer flex-1"
-                                  >
-                                    {s.nome}
-                                  </label>
+                                <div 
+                                  key={s.id} 
+                                  className={cn(
+                                    "flex items-center gap-2 px-3 py-2 rounded-md cursor-pointer hover:bg-slate-50 transition-colors",
+                                    selectedSectorIds.includes(s.id) && "bg-slate-100"
+                                  )}
+                                  onClick={() => toggleSectorSelection(s.id)}
+                                >
+                                  <div className={cn(
+                                    "h-4 w-4 border rounded-sm flex items-center justify-center transition-colors",
+                                    selectedSectorIds.includes(s.id) ? "bg-primary border-primary" : "border-slate-300 bg-white"
+                                  )}>
+                                    {selectedSectorIds.includes(s.id) && <Check className="h-3 w-3 text-white" />}
+                                  </div>
+                                  <span className="text-sm font-medium">{s.nome}</span>
                                 </div>
                               ))}
-                              {sectors?.length === 0 && <p className="text-xs text-muted-foreground p-2">Nenhum setor cadastrado.</p>}
+                              {sectors?.length === 0 && <p className="text-xs text-muted-foreground p-4 text-center">Nenhum setor cadastrado.</p>}
                             </div>
                           </ScrollArea>
                         </PopoverContent>
