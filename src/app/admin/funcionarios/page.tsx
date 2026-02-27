@@ -1,10 +1,8 @@
-
 "use client"
 
 import { useState } from "react";
 import Image from "next/image";
-import { MOCK_FUNCIONARIOS, MOCK_SETORES } from "@/lib/mock-data";
-import { Users, Plus, Edit2, Trash2, Search, Filter, Camera } from "lucide-react";
+import { Users, Plus, Edit2, Trash2, Search, Filter, Camera, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -32,13 +30,70 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { useMemoFirebase, useCollection, useFirestore, addDocumentNonBlocking, updateDocumentNonBlocking, deleteDocumentNonBlocking } from "@/firebase";
+import { collection, doc, serverTimestamp } from "firebase/firestore";
+import { Funcionario, Setor } from "@/types";
+import { useToast } from "@/hooks/use-toast";
 
 export default function FuncionariosPage() {
+  const firestore = useFirestore();
+  const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState("");
-  const filteredFuncionarios = MOCK_FUNCIONARIOS.filter(f => 
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [editingFunc, setEditingFunc] = useState<Funcionario | null>(null);
+
+  const employeesRef = useMemoFirebase(() => collection(firestore, "employees"), [firestore]);
+  const sectorsRef = useMemoFirebase(() => collection(firestore, "sectors"), [firestore]);
+
+  const { data: employees, isLoading: loadingEmployees } = useCollection<Funcionario>(employeesRef);
+  const { data: sectors } = useCollection<Setor>(sectorsRef);
+
+  const filteredEmployees = employees?.filter(f => 
     f.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
     f.cargo.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  ) || [];
+
+  const handleSave = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const formData = new FormData(e.currentTarget);
+    const data = {
+      nome: formData.get("nome") as string,
+      cargo: formData.get("cargo") as string,
+      setor_id: formData.get("setor_id") as string,
+      status: formData.get("status") as "ativo" | "inativo",
+      foto_url: (formData.get("foto_url") as string) || `https://picsum.photos/seed/${Math.random()}/400/400`,
+    };
+
+    if (editingFunc) {
+      updateDocumentNonBlocking(doc(firestore, "employees", editingFunc.id), data);
+      toast({ title: "Sucesso", description: "Colaborador atualizado." });
+    } else {
+      addDocumentNonBlocking(employeesRef, {
+        ...data,
+        data_criacao: new Date().toISOString(),
+        createdAt: serverTimestamp(),
+      });
+      toast({ title: "Sucesso", description: "Colaborador cadastrado." });
+    }
+
+    setIsDialogOpen(false);
+    setEditingFunc(null);
+  };
+
+  const handleDelete = (id: string) => {
+    if (confirm("Deseja realmente excluir este colaborador?")) {
+      deleteDocumentNonBlocking(doc(firestore, "employees", id));
+      toast({ title: "Excluído", description: "Colaborador removido com sucesso." });
+    }
+  };
+
+  if (loadingEmployees) {
+    return (
+      <div className="flex h-[60vh] items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-8">
@@ -48,7 +103,10 @@ export default function FuncionariosPage() {
           <p className="text-muted-foreground">Cadastre e organize seus colaboradores.</p>
         </div>
         
-        <Dialog>
+        <Dialog open={isDialogOpen} onOpenChange={(open) => {
+          setIsDialogOpen(open);
+          if (!open) setEditingFunc(null);
+        }}>
           <DialogTrigger asChild>
             <Button className="h-11">
               <Plus className="mr-2 h-4 w-4" />
@@ -56,62 +114,60 @@ export default function FuncionariosPage() {
             </Button>
           </DialogTrigger>
           <DialogContent className="sm:max-w-[500px]">
-            <DialogHeader>
-              <DialogTitle>Novo Funcionário</DialogTitle>
-              <DialogDescription>
-                Cadastre as informações básicas e a foto do colaborador.
-              </DialogDescription>
-            </DialogHeader>
-            <div className="grid gap-6 py-4">
-              <div className="flex justify-center">
-                <div className="relative group cursor-pointer">
-                  <div className="w-24 h-24 rounded-full bg-slate-100 flex items-center justify-center border-2 border-dashed border-slate-300 overflow-hidden">
-                    <Camera className="h-8 w-8 text-slate-400" />
+            <form onSubmit={handleSave}>
+              <DialogHeader>
+                <DialogTitle>{editingFunc ? "Editar Funcionário" : "Novo Funcionário"}</DialogTitle>
+                <DialogDescription>
+                  Preencha os dados do colaborador abaixo.
+                </DialogDescription>
+              </DialogHeader>
+              <div className="grid gap-6 py-4">
+                <div className="grid gap-2">
+                  <Label htmlFor="nome">Nome Completo</Label>
+                  <Input id="nome" name="nome" defaultValue={editingFunc?.nome} required placeholder="Ex: Roberto Justos" />
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="grid gap-2">
+                    <Label htmlFor="cargo">Cargo</Label>
+                    <Input id="cargo" name="cargo" defaultValue={editingFunc?.cargo} required placeholder="Ex: Desenvolvedor" />
                   </div>
-                  <div className="absolute inset-0 bg-black/40 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                    <span className="text-[10px] text-white font-bold uppercase">Upload</span>
+                  <div className="grid gap-2">
+                    <Label htmlFor="setor_id">Setor</Label>
+                    <Select name="setor_id" defaultValue={editingFunc?.setor_id}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecione..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {sectors?.map(s => (
+                          <SelectItem key={s.id} value={s.id}>{s.nome}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
                 </div>
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="name">Nome Completo</Label>
-                <Input id="name" placeholder="Ex: Roberto Justos" />
-              </div>
-              <div className="grid grid-cols-2 gap-4">
                 <div className="grid gap-2">
-                  <Label htmlFor="role">Cargo</Label>
-                  <Input id="role" placeholder="Ex: Desenvolvedor" />
-                </div>
-                <div className="grid gap-2">
-                  <Label htmlFor="setor">Setor</Label>
-                  <Select>
+                  <Label htmlFor="status">Status</Label>
+                  <Select name="status" defaultValue={editingFunc?.status || "ativo"}>
                     <SelectTrigger>
-                      <SelectValue placeholder="Selecione..." />
+                      <SelectValue placeholder="Status" />
                     </SelectTrigger>
                     <SelectContent>
-                      {MOCK_SETORES.map(s => (
-                        <SelectItem key={s.id} value={s.id}>{s.nome}</SelectItem>
-                      ))}
+                      <SelectItem value="ativo">Ativo</SelectItem>
+                      <SelectItem value="inativo">Inativo</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="foto_url">URL da Foto (Placeholder)</Label>
+                  <Input id="foto_url" name="foto_url" defaultValue={editingFunc?.foto_url} placeholder="https://..." />
+                </div>
               </div>
-              <div className="grid gap-2">
-                <Label htmlFor="status">Status</Label>
-                <Select defaultValue="ativo">
-                  <SelectTrigger>
-                    <SelectValue placeholder="Status" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="ativo">Ativo</SelectItem>
-                    <SelectItem value="inativo">Inativo</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-            <DialogFooter>
-              <Button type="submit" className="w-full h-11">Cadastrar Colaborador</Button>
-            </DialogFooter>
+              <DialogFooter>
+                <Button type="submit" className="w-full h-11">
+                  {editingFunc ? "Salvar Alterações" : "Cadastrar Colaborador"}
+                </Button>
+              </DialogFooter>
+            </form>
           </DialogContent>
         </Dialog>
       </div>
@@ -127,12 +183,6 @@ export default function FuncionariosPage() {
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
-          <div className="flex gap-2">
-            <Button variant="outline" size="sm" className="h-10">
-              <Filter className="mr-2 h-4 w-4" />
-              Filtrar
-            </Button>
-          </div>
         </div>
 
         <Table>
@@ -146,15 +196,15 @@ export default function FuncionariosPage() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {filteredFuncionarios.map((f) => {
-              const setor = MOCK_SETORES.find(s => s.id === f.setor_id);
+            {filteredEmployees.map((f) => {
+              const setor = sectors?.find(s => s.id === f.setor_id);
               return (
                 <TableRow key={f.id} className="group">
                   <TableCell>
                     <div className="flex items-center gap-3">
                       <div className="h-10 w-10 relative rounded-full overflow-hidden border">
                         <Image 
-                          src={f.foto_url} 
+                          src={f.foto_url || "https://picsum.photos/seed/placeholder/400/400"} 
                           alt={f.nome} 
                           fill 
                           className="object-cover" 
@@ -178,10 +228,13 @@ export default function FuncionariosPage() {
                   </TableCell>
                   <TableCell className="text-right">
                     <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <Button variant="ghost" size="icon" className="h-8 w-8">
+                      <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => {
+                        setEditingFunc(f);
+                        setIsDialogOpen(true);
+                      }}>
                         <Edit2 className="h-4 w-4 text-slate-500" />
                       </Button>
-                      <Button variant="ghost" size="icon" className="h-8 w-8 hover:text-destructive">
+                      <Button variant="ghost" size="icon" className="h-8 w-8 hover:text-destructive" onClick={() => handleDelete(f.id)}>
                         <Trash2 className="h-4 w-4" />
                       </Button>
                     </div>
@@ -191,7 +244,7 @@ export default function FuncionariosPage() {
             })}
           </TableBody>
         </Table>
-        {filteredFuncionarios.length === 0 && (
+        {filteredEmployees.length === 0 && (
           <div className="p-12 text-center text-muted-foreground">
             Nenhum colaborador encontrado.
           </div>

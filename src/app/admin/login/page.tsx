@@ -30,7 +30,7 @@ export default function LoginPage() {
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
 
-      // Verificar se o perfil administrativo existe, se não, criar (para garantir permissão no Firestore)
+      // Garantir que o perfil administrativo existe nas Regras de Segurança
       const adminRef = doc(db, "admin_profiles", user.uid);
       const adminSnap = await getDoc(adminRef);
 
@@ -54,7 +54,7 @@ export default function LoginPage() {
       toast({
         variant: "destructive",
         title: "Erro no login",
-        description: "E-mail ou senha inválidos ou erro de conexão.",
+        description: "E-mail ou senha inválidos.",
       });
     } finally {
       setLoading(false);

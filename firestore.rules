@@ -23,23 +23,19 @@ service cloud.firestore {
       allow get: if isOwner(adminId) || isAdmin();
       allow list: if isAdmin();
       allow create: if isOwner(adminId);
-      allow update: if isOwner(adminId) && resource != null;
+      allow update: if isOwner(adminId);
       allow delete: if isAdmin();
     }
 
     match /sectors/{sectorId} {
-      allow read: if isSignedIn(); // Permitir leitura para usuários logados (incluindo funcionários/admins)
+      allow read: if true; // Setores são públicos para organização do carômetro
       allow write: if isAdmin();
     }
 
     match /employees/{employeeId} {
-      // Permite leitura individual se for admin ou se o funcionário estiver ativo
-      allow get: if isAdmin() || (resource != null && resource.data.status == 'ativo');
-      
-      // Permite listagem se for admin OU se a consulta filtrar apenas por funcionários ativos
-      // Isso suporta o padrão QAP (Query as Permission)
-      allow list: if isAdmin() || (request.query.limit <= 100 && resource.data.status == 'ativo');
-      
+      // Admins podem ler tudo. Usuários anônimos/públicos só podem ler ativos.
+      // O Firestore aplicará isso como um filtro obrigatório em consultas de listagem.
+      allow read: if isAdmin() || (resource.data.status == 'ativo');
       allow write: if isAdmin();
     }
   }
