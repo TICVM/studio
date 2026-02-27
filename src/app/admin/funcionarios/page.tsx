@@ -1,9 +1,9 @@
 
 "use client"
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import Image from "next/image";
-import { Users, Plus, Edit2, Trash2, Search, FileText, Loader2, AlertCircle, Upload, Crown, Mail, Hash, Building } from "lucide-react";
+import { Users, Plus, Edit2, Trash2, Search, FileText, Loader2, AlertCircle, Upload, Crown, Mail, Hash, Building, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -33,6 +33,8 @@ import {
 } from "@/components/ui/select";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { useMemoFirebase, useCollection, useFirestore, addDocumentNonBlocking, updateDocumentNonBlocking, deleteDocumentNonBlocking, setDocumentNonBlocking } from "@/firebase";
 import { collection, doc, serverTimestamp } from "firebase/firestore";
 import { Funcionario, Setor } from "@/types";
@@ -49,6 +51,7 @@ export default function FuncionariosPage() {
   const [excelFile, setExcelFile] = useState<File | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [isLiderChecked, setIsLiderChecked] = useState(false);
+  const [selectedSectorIds, setSelectedSectorIds] = useState<string[]>([]);
 
   const employeesRef = useMemoFirebase(() => collection(firestore, "employees"), [firestore]);
   const sectorsRef = useMemoFirebase(() => collection(firestore, "sectors"), [firestore]);
@@ -67,11 +70,16 @@ export default function FuncionariosPage() {
 
   const handleSave = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    if (selectedSectorIds.length === 0) {
+      toast({ variant: "destructive", title: "Erro", description: "Selecione pelo menos um setor." });
+      return;
+    }
+
     const formData = new FormData(e.currentTarget);
     const data = {
       nome: formData.get("nome") as string,
       cargo: formData.get("cargo") as string,
-      setor_id: formData.get("setor_id") as string,
+      setor_ids: selectedSectorIds,
       status: formData.get("status") as "ativo" | "inativo",
       is_lider: isLiderChecked,
       email: formData.get("email") as string,
@@ -95,6 +103,7 @@ export default function FuncionariosPage() {
     setIsDialogOpen(false);
     setEditingFunc(null);
     setIsLiderChecked(false);
+    setSelectedSectorIds([]);
   };
 
   const handleExcelUpload = async () => {
@@ -114,21 +123,15 @@ export default function FuncionariosPage() {
         const worksheet = workbook.Sheets[firstSheetName];
         const jsonData = XLSX.utils.sheet_to_json(worksheet) as any[];
 
-        if (jsonData.length === 0) {
-          toast({ variant: "destructive", title: "Erro", description: "A planilha está vazia." });
-          setIsProcessing(false);
-          return;
-        }
-
         const sectorMap = new Map<string, string>();
-        sectors?.forEach(s => sectorMap.set(s.nome.toLowerCase(), s.id));
+        sectors?.forEach(s => sectorMap.set(s.nome.toLowerCase().trim(), s.id));
 
         let successCount = 0;
 
         for (const row of jsonData) {
           const nome = row.Nome || row.nome || row.NOME;
           const cargo = row.Cargo || row.cargo || row.CARGO;
-          const setorNome = row.Setor || row.setor || row.SETOR;
+          const setorString = row.Setor || row.setor || row.SETOR || "";
           const statusRaw = row.Status || row.status || row.STATUS;
           const fotoUrl = row.Foto || row.foto || row.FOTO || row.FotoURL || row.foto_url;
           const liderRaw = row.Lider || row.Líder || row.lider || row.lideranca;
@@ -137,23 +140,23 @@ export default function FuncionariosPage() {
           const unidade = row.Unidade || row.unidade || row.UNIDADE || row.Filial;
 
           if (nome && cargo) {
-            let targetSectorId = "";
-            
-            if (setorNome) {
-              const normalizedSetor = setorNome.toString().toLowerCase().trim();
-              const existingId = sectorMap.get(normalizedSetor);
-              
+            const rowSectorNames = setorString.toString().split(/[,;]/).map((s: string) => s.trim().toLowerCase()).filter(Boolean);
+            const targetSectorIds: string[] = [];
+
+            for (const sName of rowSectorNames) {
+              const existingId = sectorMap.get(sName);
               if (existingId) {
-                targetSectorId = existingId;
+                targetSectorIds.push(existingId);
               } else {
                 const newSectorRef = doc(collection(firestore, "sectors"));
-                targetSectorId = newSectorRef.id;
+                const sectorNameRaw = sName.charAt(0).toUpperCase() + sName.slice(1);
+                targetSectorIds.push(newSectorRef.id);
                 setDocumentNonBlocking(newSectorRef, {
-                  nome: setorNome,
+                  nome: sectorNameRaw,
                   data_criacao: new Date().toISOString(),
                   createdAt: serverTimestamp(),
                 }, { merge: true });
-                sectorMap.set(normalizedSetor, targetSectorId);
+                sectorMap.set(sName, newSectorRef.id);
               }
             }
 
@@ -164,7 +167,7 @@ export default function FuncionariosPage() {
             addDocumentNonBlocking(employeesRef, {
               nome,
               cargo,
-              setor_id: targetSectorId,
+              setor_ids: targetSectorIds,
               status,
               is_lider: isLider,
               foto_url: finalFotoUrl,
@@ -199,6 +202,12 @@ export default function FuncionariosPage() {
     }
   };
 
+  const toggleSectorSelection = (id: string) => {
+    setSelectedSectorIds(prev => 
+      prev.includes(id) ? prev.filter(sId => sId !== id) : [...prev, id]
+    );
+  };
+
   if (loadingEmployees) {
     return (
       <div className="flex h-[60vh] items-center justify-center">
@@ -227,7 +236,7 @@ export default function FuncionariosPage() {
               <DialogHeader>
                 <DialogTitle>Importar Planilha</DialogTitle>
                 <DialogDescription>
-                  Selecione um arquivo .xlsx ou .xls para importar.
+                  Selecione um arquivo .xlsx para importar. Múltiplos setores podem ser separados por vírgula.
                 </DialogDescription>
               </DialogHeader>
               
@@ -236,7 +245,7 @@ export default function FuncionariosPage() {
                 <AlertDescription className="text-xs text-blue-800">
                   Colunas esperadas:<br/>
                   <b>Nome | Cargo | Setor | Status | Líder | Foto | Email | Ramal | Unidade</b><br/>
-                  <i>* O sistema criará setores novos se não existirem.</i>
+                  <i>* Setores múltiplos ex: "RH, Financeiro"</i>
                 </AlertDescription>
               </Alert>
 
@@ -269,6 +278,7 @@ export default function FuncionariosPage() {
             if (!open) {
               setEditingFunc(null);
               setIsLiderChecked(false);
+              setSelectedSectorIds([]);
             }
           }}>
             <DialogTrigger asChild>
@@ -296,17 +306,37 @@ export default function FuncionariosPage() {
                       <Input id="cargo" name="cargo" defaultValue={editingFunc?.cargo} required placeholder="Ex: Desenvolvedor" />
                     </div>
                     <div className="grid gap-2">
-                      <Label htmlFor="setor_id">Setor</Label>
-                      <Select name="setor_id" defaultValue={editingFunc?.setor_id}>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Selecione..." />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {sectors?.map(s => (
-                            <SelectItem key={s.id} value={s.id}>{s.nome}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                      <Label>Setores (Múltipla Escolha)</Label>
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <Button variant="outline" className="w-full justify-start font-normal">
+                            {selectedSectorIds.length > 0 
+                              ? `${selectedSectorIds.length} selecionado(s)` 
+                              : "Selecione setores..."}
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-[280px] p-0" align="start">
+                          <ScrollArea className="h-60 p-4">
+                            <div className="space-y-4">
+                              {sectors?.map((s) => (
+                                <div key={s.id} className="flex items-center space-x-2">
+                                  <Checkbox 
+                                    id={`sector-${s.id}`} 
+                                    checked={selectedSectorIds.includes(s.id)}
+                                    onCheckedChange={() => toggleSectorSelection(s.id)}
+                                  />
+                                  <label 
+                                    htmlFor={`sector-${s.id}`}
+                                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                                  >
+                                    {s.nome}
+                                  </label>
+                                </div>
+                              ))}
+                            </div>
+                          </ScrollArea>
+                        </PopoverContent>
+                      </Popover>
                     </div>
                   </div>
 
@@ -366,7 +396,11 @@ export default function FuncionariosPage() {
                   </div>
                 </div>
                 <DialogFooter>
-                  <Button type="submit" className="w-full h-11">
+                  <Button type="submit" className="w-full h-11" onClick={() => {
+                    if (editingFunc && selectedSectorIds.length === 0) {
+                      setSelectedSectorIds(editingFunc.setor_ids || []);
+                    }
+                  }}>
                     {editingFunc ? "Salvar Alterações" : "Cadastrar Colaborador"}
                   </Button>
                 </DialogFooter>
@@ -394,7 +428,7 @@ export default function FuncionariosPage() {
             <TableRow className="bg-slate-50">
               <TableHead>Colaborador</TableHead>
               <TableHead>Cargo</TableHead>
-              <TableHead>Setor</TableHead>
+              <TableHead>Setores</TableHead>
               <TableHead>Contatos</TableHead>
               <TableHead>Status</TableHead>
               <TableHead className="text-right">Ações</TableHead>
@@ -402,7 +436,7 @@ export default function FuncionariosPage() {
           </TableHeader>
           <TableBody>
             {filteredEmployees.map((f) => {
-              const setor = sectors?.find(s => s.id === f.setor_id);
+              const employeeSectors = sectors?.filter(s => f.setor_ids?.includes(s.id));
               return (
                 <TableRow key={f.id} className="group">
                   <TableCell>
@@ -426,9 +460,17 @@ export default function FuncionariosPage() {
                   </TableCell>
                   <TableCell className="text-sm">{f.cargo}</TableCell>
                   <TableCell>
-                    <span className="text-xs bg-slate-100 text-slate-700 px-2 py-0.5 rounded font-medium">
-                      {setor?.nome || "Sem Setor"}
-                    </span>
+                    <div className="flex flex-wrap gap-1">
+                      {employeeSectors && employeeSectors.length > 0 ? (
+                        employeeSectors.map(s => (
+                          <span key={s.id} className="text-[9px] bg-slate-100 text-slate-700 px-1.5 py-0.5 rounded font-bold uppercase">
+                            {s.nome}
+                          </span>
+                        ))
+                      ) : (
+                        <span className="text-xs text-muted-foreground">Nenhum</span>
+                      )}
+                    </div>
                   </TableCell>
                   <TableCell>
                     <div className="flex flex-col gap-0.5">
@@ -448,6 +490,7 @@ export default function FuncionariosPage() {
                       <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => {
                         setEditingFunc(f);
                         setIsLiderChecked(!!f.is_lider);
+                        setSelectedSectorIds(f.setor_ids || []);
                         setIsDialogOpen(true);
                       }}>
                         <Edit2 className="h-4 w-4 text-slate-500" />

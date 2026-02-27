@@ -128,7 +128,7 @@ export default function DashboardPage() {
             <div className="space-y-6">
               {setores && setores.length > 0 ? (
                 setores.map(s => {
-                  const count = funcionarios?.filter(f => f.setor_id === s.id).length || 0;
+                  const count = funcionarios?.filter(f => f.setor_ids && f.setor_ids.includes(s.id)).length || 0;
                   const total = funcionarios?.length || 1;
                   const percentage = (count / total) * 100;
                   return (

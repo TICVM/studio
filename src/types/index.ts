@@ -10,7 +10,7 @@ export interface Funcionario {
   nome: string;
   cargo: string;
   foto_url: string;
-  setor_id: string;
+  setor_ids: string[]; // Alterado para array de IDs
   status: 'ativo' | 'inativo';
   is_lider?: boolean;
   email?: string;

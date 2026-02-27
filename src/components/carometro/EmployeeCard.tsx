@@ -10,6 +10,8 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { useMemoFirebase, useCollection, useFirestore } from "@/firebase";
+import { collection } from "firebase/firestore";
 
 interface EmployeeCardProps {
   funcionario: Funcionario;
@@ -17,6 +19,12 @@ interface EmployeeCardProps {
 }
 
 export function EmployeeCard({ funcionario, setor }: EmployeeCardProps) {
+  const firestore = useFirestore();
+  const sectorsRef = useMemoFirebase(() => collection(firestore, "sectors"), [firestore]);
+  const { data: allSectors } = useCollection<Setor>(sectorsRef);
+
+  const employeeSectors = allSectors?.filter(s => funcionario.setor_ids?.includes(s.id)) || [];
+
   return (
     <Dialog>
       <DialogTrigger asChild>
@@ -69,9 +77,19 @@ export function EmployeeCard({ funcionario, setor }: EmployeeCardProps) {
               {funcionario.nome}
               {funcionario.is_lider && <Crown size={20} fill="white" />}
             </DialogTitle>
-            <p className="text-primary-foreground/80 font-medium">
-              {funcionario.cargo} • {setor?.nome}
-            </p>
+            <div className="flex flex-wrap gap-2 mt-1">
+              <p className="text-primary-foreground/80 font-medium">
+                {funcionario.cargo}
+              </p>
+              <span className="text-primary-foreground/40">•</span>
+              <div className="flex flex-wrap gap-1">
+                {employeeSectors.map(s => (
+                  <span key={s.id} className="text-[10px] bg-white/20 px-1.5 py-0.5 rounded font-bold uppercase">
+                    {s.nome}
+                  </span>
+                ))}
+              </div>
+            </div>
           </DialogHeader>
         </div>
         
@@ -130,7 +148,7 @@ export function EmployeeCard({ funcionario, setor }: EmployeeCardProps) {
 
           <div className="pt-2 border-t text-center">
             <p className="text-[10px] text-muted-foreground uppercase font-bold tracking-widest">
-              Cadastrado em {new Date(funcionario.data_criacao).toLocaleDateString('pt-BR')}
+              Cadastrado em {funcionario.data_criacao ? new Date(funcionario.data_criacao).toLocaleDateString('pt-BR') : '-'}
             </p>
           </div>
         </div>

@@ -38,7 +38,9 @@ export default function Home() {
     return employees.filter((f) => {
       const matchesSearch = f.nome.toLowerCase().includes(searchTerm.toLowerCase()) || 
                            f.cargo.toLowerCase().includes(searchTerm.toLowerCase());
-      const matchesSetor = selectedSetor === "all" || f.setor_id === selectedSetor;
+      
+      // Verifica se algum dos setores do funcionário corresponde ao filtro
+      const matchesSetor = selectedSetor === "all" || (f.setor_ids && f.setor_ids.includes(selectedSetor));
       return matchesSearch && matchesSetor;
     });
   }, [employees, searchTerm, selectedSetor]);
@@ -53,9 +55,9 @@ export default function Home() {
     const sortedSectors = [...relevantSectors].sort((a, b) => a.nome.localeCompare(b.nome));
 
     return sortedSectors.map(sector => {
-      const sectorFuncs = filteredEmployees.filter(f => f.setor_id === sector.id);
+      // Um funcionário agora pode aparecer em múltiplos grupos
+      const sectorFuncs = filteredEmployees.filter(f => f.setor_ids && f.setor_ids.includes(sector.id));
       
-      // Ordenação Crítica: Líderes primeiro, depois alfabética
       const sortedFuncs = sectorFuncs.sort((a, b) => {
         if (a.is_lider && !b.is_lider) return -1;
         if (!a.is_lider && b.is_lider) return 1;
@@ -132,9 +134,9 @@ export default function Home() {
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                     {group.funcionarios.map(f => (
                       <EmployeeCard 
-                        key={f.id} 
+                        key={`${group.id}-${f.id}`} 
                         funcionario={f} 
-                        setor={sectors?.find(s => s.id === f.setor_id)}
+                        setor={group}
                       />
                     ))}
                   </div>

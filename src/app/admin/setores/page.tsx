@@ -88,12 +88,6 @@ export default function SetoresPage() {
         const worksheet = workbook.Sheets[firstSheetName];
         const jsonData = XLSX.utils.sheet_to_json(worksheet) as any[];
 
-        if (jsonData.length === 0) {
-          toast({ variant: "destructive", title: "Erro", description: "A planilha está vazia." });
-          setIsProcessing(false);
-          return;
-        }
-
         let count = 0;
         const existingSectors = new Set(sectors?.map(s => s.nome.toLowerCase()) || []);
 
@@ -129,7 +123,7 @@ export default function SetoresPage() {
   };
 
   const handleDelete = (id: string) => {
-    const memberCount = employees?.filter(f => f.setor_id === id).length || 0;
+    const memberCount = employees?.filter(f => f.setor_ids && f.setor_ids.includes(id)).length || 0;
     if (memberCount > 0) {
       toast({ variant: "destructive", title: "Ação negada", description: "Remova os funcionários deste setor antes de excluí-lo." });
       return;
@@ -263,7 +257,7 @@ export default function SetoresPage() {
           </TableHeader>
           <TableBody>
             {filteredSetores.map((setor) => {
-              const count = employees?.filter(f => f.setor_id === setor.id).length || 0;
+              const count = employees?.filter(f => f.setor_ids && f.setor_ids.includes(setor.id)).length || 0;
               return (
                 <TableRow key={setor.id}>
                   <TableCell className="font-semibold text-primary">{setor.nome}</TableCell>
