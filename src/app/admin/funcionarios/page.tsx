@@ -2,9 +2,10 @@
 
 import { useState } from "react";
 import Image from "next/image";
-import { Users, Plus, Edit2, Trash2, Search, Filter, Camera, Loader2 } from "lucide-react";
+import { Users, Plus, Edit2, Trash2, Search, FileText, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Table,
   TableBody,
@@ -40,7 +41,10 @@ export default function FuncionariosPage() {
   const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isBulkDialogOpen, setIsBulkDialogOpen] = useState(false);
   const [editingFunc, setEditingFunc] = useState<Funcionario | null>(null);
+  const [bulkText, setBulkText] = useState("");
+  const [targetSector, setTargetSector] = useState("");
 
   const employeesRef = useMemoFirebase(() => collection(firestore, "employees"), [firestore]);
   const sectorsRef = useMemoFirebase(() => collection(firestore, "sectors"), [firestore]);
@@ -80,6 +84,46 @@ export default function FuncionariosPage() {
     setEditingFunc(null);
   };
 
+  const handleBulkSave = () => {
+    if (!targetSector) {
+      toast({ variant: "destructive", title: "Erro", description: "Selecione um setor de destino." });
+      return;
+    }
+
+    const lines = bulkText.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+    
+    if (lines.length === 0) {
+      toast({ variant: "destructive", title: "Erro", description: "Insira ao menos um colaborador." });
+      return;
+    }
+
+    let successCount = 0;
+    lines.forEach(line => {
+      // Formato esperado: Nome;Cargo
+      const [nome, cargo] = line.split(';').map(s => s.trim());
+      
+      if (nome && cargo) {
+        addDocumentNonBlocking(employeesRef, {
+          nome,
+          cargo,
+          setor_id: targetSector,
+          status: 'ativo',
+          foto_url: `https://picsum.photos/seed/${Math.random()}/400/400`,
+          data_criacao: new Date().toISOString(),
+          createdAt: serverTimestamp(),
+        });
+        successCount++;
+      }
+    });
+
+    toast({ 
+      title: "Sucesso", 
+      description: `${successCount} colaboradores cadastrados em massa no setor selecionado.` 
+    });
+    setIsBulkDialogOpen(false);
+    setBulkText("");
+  };
+
   const handleDelete = (id: string) => {
     if (confirm("Deseja realmente excluir este colaborador?")) {
       deleteDocumentNonBlocking(doc(firestore, "employees", id));
@@ -103,73 +147,123 @@ export default function FuncionariosPage() {
           <p className="text-muted-foreground">Cadastre e organize seus colaboradores.</p>
         </div>
         
-        <Dialog open={isDialogOpen} onOpenChange={(open) => {
-          setIsDialogOpen(open);
-          if (!open) setEditingFunc(null);
-        }}>
-          <DialogTrigger asChild>
-            <Button className="h-11">
-              <Plus className="mr-2 h-4 w-4" />
-              Novo Funcionário
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="sm:max-w-[500px]">
-            <form onSubmit={handleSave}>
+        <div className="flex gap-2">
+          <Dialog open={isBulkDialogOpen} onOpenChange={setIsBulkDialogOpen}>
+            <DialogTrigger asChild>
+              <Button variant="outline" className="h-11">
+                <FileText className="mr-2 h-4 w-4" />
+                Cadastro em Massa
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-[600px]">
               <DialogHeader>
-                <DialogTitle>{editingFunc ? "Editar Funcionário" : "Novo Funcionário"}</DialogTitle>
+                <DialogTitle>Cadastro em Massa de Funcionários</DialogTitle>
                 <DialogDescription>
-                  Preencha os dados do colaborador abaixo.
+                  Insira os colaboradores no formato <b>Nome;Cargo</b> (um por linha).
                 </DialogDescription>
               </DialogHeader>
               <div className="grid gap-6 py-4">
                 <div className="grid gap-2">
-                  <Label htmlFor="nome">Nome Completo</Label>
-                  <Input id="nome" name="nome" defaultValue={editingFunc?.nome} required placeholder="Ex: Roberto Justos" />
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="grid gap-2">
-                    <Label htmlFor="cargo">Cargo</Label>
-                    <Input id="cargo" name="cargo" defaultValue={editingFunc?.cargo} required placeholder="Ex: Desenvolvedor" />
-                  </div>
-                  <div className="grid gap-2">
-                    <Label htmlFor="setor_id">Setor</Label>
-                    <Select name="setor_id" defaultValue={editingFunc?.setor_id}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Selecione..." />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {sectors?.map(s => (
-                          <SelectItem key={s.id} value={s.id}>{s.nome}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-                <div className="grid gap-2">
-                  <Label htmlFor="status">Status</Label>
-                  <Select name="status" defaultValue={editingFunc?.status || "ativo"}>
+                  <Label htmlFor="bulk-sector">Setor de Destino</Label>
+                  <Select value={targetSector} onValueChange={setTargetSector}>
                     <SelectTrigger>
-                      <SelectValue placeholder="Status" />
+                      <SelectValue placeholder="Selecione o setor para todos..." />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="ativo">Ativo</SelectItem>
-                      <SelectItem value="inativo">Inativo</SelectItem>
+                      {sectors?.map(s => (
+                        <SelectItem key={s.id} value={s.id}>{s.nome}</SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </div>
                 <div className="grid gap-2">
-                  <Label htmlFor="foto_url">URL da Foto (Placeholder)</Label>
-                  <Input id="foto_url" name="foto_url" defaultValue={editingFunc?.foto_url} placeholder="https://..." />
+                  <Label htmlFor="bulk-csv">Lista de Colaboradores (Nome;Cargo)</Label>
+                  <Textarea 
+                    id="bulk-csv" 
+                    placeholder="Ex:&#10;João Silva;Desenvolvedor&#10;Maria Santos;Designer&#10;Carlos Souza;Gerente" 
+                    className="min-h-[200px]"
+                    value={bulkText}
+                    onChange={(e) => setBulkText(e.target.value)}
+                  />
+                  <p className="text-[10px] text-muted-foreground">
+                    Certifique-se de usar o ponto e vírgula (;) para separar o nome do cargo.
+                  </p>
                 </div>
               </div>
               <DialogFooter>
-                <Button type="submit" className="w-full h-11">
-                  {editingFunc ? "Salvar Alterações" : "Cadastrar Colaborador"}
-                </Button>
+                <Button onClick={handleBulkSave} className="w-full">Importar Colaboradores</Button>
               </DialogFooter>
-            </form>
-          </DialogContent>
-        </Dialog>
+            </DialogContent>
+          </Dialog>
+
+          <Dialog open={isDialogOpen} onOpenChange={(open) => {
+            setIsDialogOpen(open);
+            if (!open) setEditingFunc(null);
+          }}>
+            <DialogTrigger asChild>
+              <Button className="h-11">
+                <Plus className="mr-2 h-4 w-4" />
+                Novo Funcionário
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-[500px]">
+              <form onSubmit={handleSave}>
+                <DialogHeader>
+                  <DialogTitle>{editingFunc ? "Editar Funcionário" : "Novo Funcionário"}</DialogTitle>
+                  <DialogDescription>
+                    Preencha os dados do colaborador abaixo.
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="grid gap-6 py-4">
+                  <div className="grid gap-2">
+                    <Label htmlFor="nome">Nome Completo</Label>
+                    <input type="text" id="nome" name="nome" defaultValue={editingFunc?.nome} required placeholder="Ex: Roberto Justos" className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50" />
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="grid gap-2">
+                      <Label htmlFor="cargo">Cargo</Label>
+                      <input type="text" id="cargo" name="cargo" defaultValue={editingFunc?.cargo} required placeholder="Ex: Desenvolvedor" className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50" />
+                    </div>
+                    <div className="grid gap-2">
+                      <Label htmlFor="setor_id">Setor</Label>
+                      <Select name="setor_id" defaultValue={editingFunc?.setor_id}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecione..." />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {sectors?.map(s => (
+                            <SelectItem key={s.id} value={s.id}>{s.nome}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                  <div className="grid gap-2">
+                    <Label htmlFor="status">Status</Label>
+                    <Select name="status" defaultValue={editingFunc?.status || "ativo"}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Status" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="ativo">Ativo</SelectItem>
+                        <SelectItem value="inativo">Inativo</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="grid gap-2">
+                    <Label htmlFor="foto_url">URL da Foto (Opcional)</Label>
+                    <input type="text" id="foto_url" name="foto_url" defaultValue={editingFunc?.foto_url} placeholder="https://..." className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50" />
+                  </div>
+                </div>
+                <DialogFooter>
+                  <Button type="submit" className="w-full h-11">
+                    {editingFunc ? "Salvar Alterações" : "Cadastrar Colaborador"}
+                  </Button>
+                </DialogFooter>
+              </form>
+            </DialogContent>
+          </Dialog>
+        </div>
       </div>
 
       <div className="bg-white rounded-xl shadow-sm border overflow-hidden">
