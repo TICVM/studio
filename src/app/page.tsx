@@ -1,12 +1,13 @@
-
 "use client"
 
 import { useState, useMemo } from "react";
 import { PublicNavbar } from "@/components/layout/PublicNavbar";
-import { MOCK_FUNCIONARIOS, MOCK_SETORES } from "@/lib/mock-data";
 import { EmployeeCard } from "@/components/carometro/EmployeeCard";
 import { Input } from "@/components/ui/input";
-import { Search, Filter } from "lucide-react";
+import { Search, Filter, Loader2 } from "lucide-react";
+import { useMemoFirebase, useCollection, useFirestore } from "@/firebase";
+import { collection, query, where } from "firebase/firestore";
+import { Funcionario, Setor } from "@/types";
 import {
   Select,
   SelectContent,
@@ -18,27 +19,41 @@ import {
 export default function Home() {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedSetor, setSelectedSetor] = useState("all");
+  const firestore = useFirestore();
 
-  const filteredFuncionarios = useMemo(() => {
-    return MOCK_FUNCIONARIOS.filter((f) => {
+  // Buscar apenas funcionários ativos (respeitando as regras de segurança)
+  const activeEmployeesQuery = useMemoFirebase(() => {
+    return query(collection(firestore, "employees"), where("status", "==", "ativo"));
+  }, [firestore]);
+
+  const sectorsQuery = useMemoFirebase(() => {
+    return collection(firestore, "sectors");
+  }, [firestore]);
+
+  const { data: employees, isLoading: loadingEmployees } = useCollection<Funcionario>(activeEmployeesQuery);
+  const { data: sectors, isLoading: loadingSectors } = useCollection<Setor>(sectorsQuery);
+
+  const filteredEmployees = useMemo(() => {
+    if (!employees) return [];
+    return employees.filter((f) => {
       const matchesSearch = f.nome.toLowerCase().includes(searchTerm.toLowerCase()) || 
                            f.cargo.toLowerCase().includes(searchTerm.toLowerCase());
       const matchesSetor = selectedSetor === "all" || f.setor_id === selectedSetor;
-      return matchesSearch && matchesSetor && f.status === 'ativo';
+      return matchesSearch && matchesSetor;
     });
-  }, [searchTerm, selectedSetor]);
+  }, [employees, searchTerm, selectedSetor]);
 
-  // Group by sector
-  const groupedFuncionarios = useMemo(() => {
-    const sectors = selectedSetor === "all" 
-      ? MOCK_SETORES 
-      : MOCK_SETORES.filter(s => s.id === selectedSetor);
+  const groupedEmployees = useMemo(() => {
+    if (!sectors) return [];
+    const relevantSectors = selectedSetor === "all" 
+      ? sectors 
+      : sectors.filter(s => s.id === selectedSetor);
 
-    return sectors.map(sector => ({
+    return relevantSectors.map(sector => ({
       ...sector,
-      funcionarios: filteredFuncionarios.filter(f => f.setor_id === sector.id)
+      funcionarios: filteredEmployees.filter(f => f.setor_id === sector.id)
     })).filter(group => group.funcionarios.length > 0);
-  }, [filteredFuncionarios, selectedSetor]);
+  }, [filteredEmployees, sectors, selectedSetor]);
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -72,7 +87,7 @@ export default function Home() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">Todos os Setores</SelectItem>
-                  {MOCK_SETORES.map(s => (
+                  {sectors?.map(s => (
                     <SelectItem key={s.id} value={s.id}>{s.nome}</SelectItem>
                   ))}
                 </SelectContent>
@@ -81,41 +96,47 @@ export default function Home() {
           </div>
         </div>
 
-        <div className="space-y-12">
-          {groupedFuncionarios.length > 0 ? (
-            groupedFuncionarios.map(group => (
-              <section key={group.id} className="space-y-6">
-                <div className="flex items-center gap-4">
-                  <h2 className="text-xl font-bold text-primary pr-4 whitespace-nowrap">
-                    {group.nome}
-                  </h2>
-                  <div className="h-px w-full bg-border" />
-                  <span className="text-sm font-medium text-muted-foreground px-4 bg-background">
-                    {group.funcionarios.length}
-                  </span>
+        {(loadingEmployees || loadingSectors) ? (
+          <div className="flex justify-center py-20">
+            <Loader2 className="h-10 w-10 animate-spin text-primary" />
+          </div>
+        ) : (
+          <div className="space-y-12">
+            {groupedEmployees.length > 0 ? (
+              groupedEmployees.map(group => (
+                <section key={group.id} className="space-y-6">
+                  <div className="flex items-center gap-4">
+                    <h2 className="text-xl font-bold text-primary pr-4 whitespace-nowrap">
+                      {group.nome}
+                    </h2>
+                    <div className="h-px w-full bg-border" />
+                    <span className="text-sm font-medium text-muted-foreground px-4 bg-background">
+                      {group.funcionarios.length}
+                    </span>
+                  </div>
+                  
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                    {group.funcionarios.map(f => (
+                      <EmployeeCard 
+                        key={f.id} 
+                        funcionario={f} 
+                        setor={sectors?.find(s => s.id === f.setor_id)}
+                      />
+                    ))}
+                  </div>
+                </section>
+              ))
+            ) : (
+              <div className="text-center py-20 space-y-4">
+                <div className="inline-flex h-16 w-16 items-center justify-center rounded-full bg-muted">
+                  <Search className="h-8 w-8 text-muted-foreground" />
                 </div>
-                
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                  {group.funcionarios.map(f => (
-                    <EmployeeCard 
-                      key={f.id} 
-                      funcionario={f} 
-                      setor={MOCK_SETORES.find(s => s.id === f.setor_id)}
-                    />
-                  ))}
-                </div>
-              </section>
-            ))
-          ) : (
-            <div className="text-center py-20 space-y-4">
-              <div className="inline-flex h-16 w-16 items-center justify-center rounded-full bg-muted">
-                <Search className="h-8 w-8 text-muted-foreground" />
+                <h3 className="text-lg font-medium">Nenhum colaborador encontrado</h3>
+                <p className="text-muted-foreground">Tente ajustar sua busca ou filtros.</p>
               </div>
-              <h3 className="text-lg font-medium">Nenhum colaborador encontrado</h3>
-              <p className="text-muted-foreground">Tente ajustar sua busca ou filtros.</p>
-            </div>
-          )}
-        </div>
+            )}
+          </div>
+        )}
       </main>
 
       <footer className="border-t bg-white py-8 mt-12">

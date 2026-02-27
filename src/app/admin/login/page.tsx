@@ -8,13 +8,15 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
-import { useAuth } from "@/firebase";
+import { useAuth, useFirestore } from "@/firebase";
 import { signInWithEmailAndPassword } from "firebase/auth";
+import { doc, getDoc, setDoc, serverTimestamp } from "firebase/firestore";
 import { useToast } from "@/hooks/use-toast";
 
 export default function LoginPage() {
   const router = useRouter();
   const auth = useAuth();
+  const db = useFirestore();
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [email, setEmail] = useState("");
@@ -25,17 +27,34 @@ export default function LoginPage() {
     setLoading(true);
 
     try {
-      await signInWithEmailAndPassword(auth, email, password);
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      const user = userCredential.user;
+
+      // Verificar se o perfil administrativo existe, se não, criar (para garantir permissão no Firestore)
+      const adminRef = doc(db, "admin_profiles", user.uid);
+      const adminSnap = await getDoc(adminRef);
+
+      if (!adminSnap.exists()) {
+        await setDoc(adminRef, {
+          id: user.uid,
+          email: user.email,
+          fullName: user.displayName || "Administrador",
+          role: "admin",
+          createdAt: serverTimestamp()
+        });
+      }
+
       toast({
         title: "Bem-vindo!",
         description: "Login realizado com sucesso.",
       });
       router.push("/admin/dashboard");
     } catch (error: any) {
+      console.error(error);
       toast({
         variant: "destructive",
         title: "Erro no login",
-        description: "E-mail ou senha inválidos. Verifique se o usuário foi criado no Console do Firebase.",
+        description: "E-mail ou senha inválidos ou erro de conexão.",
       });
     } finally {
       setLoading(false);
@@ -60,7 +79,7 @@ export default function LoginPage() {
           <div className="space-y-1">
             <CardTitle className="text-2xl font-bold tracking-tight text-primary">Acesso Administrativo</CardTitle>
             <CardDescription>
-              Use suas credenciais do Firebase para entrar.
+              Acesse o painel para gerenciar sua equipe.
             </CardDescription>
           </div>
         </CardHeader>
@@ -109,7 +128,7 @@ export default function LoginPage() {
         </CardContent>
         <CardFooter className="flex flex-col gap-2 border-t py-4 mt-2">
           <p className="text-xs text-muted-foreground text-center">
-            Dica: Crie o usuário no Authentication do Firebase Console antes de tentar entrar.
+            Certifique-se de que o usuário existe no Firebase Authentication.
           </p>
         </CardFooter>
       </Card>
