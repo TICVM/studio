@@ -2,6 +2,7 @@
 export interface Setor {
   id: string;
   nome: string;
+  subcategorias?: string[]; // Lista de subcategorias pré-definidas
   data_criacao: string;
 }
 
@@ -11,7 +12,7 @@ export interface Funcionario {
   cargo: string;
   foto_url: string;
   setor_id: string;
-  subcategoria?: string; // Nova propriedade opcional
+  subcategoria?: string; 
   status: 'ativo' | 'inativo';
   is_lider?: boolean;
   titulo_lider?: string;

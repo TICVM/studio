@@ -50,6 +50,7 @@ export default function FuncionariosPage() {
   const [excelFile, setExcelFile] = useState<File | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [isLiderChecked, setIsLiderChecked] = useState(false);
+  const [selectedSectorId, setSelectedSectorId] = useState<string>("");
 
   const employeesRef = useMemoFirebase(() => collection(firestore, "employees"), [firestore]);
   const sectorsRef = useMemoFirebase(() => collection(firestore, "sectors"), [firestore]);
@@ -61,11 +62,18 @@ export default function FuncionariosPage() {
     if (isDialogOpen) {
       if (editingFunc) {
         setIsLiderChecked(!!editingFunc.is_lider);
+        setSelectedSectorId(editingFunc.setor_id || "");
       } else {
         setIsLiderChecked(false);
+        setSelectedSectorId("");
       }
     }
   }, [editingFunc, isDialogOpen]);
+
+  const currentSectorSubcategorias = useMemo(() => {
+    const sector = sectors?.find(s => s.id === selectedSectorId);
+    return sector?.subcategorias || [];
+  }, [sectors, selectedSectorId]);
 
   const filteredEmployees = useMemo(() => {
     return (employees || [])
@@ -130,8 +138,8 @@ export default function FuncionariosPage() {
         const worksheet = workbook.Sheets[firstSheetName];
         const jsonData = XLSX.utils.sheet_to_json(worksheet) as any[];
 
-        const sectorMap = new Map<string, string>();
-        sectors?.forEach(s => sectorMap.set(s.nome.toLowerCase().trim(), s.id));
+        const sectorMap = new Map<string, Setor>();
+        sectors?.forEach(s => sectorMap.set(s.nome.toLowerCase().trim(), s));
 
         let successCount = 0;
 
@@ -150,18 +158,28 @@ export default function FuncionariosPage() {
 
           if (nome && cargo) {
             const sName = setorString.toString().trim().toLowerCase();
-            let targetSectorId = sectorMap.get(sName);
+            let targetSector = sectorMap.get(sName);
+            let targetSectorId = targetSector?.id;
 
             if (!targetSectorId && sName) {
               const newSectorRef = doc(collection(firestore, "sectors"));
               const sectorNameRaw = sName.charAt(0).toUpperCase() + sName.slice(1);
               targetSectorId = newSectorRef.id;
-              setDocumentNonBlocking(newSectorRef, {
+              
+              const newSector: any = {
                 nome: sectorNameRaw,
+                subcategorias: subcategoria ? [subcategoria.toString()] : [],
                 data_criacao: new Date().toISOString(),
                 createdAt: serverTimestamp(),
-              }, { merge: true });
-              sectorMap.set(sName, targetSectorId);
+              };
+
+              setDocumentNonBlocking(newSectorRef, newSector, { merge: true });
+              
+              const cachedSector = { ...newSector, id: targetSectorId } as Setor;
+              sectorMap.set(sName, cachedSector);
+            } else if (targetSector && subcategoria) {
+              // Se o setor existe mas a subcategoria não está nele, poderíamos atualizar, 
+              // mas para simplificar vamos apenas garantir que o funcionário tenha a tag.
             }
 
             const status = (statusRaw?.toString().toLowerCase() === 'inativo') ? 'inativo' : 'ativo';
@@ -297,7 +315,11 @@ export default function FuncionariosPage() {
                     </div>
                     <div className="grid gap-2">
                       <Label htmlFor="setor_id">Setor</Label>
-                      <Select name="setor_id" defaultValue={editingFunc?.setor_id}>
+                      <Select 
+                        name="setor_id" 
+                        defaultValue={editingFunc?.setor_id}
+                        onValueChange={setSelectedSectorId}
+                      >
                         <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
                         <SelectContent>
                           {sectors?.map(s => <SelectItem key={s.id} value={s.id}>{s.nome}</SelectItem>)}
@@ -307,8 +329,28 @@ export default function FuncionariosPage() {
                   </div>
 
                   <div className="grid gap-2">
-                    <Label htmlFor="subcategoria">Subcategoria (Opcional)</Label>
-                    <Input id="subcategoria" name="subcategoria" defaultValue={editingFunc?.subcategoria} placeholder="Ex: Backend, Coordenação Acadêmica..." />
+                    <Label htmlFor="subcategoria">Subcategoria</Label>
+                    {currentSectorSubcategorias.length > 0 ? (
+                      <Select name="subcategoria" defaultValue={editingFunc?.subcategoria || "Geral"}>
+                        <SelectTrigger><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="Geral">Geral</SelectItem>
+                          {currentSectorSubcategorias.map(sub => (
+                            <SelectItem key={sub} value={sub}>{sub}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    ) : (
+                      <Input 
+                        id="subcategoria" 
+                        name="subcategoria" 
+                        defaultValue={editingFunc?.subcategoria} 
+                        placeholder="Ex: Backend, Acadêmico..." 
+                      />
+                    )}
+                    <p className="text-[10px] text-muted-foreground italic">
+                      Dica: Você pode pré-definir subcategorias na aba de "Setores".
+                    </p>
                   </div>
 
                   <div className="grid grid-cols-2 gap-4">
@@ -335,12 +377,12 @@ export default function FuncionariosPage() {
                         onCheckedChange={(checked) => setIsLiderChecked(!!checked)} 
                       />
                       <Label htmlFor="is_lider" className="text-sm font-bold cursor-pointer">
-                        Destaque como Liderança
+                        Destaque como Liderança (aparece no topo do setor)
                       </Label>
                     </div>
                     {isLiderChecked && (
                       <div className="grid gap-2 pl-6">
-                        <Label htmlFor="titulo_lider">Título Personalizado (ex: Coordenador)</Label>
+                        <Label htmlFor="titulo_lider">Título Customizado (ex: Coordenador)</Label>
                         <Input 
                           id="titulo_lider" 
                           name="titulo_lider" 
@@ -404,7 +446,7 @@ export default function FuncionariosPage() {
               <TableRow key={f.id} className="group">
                 <TableCell>
                   <div className="flex items-center gap-3">
-                    <div className="h-16 w-12 relative rounded-sm overflow-hidden border bg-slate-50 shrink-0">
+                    <div className="h-16 w-12 relative rounded-sm overflow-hidden border bg-slate-50 shrink-0 shadow-sm">
                       <Image 
                         src={f.foto_url || "https://picsum.photos/seed/placeholder/400/533"} 
                         alt={f.nome} 
@@ -421,12 +463,12 @@ export default function FuncionariosPage() {
                 <TableCell>
                   <div className="flex flex-col">
                     <span className="text-sm">{f.cargo}</span>
-                    {f.is_lider && <span className="text-[9px] font-bold text-amber-600 uppercase">{f.titulo_lider}</span>}
+                    {f.is_lider && <span className="text-[9px] font-black text-amber-600 uppercase tracking-tighter">{f.titulo_lider}</span>}
                   </div>
                 </TableCell>
                 <TableCell>
                   <div className="flex flex-col">
-                    <span className="text-xs font-medium">
+                    <span className="text-xs font-bold text-slate-700">
                       {sectors?.find(s => s.id === f.setor_id)?.nome || "-"}
                     </span>
                     {f.subcategoria && (
@@ -437,7 +479,7 @@ export default function FuncionariosPage() {
                   </div>
                 </TableCell>
                 <TableCell>
-                  <Badge variant={f.status === 'ativo' ? 'default' : 'secondary'} className="text-[10px] uppercase">
+                  <Badge variant={f.status === 'ativo' ? 'default' : 'secondary'} className="text-[10px] uppercase font-black">
                     {f.status}
                   </Badge>
                 </TableCell>

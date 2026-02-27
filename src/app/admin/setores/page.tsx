@@ -2,7 +2,7 @@
 "use client"
 
 import { useState } from "react";
-import { Grid, Plus, Edit2, Trash2, Search, Loader2, FileText, AlertCircle, Upload } from "lucide-react";
+import { Grid, Plus, Edit2, Trash2, Search, Loader2, FileText, AlertCircle, Upload, Tags } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -29,6 +29,7 @@ import { collection, doc, serverTimestamp } from "firebase/firestore";
 import { Setor, Funcionario } from "@/types";
 import { useToast } from "@/hooks/use-toast";
 import * as XLSX from "xlsx";
+import { Badge } from "@/components/ui/badge";
 
 export default function SetoresPage() {
   const firestore = useFirestore();
@@ -54,13 +55,23 @@ export default function SetoresPage() {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
     const nome = formData.get("nome") as string;
+    const subcatsRaw = formData.get("subcategorias") as string;
+    
+    // Converte a string de subcategorias em um array limpo
+    const subcategorias = subcatsRaw 
+      ? subcatsRaw.split(",").map(s => s.trim()).filter(s => s.length > 0)
+      : [];
 
     if (editingSector) {
-      updateDocumentNonBlocking(doc(firestore, "sectors", editingSector.id), { nome });
+      updateDocumentNonBlocking(doc(firestore, "sectors", editingSector.id), { 
+        nome, 
+        subcategorias 
+      });
       toast({ title: "Sucesso", description: "Setor atualizado." });
     } else {
       addDocumentNonBlocking(sectorsRef, {
         nome,
+        subcategorias,
         data_criacao: new Date().toISOString(),
         createdAt: serverTimestamp(),
       });
@@ -93,12 +104,18 @@ export default function SetoresPage() {
 
         for (const row of jsonData) {
           const nome = row.Nome || row.nome || row.NOME || row.Setor || row.setor;
+          const subcatsRaw = row.Subcategorias || row.subcategorias || "";
           
           if (nome) {
             const normalizedName = nome.toString().trim();
             if (!existingSectors.has(normalizedName.toLowerCase())) {
+              const subcategorias = subcatsRaw 
+                ? subcatsRaw.toString().split(/[,;]/).map((s: string) => s.trim()).filter((s: string) => s.length > 0)
+                : [];
+
               addDocumentNonBlocking(sectorsRef, {
                 nome: normalizedName,
+                subcategorias,
                 data_criacao: new Date().toISOString(),
                 createdAt: serverTimestamp(),
               });
@@ -108,7 +125,7 @@ export default function SetoresPage() {
           }
         }
 
-        toast({ title: "Sucesso", description: `${count} novos setores importados do Excel.` });
+        toast({ title: "Sucesso", description: `${count} novos setores importados.` });
         setIsBulkDialogOpen(false);
         setExcelFile(null);
       } catch (error) {
@@ -123,7 +140,7 @@ export default function SetoresPage() {
   };
 
   const handleDelete = (id: string) => {
-    const memberCount = employees?.filter(f => f.setor_ids && f.setor_ids.includes(id)).length || 0;
+    const memberCount = employees?.filter(f => f.setor_id === id).length || 0;
     if (memberCount > 0) {
       toast({ variant: "destructive", title: "Ação negada", description: "Remova os funcionários deste setor antes de excluí-lo." });
       return;
@@ -148,7 +165,7 @@ export default function SetoresPage() {
       <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center">
         <div>
           <h1 className="text-3xl font-bold tracking-tight text-primary">Setores</h1>
-          <p className="text-muted-foreground">Organize os departamentos da sua empresa.</p>
+          <p className="text-muted-foreground">Gerencie departamentos e suas subcategorias.</p>
         </div>
         
         <div className="flex gap-2">
@@ -169,7 +186,7 @@ export default function SetoresPage() {
               <Alert className="bg-amber-50 border-amber-200">
                 <AlertCircle className="h-4 w-4 text-amber-600" />
                 <AlertDescription className="text-xs text-amber-800">
-                  A planilha deve ter uma coluna chamada <b>Nome</b> ou <b>Setor</b>.
+                  A planilha deve ter colunas: <b>Nome</b> e <b>Subcategorias</b> (opcional, separadas por vírgula).
                 </AlertDescription>
               </Alert>
               <div className="grid gap-4 py-6">
@@ -189,12 +206,8 @@ export default function SetoresPage() {
                   className="w-full"
                   disabled={!excelFile || isProcessing}
                 >
-                  {isProcessing ? (
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  ) : (
-                    <Upload className="mr-2 h-4 w-4" />
-                  )}
-                  Processar Planilha
+                  {isProcessing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Upload className="mr-2 h-4 w-4" />}
+                  {isProcessing ? "Processando..." : "Importar"}
                 </Button>
               </DialogFooter>
             </DialogContent>
@@ -205,27 +218,41 @@ export default function SetoresPage() {
             if (!open) setEditingSector(null);
           }}>
             <DialogTrigger asChild>
-              <Button className="h-11">
+              <Button className="h-11 shadow-md">
                 <Plus className="mr-2 h-4 w-4" />
                 Novo Setor
               </Button>
             </DialogTrigger>
-            <DialogContent>
+            <DialogContent className="sm:max-w-[500px]">
               <form onSubmit={handleSave}>
                 <DialogHeader>
                   <DialogTitle>{editingSector ? "Editar Setor" : "Criar Novo Setor"}</DialogTitle>
                   <DialogDescription>
-                    Informe o nome do setor que deseja gerenciar.
+                    Defina o nome do departamento e suas divisões internas.
                   </DialogDescription>
                 </DialogHeader>
-                <div className="grid gap-4 py-4">
+                <div className="grid gap-6 py-4">
                   <div className="grid gap-2">
                     <Label htmlFor="nome">Nome do Setor</Label>
-                    <Input id="nome" name="nome" defaultValue={editingSector?.nome} required placeholder="Ex: Financeiro" />
+                    <Input id="nome" name="nome" defaultValue={editingSector?.nome} required placeholder="Ex: Tecnologia" />
+                  </div>
+                  <div className="grid gap-2">
+                    <Label htmlFor="subcategorias" className="flex items-center gap-2">
+                      <Tags size={14} /> Subcategorias (separadas por vírgula)
+                    </Label>
+                    <Input 
+                      id="subcategorias" 
+                      name="subcategorias" 
+                      defaultValue={editingSector?.subcategorias?.join(", ")} 
+                      placeholder="Ex: Frontend, Backend, Mobile..." 
+                    />
+                    <p className="text-[10px] text-muted-foreground italic">
+                      As subcategorias ajudam a organizar o Carômetro em subgrupos.
+                    </p>
                   </div>
                 </div>
                 <DialogFooter>
-                  <Button type="submit" className="w-full">Salvar Setor</Button>
+                  <Button type="submit" className="w-full h-11">Salvar Setor</Button>
                 </DialogFooter>
               </form>
             </DialogContent>
@@ -234,7 +261,7 @@ export default function SetoresPage() {
       </div>
 
       <div className="bg-white rounded-xl shadow-sm border overflow-hidden">
-        <div className="p-4 border-b flex items-center justify-between">
+        <div className="p-4 border-b">
           <div className="relative w-full max-w-sm">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input 
@@ -250,32 +277,42 @@ export default function SetoresPage() {
           <TableHeader>
             <TableRow className="bg-slate-50">
               <TableHead>Nome</TableHead>
+              <TableHead>Subcategorias</TableHead>
               <TableHead>Membros</TableHead>
-              <TableHead>Data de Criação</TableHead>
               <TableHead className="text-right">Ações</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {filteredSetores.map((setor) => {
-              const count = employees?.filter(f => f.setor_ids && f.setor_ids.includes(setor.id)).length || 0;
+              const count = employees?.filter(f => f.setor_id === setor.id).length || 0;
               return (
-                <TableRow key={setor.id}>
-                  <TableCell className="font-semibold text-primary">{setor.nome}</TableCell>
+                <TableRow key={setor.id} className="group">
+                  <TableCell className="font-bold text-primary">{setor.nome}</TableCell>
                   <TableCell>
-                    <span className="bg-blue-50 text-blue-700 px-2.5 py-0.5 rounded-full text-xs font-bold">
-                      {count} {count === 1 ? 'colaborador' : 'colaboradores'}
-                    </span>
+                    <div className="flex flex-wrap gap-1">
+                      {setor.subcategorias && setor.subcategorias.length > 0 ? (
+                        setor.subcategorias.map(sub => (
+                          <Badge key={sub} variant="secondary" className="text-[9px] uppercase tracking-wider py-0 px-1.5">
+                            {sub}
+                          </Badge>
+                        ))
+                      ) : (
+                        <span className="text-[10px] text-muted-foreground italic">Nenhuma</span>
+                      )}
+                    </div>
                   </TableCell>
-                  <TableCell className="text-sm text-muted-foreground">
-                    {setor.data_criacao ? new Date(setor.data_criacao).toLocaleDateString('pt-BR') : '-'}
+                  <TableCell>
+                    <Badge variant="outline" className="text-[10px] bg-slate-50">
+                      {count} {count === 1 ? 'membro' : 'membros'}
+                    </Badge>
                   </TableCell>
                   <TableCell className="text-right">
-                    <div className="flex justify-end gap-2">
+                    <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                       <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => {
                         setEditingSector(setor);
                         setIsDialogOpen(true);
                       }}>
-                        <Edit2 className="h-4 w-4 text-slate-500" />
+                        <Edit2 className="h-4 w-4" />
                       </Button>
                       <Button variant="ghost" size="icon" className="h-8 w-8 hover:text-destructive" onClick={() => handleDelete(setor.id)}>
                         <Trash2 className="h-4 w-4" />
