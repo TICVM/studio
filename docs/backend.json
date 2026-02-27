@@ -45,6 +45,19 @@
           "type": "string",
           "description": "The job title or position of the employee."
         },
+        "email": {
+          "type": "string",
+          "description": "The email address of the employee.",
+          "format": "email"
+        },
+        "ramal": {
+          "type": "string",
+          "description": "The internal phone extension/ramal."
+        },
+        "unidade": {
+          "type": "string",
+          "description": "The physical unit or branch where the employee works."
+        },
         "photoUrl": {
           "type": "string",
           "description": "URL pointing to the employee's profile photo.",

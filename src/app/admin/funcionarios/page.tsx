@@ -3,7 +3,7 @@
 
 import { useState } from "react";
 import Image from "next/image";
-import { Users, Plus, Edit2, Trash2, Search, FileText, Loader2, AlertCircle, Upload, Crown } from "lucide-react";
+import { Users, Plus, Edit2, Trash2, Search, FileText, Loader2, AlertCircle, Upload, Crown, Mail, Hash, Building } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -60,7 +60,6 @@ export default function FuncionariosPage() {
     f.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
     f.cargo.toLowerCase().includes(searchTerm.toLowerCase())
   ).sort((a, b) => {
-    // Ordenação administrativa: Líderes primeiro, depois alfabética
     if (a.is_lider && !b.is_lider) return -1;
     if (!a.is_lider && b.is_lider) return 1;
     return a.nome.localeCompare(b.nome);
@@ -75,6 +74,9 @@ export default function FuncionariosPage() {
       setor_id: formData.get("setor_id") as string,
       status: formData.get("status") as "ativo" | "inativo",
       is_lider: isLiderChecked,
+      email: formData.get("email") as string,
+      ramal: formData.get("ramal") as string,
+      unidade: formData.get("unidade") as string,
       foto_url: (formData.get("foto_url") as string) || `https://picsum.photos/seed/${Math.random()}/400/533`,
     };
 
@@ -130,6 +132,9 @@ export default function FuncionariosPage() {
           const statusRaw = row.Status || row.status || row.STATUS;
           const fotoUrl = row.Foto || row.foto || row.FOTO || row.FotoURL || row.foto_url;
           const liderRaw = row.Lider || row.Líder || row.lider || row.lideranca;
+          const email = row.Email || row.email || row.EMAIL || row.Correio;
+          const ramal = row.Ramal || row.ramal || row.RAMAL || row.Extensao;
+          const unidade = row.Unidade || row.unidade || row.UNIDADE || row.Filial;
 
           if (nome && cargo) {
             let targetSectorId = "";
@@ -163,6 +168,9 @@ export default function FuncionariosPage() {
               status,
               is_lider: isLider,
               foto_url: finalFotoUrl,
+              email: email?.toString() || "",
+              ramal: ramal?.toString() || "",
+              unidade: unidade?.toString() || "",
               data_criacao: new Date().toISOString(),
               createdAt: serverTimestamp(),
             });
@@ -204,7 +212,7 @@ export default function FuncionariosPage() {
       <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center">
         <div>
           <h1 className="text-3xl font-bold tracking-tight text-primary">Funcionários</h1>
-          <p className="text-muted-foreground">Gerencie sua equipe. Líderes aparecem primeiro na listagem.</p>
+          <p className="text-muted-foreground">Gerencie sua equipe e informações de contato.</p>
         </div>
         
         <div className="flex gap-2">
@@ -227,8 +235,8 @@ export default function FuncionariosPage() {
                 <AlertCircle className="h-4 w-4 text-blue-600" />
                 <AlertDescription className="text-xs text-blue-800">
                   Colunas esperadas:<br/>
-                  <b>Nome | Cargo | Setor | Status | Líder | Foto</b><br/>
-                  <i>* Na coluna Líder use "Sim" para destacar o funcionário.</i>
+                  <b>Nome | Cargo | Setor | Status | Líder | Foto | Email | Ramal | Unidade</b><br/>
+                  <i>* O sistema criará setores novos se não existirem.</i>
                 </AlertDescription>
               </Alert>
 
@@ -269,7 +277,7 @@ export default function FuncionariosPage() {
                 Novo Funcionário
               </Button>
             </DialogTrigger>
-            <DialogContent className="sm:max-w-[500px]">
+            <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
               <form onSubmit={handleSave}>
                 <DialogHeader>
                   <DialogTitle>{editingFunc ? "Editar Funcionário" : "Novo Funcionário"}</DialogTitle>
@@ -299,6 +307,31 @@ export default function FuncionariosPage() {
                           ))}
                         </SelectContent>
                       </Select>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="grid gap-2">
+                      <Label htmlFor="email">E-mail</Label>
+                      <div className="relative">
+                        <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                        <Input id="email" name="email" type="email" className="pl-10" defaultValue={editingFunc?.email} placeholder="email@empresa.com" />
+                      </div>
+                    </div>
+                    <div className="grid gap-2">
+                      <Label htmlFor="ramal">Ramal</Label>
+                      <div className="relative">
+                        <Hash className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                        <Input id="ramal" name="ramal" className="pl-10" defaultValue={editingFunc?.ramal} placeholder="Ex: 2024" />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="grid gap-2">
+                    <Label htmlFor="unidade">Unidade / Localização</Label>
+                    <div className="relative">
+                      <Building className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                      <Input id="unidade" name="unidade" className="pl-10" defaultValue={editingFunc?.unidade} placeholder="Ex: Sede Central - Bloco A" />
                     </div>
                   </div>
                   
@@ -362,7 +395,7 @@ export default function FuncionariosPage() {
               <TableHead>Colaborador</TableHead>
               <TableHead>Cargo</TableHead>
               <TableHead>Setor</TableHead>
-              <TableHead>Hierarquia</TableHead>
+              <TableHead>Contatos</TableHead>
               <TableHead>Status</TableHead>
               <TableHead className="text-right">Ações</TableHead>
             </TableRow>
@@ -382,7 +415,13 @@ export default function FuncionariosPage() {
                           className="object-cover" 
                         />
                       </div>
-                      <span className="font-semibold text-sm">{f.nome}</span>
+                      <div className="flex flex-col">
+                        <span className="font-semibold text-sm flex items-center gap-1">
+                          {f.nome}
+                          {f.is_lider && <Crown size={12} className="text-amber-500" />}
+                        </span>
+                        <span className="text-[10px] text-muted-foreground">{f.unidade}</span>
+                      </div>
                     </div>
                   </TableCell>
                   <TableCell className="text-sm">{f.cargo}</TableCell>
@@ -392,11 +431,10 @@ export default function FuncionariosPage() {
                     </span>
                   </TableCell>
                   <TableCell>
-                    {f.is_lider && (
-                      <span className="inline-flex items-center gap-1 text-[10px] font-bold text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-200 uppercase">
-                        <Crown size={10} /> Líder
-                      </span>
-                    )}
+                    <div className="flex flex-col gap-0.5">
+                      {f.email && <span className="text-[10px] text-muted-foreground truncate max-w-[150px]">{f.email}</span>}
+                      {f.ramal && <span className="text-[10px] font-bold text-primary">Ramal: {f.ramal}</span>}
+                    </div>
                   </TableCell>
                   <TableCell>
                     <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${

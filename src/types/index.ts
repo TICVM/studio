@@ -13,6 +13,9 @@ export interface Funcionario {
   setor_id: string;
   status: 'ativo' | 'inativo';
   is_lider?: boolean;
+  email?: string;
+  ramal?: string;
+  unidade?: string;
   data_criacao: string;
 }
 
