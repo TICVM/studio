@@ -10,9 +10,10 @@ export interface Funcionario {
   nome: string;
   cargo: string;
   foto_url: string;
-  setor_ids: string[]; // Alterado para array de IDs
+  setor_ids: string[];
   status: 'ativo' | 'inativo';
   is_lider?: boolean;
+  titulo_lider?: string; // Novo campo para o título personalizado
   email?: string;
   ramal?: string;
   unidade?: string;

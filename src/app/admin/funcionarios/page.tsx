@@ -1,7 +1,7 @@
 
 "use client"
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import Image from "next/image";
 import { Users, Plus, Edit2, Trash2, Search, FileText, Loader2, AlertCircle, Upload, Crown, Mail, Hash, Building, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -59,6 +59,17 @@ export default function FuncionariosPage() {
   const { data: employees, isLoading: loadingEmployees } = useCollection<Funcionario>(employeesRef);
   const { data: sectors } = useCollection<Setor>(sectorsRef);
 
+  // Sincroniza estados ao abrir o diálogo de edição
+  useEffect(() => {
+    if (editingFunc) {
+      setIsLiderChecked(!!editingFunc.is_lider);
+      setSelectedSectorIds(editingFunc.setor_ids || []);
+    } else {
+      setIsLiderChecked(false);
+      setSelectedSectorIds([]);
+    }
+  }, [editingFunc]);
+
   const filteredEmployees = employees?.filter(f => 
     f.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
     f.cargo.toLowerCase().includes(searchTerm.toLowerCase())
@@ -82,6 +93,7 @@ export default function FuncionariosPage() {
       setor_ids: selectedSectorIds,
       status: formData.get("status") as "ativo" | "inativo",
       is_lider: isLiderChecked,
+      titulo_lider: isLiderChecked ? (formData.get("titulo_lider") as string || "Líder de Setor") : "",
       email: formData.get("email") as string,
       ramal: formData.get("ramal") as string,
       unidade: formData.get("unidade") as string,
@@ -102,8 +114,6 @@ export default function FuncionariosPage() {
 
     setIsDialogOpen(false);
     setEditingFunc(null);
-    setIsLiderChecked(false);
-    setSelectedSectorIds([]);
   };
 
   const handleExcelUpload = async () => {
@@ -135,6 +145,7 @@ export default function FuncionariosPage() {
           const statusRaw = row.Status || row.status || row.STATUS;
           const fotoUrl = row.Foto || row.foto || row.FOTO || row.FotoURL || row.foto_url;
           const liderRaw = row.Lider || row.Líder || row.lider || row.lideranca;
+          const tituloLider = row.TituloLider || row.titulo_lider || row.Titulo_Lider;
           const email = row.Email || row.email || row.EMAIL || row.Correio;
           const ramal = row.Ramal || row.ramal || row.RAMAL || row.Extensao;
           const unidade = row.Unidade || row.unidade || row.UNIDADE || row.Filial;
@@ -170,6 +181,7 @@ export default function FuncionariosPage() {
               setor_ids: targetSectorIds,
               status,
               is_lider: isLider,
+              titulo_lider: isLider ? (tituloLider?.toString() || "Líder de Setor") : "",
               foto_url: finalFotoUrl,
               email: email?.toString() || "",
               ramal: ramal?.toString() || "",
@@ -236,7 +248,7 @@ export default function FuncionariosPage() {
               <DialogHeader>
                 <DialogTitle>Importar Planilha</DialogTitle>
                 <DialogDescription>
-                  Selecione um arquivo .xlsx para importar. Múltiplos setores podem ser separados por vírgula.
+                  Selecione um arquivo .xlsx para importar.
                 </DialogDescription>
               </DialogHeader>
               
@@ -244,8 +256,7 @@ export default function FuncionariosPage() {
                 <AlertCircle className="h-4 w-4 text-blue-600" />
                 <AlertDescription className="text-xs text-blue-800">
                   Colunas esperadas:<br/>
-                  <b>Nome | Cargo | Setor | Status | Líder | Foto | Email | Ramal | Unidade</b><br/>
-                  <i>* Setores múltiplos ex: "RH, Financeiro"</i>
+                  <b>Nome | Cargo | Setor | Status | Líder | TituloLider | Foto | Email | Ramal | Unidade</b><br/>
                 </AlertDescription>
               </Alert>
 
@@ -277,8 +288,6 @@ export default function FuncionariosPage() {
             setIsDialogOpen(open);
             if (!open) {
               setEditingFunc(null);
-              setIsLiderChecked(false);
-              setSelectedSectorIds([]);
             }
           }}>
             <DialogTrigger asChild>
@@ -309,7 +318,7 @@ export default function FuncionariosPage() {
                       <Label>Setores (Múltipla Escolha)</Label>
                       <Popover>
                         <PopoverTrigger asChild>
-                          <Button variant="outline" className="w-full justify-start font-normal">
+                          <Button variant="outline" className="w-full justify-start font-normal text-left overflow-hidden">
                             {selectedSectorIds.length > 0 
                               ? `${selectedSectorIds.length} selecionado(s)` 
                               : "Selecione setores..."}
@@ -365,15 +374,28 @@ export default function FuncionariosPage() {
                     </div>
                   </div>
                   
-                  <div className="flex items-center space-x-2 bg-slate-50 p-3 rounded-lg border">
-                    <Checkbox 
-                      id="is_lider" 
-                      checked={isLiderChecked} 
-                      onCheckedChange={(checked) => setIsLiderChecked(!!checked)} 
-                    />
-                    <Label htmlFor="is_lider" className="text-sm font-semibold cursor-pointer">
-                      Líder de Setor (Aparece no topo)
-                    </Label>
+                  <div className="space-y-4 bg-slate-50 p-4 rounded-lg border">
+                    <div className="flex items-center space-x-2">
+                      <Checkbox 
+                        id="is_lider" 
+                        checked={isLiderChecked} 
+                        onCheckedChange={(checked) => setIsLiderChecked(!!checked)} 
+                      />
+                      <Label htmlFor="is_lider" className="text-sm font-bold cursor-pointer">
+                        Destaque como Liderança (Aparece no topo do setor)
+                      </Label>
+                    </div>
+                    {isLiderChecked && (
+                      <div className="grid gap-2 pl-6 animate-in fade-in slide-in-from-top-2">
+                        <Label htmlFor="titulo_lider">Título da Liderança</Label>
+                        <Input 
+                          id="titulo_lider" 
+                          name="titulo_lider" 
+                          defaultValue={editingFunc?.titulo_lider || "Líder de Setor"} 
+                          placeholder="Ex: Coordenador de Área, Diretor, etc." 
+                        />
+                      </div>
+                    )}
                   </div>
 
                   <div className="grid grid-cols-2 gap-4">
@@ -396,11 +418,7 @@ export default function FuncionariosPage() {
                   </div>
                 </div>
                 <DialogFooter>
-                  <Button type="submit" className="w-full h-11" onClick={() => {
-                    if (editingFunc && selectedSectorIds.length === 0) {
-                      setSelectedSectorIds(editingFunc.setor_ids || []);
-                    }
-                  }}>
+                  <Button type="submit" className="w-full h-11">
                     {editingFunc ? "Salvar Alterações" : "Cadastrar Colaborador"}
                   </Button>
                 </DialogFooter>
@@ -458,7 +476,14 @@ export default function FuncionariosPage() {
                       </div>
                     </div>
                   </TableCell>
-                  <TableCell className="text-sm">{f.cargo}</TableCell>
+                  <TableCell className="text-sm">
+                    <div className="flex flex-col">
+                      <span>{f.cargo}</span>
+                      {f.is_lider && f.titulo_lider && (
+                        <span className="text-[9px] font-bold text-amber-600 uppercase">{f.titulo_lider}</span>
+                      )}
+                    </div>
+                  </TableCell>
                   <TableCell>
                     <div className="flex flex-wrap gap-1">
                       {employeeSectors && employeeSectors.length > 0 ? (
@@ -489,8 +514,6 @@ export default function FuncionariosPage() {
                     <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                       <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => {
                         setEditingFunc(f);
-                        setIsLiderChecked(!!f.is_lider);
-                        setSelectedSectorIds(f.setor_ids || []);
                         setIsDialogOpen(true);
                       }}>
                         <Edit2 className="h-4 w-4 text-slate-500" />
