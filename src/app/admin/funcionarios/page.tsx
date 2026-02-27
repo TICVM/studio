@@ -3,7 +3,7 @@
 
 import { useState, useMemo, useEffect } from "react";
 import Image from "next/image";
-import { Users, Plus, Edit2, Trash2, Search, FileText, Loader2, AlertCircle, Upload, Crown, Mail, Hash, Building, CheckCircle2, ChevronDown, X, Check } from "lucide-react";
+import { Users, Plus, Edit2, Trash2, Search, FileText, Loader2, AlertCircle, Upload, Crown, Mail, Hash, Building, ChevronDown, Check, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -61,7 +61,7 @@ export default function FuncionariosPage() {
   const { data: employees, isLoading: loadingEmployees } = useCollection<Funcionario>(employeesRef);
   const { data: sectors } = useCollection<Setor>(sectorsRef);
 
-  // Sync state when editing
+  // Sync state when editing starts or dialog opens
   useEffect(() => {
     if (isDialogOpen) {
       if (editingFunc) {
@@ -81,7 +81,6 @@ export default function FuncionariosPage() {
         f.cargo.toLowerCase().includes(searchTerm.toLowerCase())
       )
       .sort((a, b) => {
-        // Hierarchy: Leaders first, then alphabetical
         if (a.is_lider && !b.is_lider) return -1;
         if (!a.is_lider && b.is_lider) return 1;
         return a.nome.localeCompare(b.nome);
@@ -154,13 +153,12 @@ export default function FuncionariosPage() {
           const statusRaw = row.Status || row.status || row.STATUS;
           const fotoUrl = row.Foto || row.foto || row.FOTO || row.FotoURL || row.foto_url;
           const liderRaw = row.Lider || row.Líder || row.lider || row.lideranca;
-          const tituloLider = row.TituloLider || row.titulo_lider || row.Titulo_Lider || row.cargo_lider;
-          const email = row.Email || row.email || row.EMAIL || row.Correio;
-          const ramal = row.Ramal || row.ramal || row.RAMAL || row.Extensao;
-          const unidade = row.Unidade || row.unidade || row.UNIDADE || row.Filial;
+          const tituloLider = row.TituloLider || row.titulo_lider || row.cargo_lider;
+          const email = row.Email || row.email || row.EMAIL;
+          const ramal = row.Ramal || row.ramal || row.RAMAL;
+          const unidade = row.Unidade || row.unidade || row.UNIDADE;
 
           if (nome && cargo) {
-            // Split multiple sectors
             const rowSectorNames = setorString.toString().split(/[,;]/).map((s: string) => s.trim().toLowerCase()).filter(Boolean);
             const targetSectorIds: string[] = [];
 
@@ -169,7 +167,6 @@ export default function FuncionariosPage() {
               if (existingId) {
                 targetSectorIds.push(existingId);
               } else {
-                // Auto-create missing sectors
                 const newSectorRef = doc(collection(firestore, "sectors"));
                 const sectorNameRaw = sName.charAt(0).toUpperCase() + sName.slice(1);
                 targetSectorIds.push(newSectorRef.id);
@@ -183,7 +180,7 @@ export default function FuncionariosPage() {
             }
 
             const status = (statusRaw?.toString().toLowerCase() === 'inativo') ? 'inativo' : 'ativo';
-            const isLider = liderRaw?.toString().toLowerCase() === 'sim' || liderRaw === true || liderRaw === 1 || liderRaw === 'S';
+            const isLider = liderRaw?.toString().toLowerCase() === 'sim' || liderRaw === true || liderRaw === 'S';
             const finalFotoUrl = fotoUrl || `https://picsum.photos/seed/${Math.random()}/400/533`;
 
             addDocumentNonBlocking(employeesRef, {
@@ -262,16 +259,12 @@ export default function FuncionariosPage() {
                   Selecione um arquivo .xlsx para importar colaboradores em massa.
                 </DialogDescription>
               </DialogHeader>
-              
               <Alert className="bg-blue-50 border-blue-200">
                 <AlertCircle className="h-4 w-4 text-blue-600" />
                 <AlertDescription className="text-xs text-blue-800">
-                  Colunas esperadas:<br/>
-                  <b>Nome | Cargo | Setor | Status | Líder | TituloLider | Foto | Email | Ramal | Unidade</b><br/>
-                  <span className="opacity-70 mt-1 block">* O sistema cria setores automaticamente se não existirem.</span>
+                  Colunas esperadas: <b>Nome | Cargo | Setor | Status | Líder | TituloLider | Foto | Email | Ramal | Unidade</b>
                 </AlertDescription>
               </Alert>
-
               <div className="grid gap-4 py-6">
                 <div className="grid gap-2">
                   <Label htmlFor="excel-file">Arquivo Excel</Label>
@@ -298,9 +291,7 @@ export default function FuncionariosPage() {
 
           <Dialog open={isDialogOpen} onOpenChange={(open) => {
             setIsDialogOpen(open);
-            if (!open) {
-              setEditingFunc(null);
-            }
+            if (!open) setEditingFunc(null);
           }}>
             <DialogTrigger asChild>
               <Button className="h-11 shadow-md">
@@ -312,22 +303,20 @@ export default function FuncionariosPage() {
               <form onSubmit={handleSave}>
                 <DialogHeader>
                   <DialogTitle>{editingFunc ? "Editar Funcionário" : "Novo Funcionário"}</DialogTitle>
-                  <DialogDescription>
-                    Preencha os dados do colaborador abaixo.
-                  </DialogDescription>
+                  <DialogDescription>Preencha os dados do colaborador.</DialogDescription>
                 </DialogHeader>
                 <div className="grid gap-6 py-4">
                   <div className="grid gap-2">
                     <Label htmlFor="nome">Nome Completo</Label>
-                    <Input id="nome" name="nome" defaultValue={editingFunc?.nome} required placeholder="Ex: Roberto Justos" />
+                    <Input id="nome" name="nome" defaultValue={editingFunc?.nome} required />
                   </div>
                   <div className="grid grid-cols-2 gap-4">
                     <div className="grid gap-2">
                       <Label htmlFor="cargo">Cargo</Label>
-                      <Input id="cargo" name="cargo" defaultValue={editingFunc?.cargo} required placeholder="Ex: Desenvolvedor" />
+                      <Input id="cargo" name="cargo" defaultValue={editingFunc?.cargo} required />
                     </div>
                     <div className="grid gap-2">
-                      <Label>Setores (Múltipla Escolha)</Label>
+                      <Label>Setores (Múltipla Seleção)</Label>
                       <Popover>
                         <PopoverTrigger asChild>
                           <Button 
@@ -335,18 +324,15 @@ export default function FuncionariosPage() {
                             variant="outline" 
                             className="w-full justify-between font-normal text-left h-auto min-h-[40px] py-2"
                           >
-                            <div className="flex flex-wrap gap-1 items-center max-w-[200px]">
+                            <div className="flex flex-wrap gap-1 max-w-[200px]">
                               {selectedSectorIds.length > 0 ? (
-                                selectedSectorIds.map(id => {
-                                  const s = sectors?.find(sec => sec.id === id);
-                                  return (
-                                    <Badge key={id} variant="secondary" className="text-[10px] px-2 py-0 h-5">
-                                      {s?.nome}
-                                    </Badge>
-                                  );
-                                })
+                                selectedSectorIds.map(id => (
+                                  <Badge key={id} variant="secondary" className="text-[10px] px-2 py-0 h-5">
+                                    {sectors?.find(s => s.id === id)?.nome}
+                                  </Badge>
+                                ))
                               ) : (
-                                <span className="text-muted-foreground">Selecione os setores...</span>
+                                <span className="text-muted-foreground">Selecione...</span>
                               )}
                             </div>
                             <ChevronDown className="h-4 w-4 opacity-50 shrink-0" />
@@ -362,18 +348,23 @@ export default function FuncionariosPage() {
                                     "flex items-center gap-2 px-3 py-2 rounded-md cursor-pointer hover:bg-slate-50 transition-colors",
                                     selectedSectorIds.includes(s.id) && "bg-slate-100"
                                   )}
-                                  onClick={() => toggleSectorSelection(s.id)}
+                                  onClick={(e) => {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                    toggleSectorSelection(s.id);
+                                  }}
                                 >
-                                  <div className={cn(
-                                    "h-4 w-4 border rounded-sm flex items-center justify-center transition-colors",
-                                    selectedSectorIds.includes(s.id) ? "bg-primary border-primary" : "border-slate-300 bg-white"
-                                  )}>
-                                    {selectedSectorIds.includes(s.id) && <Check className="h-3 w-3 text-white" />}
-                                  </div>
+                                  <Checkbox 
+                                    checked={selectedSectorIds.includes(s.id)} 
+                                    onCheckedChange={() => toggleSectorSelection(s.id)}
+                                    className="pointer-events-none"
+                                  />
                                   <span className="text-sm font-medium">{s.nome}</span>
                                 </div>
                               ))}
-                              {sectors?.length === 0 && <p className="text-xs text-muted-foreground p-4 text-center">Nenhum setor cadastrado.</p>}
+                              {(!sectors || sectors.length === 0) && (
+                                <p className="text-xs text-muted-foreground p-4 text-center">Nenhum setor cadastrado.</p>
+                              )}
                             </div>
                           </ScrollArea>
                         </PopoverContent>
@@ -384,26 +375,17 @@ export default function FuncionariosPage() {
                   <div className="grid grid-cols-2 gap-4">
                     <div className="grid gap-2">
                       <Label htmlFor="email">E-mail</Label>
-                      <div className="relative">
-                        <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                        <Input id="email" name="email" type="email" className="pl-10" defaultValue={editingFunc?.email} placeholder="email@empresa.com" />
-                      </div>
+                      <Input id="email" name="email" type="email" defaultValue={editingFunc?.email} />
                     </div>
                     <div className="grid gap-2">
                       <Label htmlFor="ramal">Ramal</Label>
-                      <div className="relative">
-                        <Hash className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                        <Input id="ramal" name="ramal" className="pl-10" defaultValue={editingFunc?.ramal} placeholder="Ex: 2024" />
-                      </div>
+                      <Input id="ramal" name="ramal" defaultValue={editingFunc?.ramal} />
                     </div>
                   </div>
 
                   <div className="grid gap-2">
                     <Label htmlFor="unidade">Unidade / Localização</Label>
-                    <div className="relative">
-                      <Building className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                      <Input id="unidade" name="unidade" className="pl-10" defaultValue={editingFunc?.unidade} placeholder="Ex: Sede Central - Bloco A" />
-                    </div>
+                    <Input id="unidade" name="unidade" defaultValue={editingFunc?.unidade} />
                   </div>
                   
                   <div className="space-y-4 bg-slate-50 p-4 rounded-lg border">
@@ -414,17 +396,16 @@ export default function FuncionariosPage() {
                         onCheckedChange={(checked) => setIsLiderChecked(!!checked)} 
                       />
                       <Label htmlFor="is_lider" className="text-sm font-bold cursor-pointer">
-                        Destaque como Liderança (Aparece no topo do setor)
+                        Destaque como Liderança
                       </Label>
                     </div>
                     {isLiderChecked && (
-                      <div className="grid gap-2 pl-6 animate-in fade-in slide-in-from-top-2">
-                        <Label htmlFor="titulo_lider">Título da Liderança Personalizado</Label>
+                      <div className="grid gap-2 pl-6">
+                        <Label htmlFor="titulo_lider">Título Personalizado (ex: Coordenador)</Label>
                         <Input 
                           id="titulo_lider" 
                           name="titulo_lider" 
                           defaultValue={editingFunc?.titulo_lider || "Líder de Setor"} 
-                          placeholder="Ex: Coordenador de Área, Diretor, etc." 
                         />
                       </div>
                     )}
@@ -434,9 +415,7 @@ export default function FuncionariosPage() {
                     <div className="grid gap-2">
                       <Label htmlFor="status">Status</Label>
                       <Select name="status" defaultValue={editingFunc?.status || "ativo"}>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Status" />
-                        </SelectTrigger>
+                        <SelectTrigger><SelectValue /></SelectTrigger>
                         <SelectContent>
                           <SelectItem value="ativo">Ativo</SelectItem>
                           <SelectItem value="inativo">Inativo</SelectItem>
@@ -444,15 +423,13 @@ export default function FuncionariosPage() {
                       </Select>
                     </div>
                     <div className="grid gap-2">
-                      <Label htmlFor="foto_url">URL da Foto</Label>
-                      <Input id="foto_url" name="foto_url" defaultValue={editingFunc?.foto_url} placeholder="https://..." />
+                      <Label htmlFor="foto_url">URL da Foto (3x4)</Label>
+                      <Input id="foto_url" name="foto_url" defaultValue={editingFunc?.foto_url} />
                     </div>
                   </div>
                 </div>
                 <DialogFooter>
-                  <Button type="submit" className="w-full h-11">
-                    {editingFunc ? "Salvar Alterações" : "Cadastrar Colaborador"}
-                  </Button>
+                  <Button type="submit" className="w-full h-11">Salvar</Button>
                 </DialogFooter>
               </form>
             </DialogContent>
@@ -465,7 +442,7 @@ export default function FuncionariosPage() {
           <div className="relative w-full max-w-sm">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input 
-              placeholder="Buscar por nome ou cargo..." 
+              placeholder="Buscar..." 
               className="pl-10"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
@@ -479,7 +456,6 @@ export default function FuncionariosPage() {
               <TableHead>Colaborador</TableHead>
               <TableHead>Cargo</TableHead>
               <TableHead>Setores</TableHead>
-              <TableHead>Contatos</TableHead>
               <TableHead>Status</TableHead>
               <TableHead className="text-right">Ações</TableHead>
             </TableRow>
@@ -491,56 +467,32 @@ export default function FuncionariosPage() {
                 <TableRow key={f.id} className="group">
                   <TableCell>
                     <div className="flex items-center gap-3">
-                      <div className="h-16 w-12 relative rounded-sm overflow-hidden border bg-slate-50 shadow-sm shrink-0">
-                        <Image 
-                          src={f.foto_url || "https://picsum.photos/seed/placeholder/400/533"} 
-                          alt={f.nome} 
-                          fill 
-                          className="object-cover" 
-                        />
+                      <div className="h-16 w-12 relative rounded-sm overflow-hidden border bg-slate-50 shrink-0">
+                        <Image src={f.foto_url} alt={f.nome} fill className="object-cover" />
                       </div>
-                      <div className="flex flex-col">
-                        <span className="font-semibold text-sm flex items-center gap-1">
-                          {f.nome}
-                          {f.is_lider && <Crown size={12} className="text-amber-500" />}
-                        </span>
-                        <span className="text-[10px] text-muted-foreground">{f.unidade}</span>
-                      </div>
+                      <span className="font-semibold text-sm flex items-center gap-1">
+                        {f.nome}
+                        {f.is_lider && <Crown size={12} className="text-amber-500" />}
+                      </span>
                     </div>
                   </TableCell>
-                  <TableCell className="text-sm">
+                  <TableCell>
                     <div className="flex flex-col">
-                      <span>{f.cargo}</span>
-                      {f.is_lider && f.titulo_lider && (
-                        <span className="text-[9px] font-bold text-amber-600 uppercase">{f.titulo_lider}</span>
-                      )}
+                      <span className="text-sm">{f.cargo}</span>
+                      {f.is_lider && <span className="text-[9px] font-bold text-amber-600 uppercase">{f.titulo_lider}</span>}
                     </div>
                   </TableCell>
                   <TableCell>
                     <div className="flex flex-wrap gap-1">
-                      {employeeSectors && employeeSectors.length > 0 ? (
-                        employeeSectors.map(s => (
-                          <span key={s.id} className="text-[9px] bg-slate-100 text-slate-700 px-1.5 py-0.5 rounded font-bold uppercase">
-                            {s.nome}
-                          </span>
-                        ))
-                      ) : (
-                        <span className="text-xs text-muted-foreground">Nenhum</span>
-                      )}
+                      {employeeSectors?.map(s => (
+                        <span key={s.id} className="text-[9px] bg-slate-100 px-1.5 py-0.5 rounded font-bold uppercase">{s.nome}</span>
+                      ))}
                     </div>
                   </TableCell>
                   <TableCell>
-                    <div className="flex flex-col gap-0.5">
-                      {f.email && <span className="text-[10px] text-muted-foreground truncate max-w-[150px]">{f.email}</span>}
-                      {f.ramal && <span className="text-[10px] font-bold text-primary">Ramal: {f.ramal}</span>}
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${
-                      f.status === 'ativo' ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-500'
-                    }`}>
+                    <Badge variant={f.status === 'ativo' ? 'default' : 'secondary'} className="text-[10px] uppercase">
                       {f.status}
-                    </span>
+                    </Badge>
                   </TableCell>
                   <TableCell className="text-right">
                     <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -548,7 +500,7 @@ export default function FuncionariosPage() {
                         setEditingFunc(f);
                         setIsDialogOpen(true);
                       }}>
-                        <Edit2 className="h-4 w-4 text-slate-500" />
+                        <Edit2 className="h-4 w-4" />
                       </Button>
                       <Button variant="ghost" size="icon" className="h-8 w-8 hover:text-destructive" onClick={() => handleDelete(f.id)}>
                         <Trash2 className="h-4 w-4" />
@@ -560,11 +512,6 @@ export default function FuncionariosPage() {
             })}
           </TableBody>
         </Table>
-        {filteredEmployees.length === 0 && (
-          <div className="p-12 text-center text-muted-foreground">
-            Nenhum colaborador encontrado.
-          </div>
-        )}
       </div>
     </div>
   );
