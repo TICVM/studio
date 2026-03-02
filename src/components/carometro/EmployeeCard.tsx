@@ -4,7 +4,7 @@
 import Image from "next/image";
 import { Funcionario, Setor } from "@/types";
 import { Card, CardContent } from "@/components/ui/card";
-import { Crown, Mail, Hash, Building, ArrowRight, Tag } from "lucide-react";
+import { Crown, Mail, Hash, Building, ArrowRight, Briefcase } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -77,16 +77,10 @@ export function EmployeeCard({ funcionario, setor }: EmployeeCardProps) {
                 {funcionario.is_lider && <Crown size={20} fill="white" />}
               </DialogTitle>
               <div className="flex flex-wrap gap-2 mt-1">
-                <p className="text-primary-foreground/80 font-medium">
-                  {funcionario.cargo}
-                </p>
                 {funcionario.is_lider && (
-                  <>
-                    <span className="text-primary-foreground/40">•</span>
-                    <span className="text-primary-foreground/90 font-bold uppercase text-xs">
-                      {funcionario.titulo_lider || "Líder"}
-                    </span>
-                  </>
+                  <span className="text-primary-foreground/90 font-bold uppercase text-xs">
+                    {funcionario.titulo_lider || "Líder"}
+                  </span>
                 )}
               </div>
             </DialogHeader>
@@ -109,12 +103,10 @@ export function EmployeeCard({ funcionario, setor }: EmployeeCardProps) {
                 <span className="text-[10px] bg-slate-100 text-slate-700 px-2 py-1 rounded font-bold uppercase border">
                   {setor?.nome || "Setor não informado"}
                 </span>
-                {funcionario.subcategoria && (
-                  <div className="flex items-center gap-1 text-[10px] font-bold text-primary uppercase bg-primary/5 px-2 py-1 rounded border border-primary/10">
-                    <Tag size={10} />
-                    {funcionario.subcategoria}
-                  </div>
-                )}
+                <div className="flex items-center gap-1 text-[10px] font-bold text-primary uppercase bg-primary/5 px-2 py-1 rounded border border-primary/10">
+                  <Briefcase size={10} />
+                  {funcionario.cargo}
+                </div>
               </div>
 
               {funcionario.email && (
@@ -155,6 +147,14 @@ export function EmployeeCard({ funcionario, setor }: EmployeeCardProps) {
                   </div>
                 )}
               </div>
+
+              {funcionario.subcategoria && (
+                <div className="pt-2 text-center">
+                  <span className="text-[9px] font-bold text-muted-foreground uppercase tracking-widest px-2 py-0.5 rounded-full bg-slate-50 border">
+                    {funcionario.subcategoria}
+                  </span>
+                </div>
+              )}
             </div>
 
             <div className="pt-2 border-t text-center">
