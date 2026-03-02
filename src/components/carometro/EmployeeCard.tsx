@@ -147,14 +147,6 @@ export function EmployeeCard({ funcionario, setor }: EmployeeCardProps) {
                   </div>
                 )}
               </div>
-
-              {funcionario.subcategoria && (
-                <div className="pt-2 text-center">
-                  <span className="text-[9px] font-bold text-muted-foreground uppercase tracking-widest px-2 py-0.5 rounded-full bg-slate-50 border">
-                    {funcionario.subcategoria}
-                  </span>
-                </div>
-              )}
             </div>
 
             <div className="pt-2 border-t text-center">
