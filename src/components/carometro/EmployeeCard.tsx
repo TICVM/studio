@@ -4,7 +4,7 @@
 import Image from "next/image";
 import { Funcionario, Setor } from "@/types";
 import { Card, CardContent } from "@/components/ui/card";
-import { Crown, Mail, Hash, Building, ArrowRight, Briefcase } from "lucide-react";
+import { Crown, Mail, Hash, Building, ArrowRight, Briefcase, Tag } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -100,12 +100,17 @@ export function EmployeeCard({ funcionario, setor }: EmployeeCardProps) {
 
             <div className="space-y-4">
               <div className="flex flex-col items-center gap-2 mb-4">
-                <span className="text-[10px] bg-slate-100 text-slate-700 px-2 py-1 rounded font-bold uppercase border">
-                  {setor?.nome || "Setor não informado"}
-                </span>
-                <div className="flex items-center gap-1 text-[10px] font-bold text-primary uppercase bg-primary/5 px-2 py-1 rounded border border-primary/10">
-                  <Briefcase size={10} />
-                  {funcionario.cargo}
+                <div className="flex gap-2">
+                  {funcionario.subcategoria && (
+                    <span className="text-[10px] bg-slate-100 text-slate-700 px-2 py-1 rounded font-bold uppercase border flex items-center gap-1">
+                      <Tag size={10} />
+                      {funcionario.subcategoria}
+                    </span>
+                  )}
+                  <div className="flex items-center gap-1 text-[10px] font-bold text-primary uppercase bg-primary/5 px-2 py-1 rounded border border-primary/10">
+                    <Briefcase size={10} />
+                    {funcionario.cargo}
+                  </div>
                 </div>
               </div>
 
