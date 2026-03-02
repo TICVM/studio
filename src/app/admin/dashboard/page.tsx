@@ -2,6 +2,7 @@
 "use client"
 
 import { useMemo } from "react";
+import Image from "next/image";
 import { useMemoFirebase, useCollection, useFirestore } from "@/firebase";
 import { collection } from "firebase/firestore";
 import { Users, Grid, UserCheck, UserX, Clock, Loader2, ArrowUpRight } from "lucide-react";
