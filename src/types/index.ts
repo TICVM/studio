@@ -34,4 +34,5 @@ export interface SystemSettings {
   systemName: string;
   logoUrl: string;
   primaryColor: string;
+  logoStyle: 'square_with_name' | 'rectangular_no_name';
 }

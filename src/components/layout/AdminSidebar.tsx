@@ -24,20 +24,36 @@ export function AdminSidebar() {
   const settingsRef = useMemoFirebase(() => doc(firestore, "settings", "appearance"), [firestore]);
   const { data: settings } = useDoc<SystemSettings>(settingsRef);
 
+  const logoStyle = settings?.logoStyle || "square_with_name";
+
   return (
     <div className="w-64 bg-sidebar flex flex-col h-screen shrink-0 border-r border-sidebar-border transition-all">
       <div className="p-6">
         <Link href="/admin/dashboard" className="flex items-center gap-3">
-          <div className="bg-primary p-2 rounded-lg text-white relative w-10 h-10 overflow-hidden">
-            {settings?.logoUrl ? (
-              <NextImage src={settings.logoUrl} alt="Logo" fill className="object-contain p-1" />
-            ) : (
-              <Users size={24} />
-            )}
-          </div>
-          <span className="text-lg font-bold tracking-tight text-sidebar-foreground truncate">
-            {settings?.systemName || "AdminPanel"}
-          </span>
+          {logoStyle === "square_with_name" ? (
+            <>
+              <div className="bg-primary p-2 rounded-lg text-white relative w-10 h-10 overflow-hidden shrink-0">
+                {settings?.logoUrl ? (
+                  <NextImage src={settings.logoUrl} alt="Logo" fill className="object-contain p-1" />
+                ) : (
+                  <Users size={24} />
+                )}
+              </div>
+              <span className="text-lg font-bold tracking-tight text-sidebar-foreground truncate">
+                {settings?.systemName || "AdminPanel"}
+              </span>
+            </>
+          ) : (
+            <div className="h-12 w-full flex items-center justify-start overflow-hidden">
+              {settings?.logoUrl ? (
+                <img src={settings.logoUrl} alt="Logo" className="h-full w-auto object-contain" />
+              ) : (
+                <span className="text-lg font-bold tracking-tight text-sidebar-foreground">
+                  {settings?.systemName || "AdminPanel"}
+                </span>
+              )}
+            </div>
+          )}
         </Link>
       </div>
 

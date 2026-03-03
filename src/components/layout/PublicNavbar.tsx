@@ -14,20 +14,36 @@ export function PublicNavbar() {
   const settingsRef = useMemoFirebase(() => doc(firestore, "settings", "appearance"), [firestore]);
   const { data: settings } = useDoc<SystemSettings>(settingsRef);
 
+  const logoStyle = settings?.logoStyle || "square_with_name";
+
   return (
     <nav className="sticky top-0 z-50 w-full border-b bg-white/80 backdrop-blur-md">
       <div className="container mx-auto px-4 h-16 flex items-center justify-between">
-        <Link href="/" className="flex items-center gap-2">
-          <div className="bg-primary p-1.5 rounded-lg text-white relative w-10 h-10 overflow-hidden">
-            {settings?.logoUrl ? (
-              <NextImage src={settings.logoUrl} alt="Logo" fill className="object-contain p-1" />
-            ) : (
-              <Users size={20} />
-            )}
-          </div>
-          <span className="text-xl font-bold tracking-tight text-primary">
-            {settings?.systemName || "PessoasEmpresa"}
-          </span>
+        <Link href="/" className="flex items-center gap-2 h-full py-2">
+          {logoStyle === "square_with_name" ? (
+            <>
+              <div className="bg-primary p-1.5 rounded-lg text-white relative w-10 h-10 overflow-hidden shrink-0">
+                {settings?.logoUrl ? (
+                  <NextImage src={settings.logoUrl} alt="Logo" fill className="object-contain p-1" />
+                ) : (
+                  <Users size={20} />
+                )}
+              </div>
+              <span className="text-xl font-bold tracking-tight text-primary truncate max-w-[150px] sm:max-w-xs">
+                {settings?.systemName || "PessoasEmpresa"}
+              </span>
+            </>
+          ) : (
+            <div className="relative h-full aspect-[4/1] flex items-center">
+              {settings?.logoUrl ? (
+                <img src={settings.logoUrl} alt="Logo" className="h-full w-auto object-contain py-1" />
+              ) : (
+                <span className="text-xl font-bold tracking-tight text-primary">
+                  {settings?.systemName || "PessoasEmpresa"}
+                </span>
+              )}
+            </div>
+          )}
         </Link>
         <div className="flex items-center gap-4">
           <Button variant="ghost" asChild className="hidden sm:flex">

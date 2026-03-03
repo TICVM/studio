@@ -2,11 +2,12 @@
 "use client"
 
 import { useState, useEffect, useRef } from "react";
-import { Settings, Save, Palette, Image as ImageIcon, Type, Loader2, Users, Upload, X } from "lucide-react";
+import { Settings, Save, Palette, Image as ImageIcon, Type, Loader2, Users, Upload, X, Layout } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useFirestore, useDoc, useMemoFirebase, updateDocumentNonBlocking } from "@/firebase";
 import { doc } from "firebase/firestore";
 import { SystemSettings } from "@/types";
@@ -22,19 +23,22 @@ export default function ConfiguracoesPage() {
   const [form, setForm] = useState<Partial<SystemSettings>>({
     systemName: "",
     logoUrl: "",
-    primaryColor: "#3b82f6"
+    primaryColor: "#3b82f6",
+    logoStyle: "square_with_name"
   });
 
   const [isCompressing, setIsCompressing] = useState(false);
 
   useEffect(() => {
     if (settings) {
-      setForm(settings);
+      setForm({
+        ...settings,
+        logoStyle: settings.logoStyle || "square_with_name"
+      });
     }
   }, [settings]);
 
-  // Função para comprimir e redimensionar a imagem
-  const compressImage = (base64Str: string, maxWidth = 400, maxHeight = 400): Promise<string> => {
+  const compressImage = (base64Str: string, maxWidth = 800, maxHeight = 400): Promise<string> => {
     return new Promise((resolve) => {
       const img = new (window as any).Image();
       img.src = base64Str;
@@ -59,7 +63,6 @@ export default function ConfiguracoesPage() {
         canvas.height = height;
         const ctx = canvas.getContext('2d');
         ctx?.drawImage(img, 0, 0, width, height);
-        // Preserva transparência para logos usando PNG
         resolve(canvas.toDataURL('image/png'));
       };
     });
@@ -69,13 +72,13 @@ export default function ConfiguracoesPage() {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    setIsCompressing(true);
+    setIsProcessing(true);
     const reader = new FileReader();
     reader.onload = async (event) => {
       try {
         const base64 = event.target?.result as string;
-        // Sempre aplica compressão/redimensionamento para garantir otimização
-        const optimizedLogo = await compressImage(base64);
+        // Ajustamos max width para 800 para logos retangulares
+        const optimizedLogo = await compressImage(base64, 800, 400);
         setForm(prev => ({ ...prev, logoUrl: optimizedLogo }));
         toast({
           title: "Logo processada",
@@ -88,11 +91,13 @@ export default function ConfiguracoesPage() {
           description: "Não foi possível otimizar a imagem.",
         });
       } finally {
-        setIsCompressing(false);
+        setIsProcessing(false);
       }
     };
     reader.readAsDataURL(file);
   };
+
+  const [isProcessing, setIsProcessing] = useState(false);
 
   const removeLogo = () => {
     setForm(prev => ({ ...prev, logoUrl: "" }));
@@ -144,11 +149,35 @@ export default function ConfiguracoesPage() {
                 />
               </div>
               
+              <div className="space-y-4">
+                <Label>Layout do Logotipo</Label>
+                <RadioGroup 
+                  value={form.logoStyle} 
+                  onValueChange={(val: 'square_with_name' | 'rectangular_no_name') => setForm({...form, logoStyle: val})}
+                  className="grid grid-cols-1 gap-4"
+                >
+                  <div className="flex items-center space-x-2 border p-3 rounded-lg hover:bg-slate-50 cursor-pointer">
+                    <RadioGroupItem value="square_with_name" id="style1" />
+                    <Label htmlFor="style1" className="flex-1 cursor-pointer">
+                      <div className="font-bold">Ícone + Nome</div>
+                      <div className="text-xs text-muted-foreground">Logo quadrada acompanhada do nome textual.</div>
+                    </Label>
+                  </div>
+                  <div className="flex items-center space-x-2 border p-3 rounded-lg hover:bg-slate-50 cursor-pointer">
+                    <RadioGroupItem value="rectangular_no_name" id="style2" />
+                    <Label htmlFor="style2" className="flex-1 cursor-pointer">
+                      <div className="font-bold">Logo Retangular</div>
+                      <div className="text-xs text-muted-foreground">Logo larga, sem o nome textual ao lado.</div>
+                    </Label>
+                  </div>
+                </RadioGroup>
+              </div>
+
               <div className="space-y-2">
                 <Label>Logotipo da Empresa</Label>
                 <div className="flex flex-col gap-4">
                   {form.logoUrl ? (
-                    <div className="relative w-32 h-32 border rounded-lg overflow-hidden bg-slate-50 flex items-center justify-center p-2">
+                    <div className={`relative ${form.logoStyle === 'rectangular_no_name' ? 'w-full h-24' : 'w-32 h-32'} border rounded-lg overflow-hidden bg-slate-50 flex items-center justify-center p-2`}>
                       <img src={form.logoUrl} alt="Preview Logo" className="max-w-full max-h-full object-contain" />
                       <button 
                         type="button"
@@ -161,10 +190,10 @@ export default function ConfiguracoesPage() {
                   ) : (
                     <div 
                       onClick={() => fileInputRef.current?.click()}
-                      className="w-32 h-32 border-2 border-dashed rounded-lg flex flex-col items-center justify-center gap-2 cursor-pointer hover:bg-slate-50 transition-colors text-muted-foreground"
+                      className={`w-32 h-32 border-2 border-dashed rounded-lg flex flex-col items-center justify-center gap-2 cursor-pointer hover:bg-slate-50 transition-colors text-muted-foreground`}
                     >
-                      {isCompressing ? <Loader2 className="h-6 w-6 animate-spin" /> : <Upload size={24} />}
-                      <span className="text-[10px] font-bold uppercase">{isCompressing ? "Processando..." : "Upload"}</span>
+                      {isProcessing ? <Loader2 className="h-6 w-6 animate-spin" /> : <Upload size={24} />}
+                      <span className="text-[10px] font-bold uppercase">{isProcessing ? "Processando..." : "Upload"}</span>
                     </div>
                   )}
                   <input 
@@ -174,7 +203,7 @@ export default function ConfiguracoesPage() {
                     accept="image/*"
                     className="hidden"
                   />
-                  <p className="text-[10px] text-muted-foreground italic">O sistema comprimirá imagens grandes automaticamente.</p>
+                  <p className="text-[10px] text-muted-foreground italic">Dica: Use logos retangulares se escolher o estilo "Logo Retangular".</p>
                 </div>
               </div>
             </CardContent>
@@ -208,34 +237,47 @@ export default function ConfiguracoesPage() {
             </CardContent>
           </Card>
 
-          <Button type="submit" className="w-full h-12 shadow-md" disabled={isCompressing}>
+          <Button type="submit" className="w-full h-12 shadow-md" disabled={isProcessing}>
             <Save className="mr-2 h-5 w-5" />
             Salvar Alterações
           </Button>
         </div>
 
         <div className="space-y-6">
-          <Card className="border-none shadow-sm bg-slate-50">
+          <Card className="border-none shadow-sm bg-slate-50 sticky top-8">
             <CardHeader>
               <CardTitle className="text-sm uppercase tracking-widest text-muted-foreground">Pré-visualização</CardTitle>
             </CardHeader>
             <CardContent className="space-y-8">
               <div className="p-4 bg-white rounded-lg shadow-sm border space-y-4">
-                <div className="flex items-center gap-3">
-                  <div 
-                    className="w-10 h-10 rounded-lg flex items-center justify-center text-white overflow-hidden p-1"
-                    style={{ backgroundColor: form.primaryColor }}
-                  >
-                    {form.logoUrl ? (
-                      <img src={form.logoUrl} alt="Logo" className="w-full h-full object-contain" />
-                    ) : (
-                      <Users size={20} />
-                    )}
-                  </div>
-                  <span className="font-bold text-lg" style={{ color: form.primaryColor }}>
-                    {form.systemName || "Nome do Sistema"}
-                  </span>
+                <div className="flex items-center gap-3 border-b pb-4">
+                  {form.logoStyle === 'square_with_name' ? (
+                    <>
+                      <div 
+                        className="w-10 h-10 rounded-lg flex items-center justify-center text-white overflow-hidden p-1"
+                        style={{ backgroundColor: form.primaryColor }}
+                      >
+                        {form.logoUrl ? (
+                          <img src={form.logoUrl} alt="Logo" className="w-full h-full object-contain" />
+                        ) : (
+                          <Users size={20} />
+                        )}
+                      </div>
+                      <span className="font-bold text-lg" style={{ color: form.primaryColor }}>
+                        {form.systemName || "Nome do Sistema"}
+                      </span>
+                    </>
+                  ) : (
+                    <div className="h-10 w-full flex items-center justify-start overflow-hidden">
+                      {form.logoUrl ? (
+                        <img src={form.logoUrl} alt="Logo" className="h-full object-contain" />
+                      ) : (
+                        <span className="font-bold text-lg" style={{ color: form.primaryColor }}>{form.systemName}</span>
+                      )}
+                    </div>
+                  )}
                 </div>
+                
                 <div className="space-y-2">
                   <div 
                     className="h-8 w-full rounded-md" 
@@ -246,7 +288,7 @@ export default function ConfiguracoesPage() {
               </div>
               
               <div className="text-xs text-muted-foreground text-center bg-slate-100 p-4 rounded-lg">
-                <p>As alterações de cor e nome são aplicadas instantaneamente em todo o sistema.</p>
+                <p>O estilo selecionado altera como o cabeçalho aparece em todas as telas.</p>
               </div>
             </CardContent>
           </Card>

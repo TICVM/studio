@@ -146,7 +146,12 @@
       "properties": {
         "systemName": { "type": "string" },
         "logoUrl": { "type": "string" },
-        "primaryColor": { "type": "string", "description": "Hex color code for the primary brand color." }
+        "primaryColor": { "type": "string", "description": "Hex color code for the primary brand color." },
+        "logoStyle": { 
+          "type": "string", 
+          "enum": ["square_with_name", "rectangular_no_name"],
+          "description": "Defines if the logo is a square icon with name or a wide rectangular logo without name text."
+        }
       }
     }
   },
