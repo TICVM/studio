@@ -55,7 +55,7 @@ export default function Home() {
 
   // Aniversariantes do Mês
   const anniversaries = useMemo(() => {
-    if (!employees || !settings?.showBirthdays) return [];
+    if (!employees || settings?.showBirthdays === false) return [];
     return employees.filter(f => {
       if (!f.data_nascimento) return false;
       const birthDate = new Date(f.data_nascimento);
@@ -152,7 +152,7 @@ export default function Home() {
       
       <main className="flex-1 container mx-auto px-4 py-8 space-y-10">
         {/* Aniversariantes do Mês (Destaque Festivo) */}
-        {settings?.showBirthdays && anniversaries.length > 0 && !hasActiveFilters && (
+        {settings?.showBirthdays !== false && anniversaries.length > 0 && !hasActiveFilters && (
           <section className="bg-gradient-to-r from-pink-500/10 via-purple-500/10 to-blue-500/10 p-6 md:p-8 rounded-[2rem] border border-pink-100 shadow-sm animate-in fade-in slide-in-from-top-4 duration-700">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-8 gap-4">
               <div className="space-y-1">

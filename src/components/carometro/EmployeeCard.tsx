@@ -38,13 +38,13 @@ export function EmployeeCard({ funcionario, setor }: EmployeeCardProps) {
   const showBadge = settings?.cardShowBadge ?? true;
   const badgePos = settings?.cardBadgePosition || 'bottom';
 
-  // Verificar se o aniversário é hoje
+  // Verificar se o aniversário é hoje e se a função está habilitada
   const isBirthdayToday = useMemo(() => {
-    if (!funcionario.data_nascimento) return false;
+    if (!funcionario.data_nascimento || settings?.showBirthdays === false) return false;
     const today = new Date();
     const birthDate = new Date(funcionario.data_nascimento);
     return today.getUTCMonth() === birthDate.getUTCMonth() && today.getUTCDate() === birthDate.getUTCDate();
-  }, [funcionario.data_nascimento]);
+  }, [funcionario.data_nascimento, settings?.showBirthdays]);
 
   const badgeContent = (
     <div className={cn("pt-2", badgePos === 'top' && "pt-0 mb-4")}>
