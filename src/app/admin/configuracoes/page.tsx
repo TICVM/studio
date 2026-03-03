@@ -205,8 +205,8 @@ export default function ConfiguracoesPage() {
                     
                     <div className="flex items-center justify-between p-3 border rounded-lg bg-slate-50">
                       <div className="space-y-0.5">
-                        <Label htmlFor="showCount" className="cursor-pointer font-medium">Exibir Contagem</Label>
-                        <p className="text-[10px] text-muted-foreground uppercase">Mostra o número de colaboradores na página.</p>
+                        <Label htmlFor="showCount" className="cursor-pointer font-medium">Exibir Número</Label>
+                        <p className="text-[10px] text-muted-foreground uppercase">Mostra ou oculta apenas o numeral do total de colaboradores.</p>
                       </div>
                       <Switch 
                         id="showCount" 
