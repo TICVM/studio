@@ -2,7 +2,7 @@
 "use client"
 
 import { useState, useEffect } from "react";
-import { Settings, Save, Palette, Image, Type, Loader2 } from "lucide-react";
+import { Settings, Save, Palette, Image, Type, Loader2, Users } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
