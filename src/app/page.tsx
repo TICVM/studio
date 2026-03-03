@@ -134,9 +134,11 @@ export default function Home() {
               {settings?.heroTitle || settings?.systemName || "Equipe Corporativa"}
             </h1>
             <div className="flex items-center gap-2">
-              <p className="text-sm" style={{ color: 'hsl(var(--foreground))' }}>
-                {filteredEmployees.length} {settings?.countLabel || "colaboradores encontrados."}
-              </p>
+              {settings?.showCount !== false && (
+                <p className="text-sm" style={{ color: 'hsl(var(--foreground))' }}>
+                  {filteredEmployees.length} {settings?.countLabel || "colaboradores encontrados."}
+                </p>
+              )}
               {hasActiveFilters && (
                 <Button 
                   variant="ghost" 

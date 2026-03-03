@@ -36,6 +36,7 @@ export interface SystemSettings {
   systemName: string;
   heroTitle?: string;
   countLabel?: string;
+  showCount?: boolean;
   logoUrl: string;
   primaryColor: string;
   leadershipColor?: string;

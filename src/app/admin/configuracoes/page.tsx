@@ -45,6 +45,7 @@ export default function ConfiguracoesPage() {
     systemName: "",
     heroTitle: "",
     countLabel: "",
+    showCount: true,
     logoUrl: "",
     primaryColor: "#3b82f6",
     leadershipColor: "#f59e0b",
@@ -83,6 +84,7 @@ export default function ConfiguracoesPage() {
         ...settings,
         logoStyle: settings.logoStyle || "square_with_name",
         logoHeight: settings.logoHeight || 48,
+        showCount: settings.showCount ?? true,
         leadershipColor: settings.leadershipColor || "#f59e0b",
         backgroundColor: settings.backgroundColor || "#f8fafc",
         cardBackgroundColor: settings.cardBackgroundColor || "#ffffff",
@@ -199,6 +201,18 @@ export default function ConfiguracoesPage() {
                       <Label htmlFor="countLabel">Rótulo de Contagem</Label>
                       <Input id="countLabel" value={form.countLabel} onChange={e => setForm({...form, countLabel: e.target.value})} placeholder="Ex: colaboradores encontrados" />
                       <p className="text-[10px] text-muted-foreground">O texto que aparece após o número total de colaboradores.</p>
+                    </div>
+                    
+                    <div className="flex items-center justify-between p-3 border rounded-lg bg-slate-50">
+                      <div className="space-y-0.5">
+                        <Label htmlFor="showCount" className="cursor-pointer font-medium">Exibir Contagem</Label>
+                        <p className="text-[10px] text-muted-foreground uppercase">Mostra o número de colaboradores na página.</p>
+                      </div>
+                      <Switch 
+                        id="showCount" 
+                        checked={form.showCount ?? true} 
+                        onCheckedChange={(v) => setForm({...form, showCount: v})} 
+                      />
                     </div>
                   </div>
                   
