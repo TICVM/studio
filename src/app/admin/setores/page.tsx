@@ -57,7 +57,6 @@ export default function SetoresPage() {
     const nome = formData.get("nome") as string;
     const subcatsRaw = formData.get("subcategorias") as string;
     
-    // Converte a string de subcategorias em um array limpo
     const subcategorias = subcatsRaw 
       ? subcatsRaw.split(",").map(s => s.trim()).filter(s => s.length > 0)
       : [];
@@ -146,8 +145,9 @@ export default function SetoresPage() {
       return;
     }
 
-    if (confirm("Deseja realmente excluir este setor?")) {
-      deleteDocumentNonBlocking(doc(firestore, "sectors", id));
+    if (window.confirm("Deseja realmente excluir este setor?")) {
+      const docRef = doc(firestore, "sectors", id);
+      deleteDocumentNonBlocking(docRef);
       toast({ title: "Excluído", description: "Setor removido com sucesso." });
     }
   };

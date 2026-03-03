@@ -177,9 +177,6 @@ export default function FuncionariosPage() {
               
               const cachedSector = { ...newSector, id: targetSectorId } as Setor;
               sectorMap.set(sName, cachedSector);
-            } else if (targetSector && subcategoria) {
-              // Se o setor existe mas a subcategoria não está nele, poderíamos atualizar, 
-              // mas para simplificar vamos apenas garantir que o funcionário tenha a tag.
             }
 
             const status = (statusRaw?.toString().toLowerCase() === 'inativo') ? 'inativo' : 'ativo';
@@ -220,8 +217,9 @@ export default function FuncionariosPage() {
   };
 
   const handleDelete = (id: string) => {
-    if (confirm("Deseja realmente excluir este colaborador?")) {
-      deleteDocumentNonBlocking(doc(firestore, "employees", id));
+    if (window.confirm("Deseja realmente excluir este colaborador?")) {
+      const docRef = doc(firestore, "employees", id);
+      deleteDocumentNonBlocking(docRef);
       toast({ title: "Excluído", description: "Colaborador removido com sucesso." });
     }
   };

@@ -2,7 +2,7 @@
 "use client"
 
 import { useMemo } from "react";
-import Image from "next/image";
+import NextImage from "next/image";
 import { useMemoFirebase, useCollection, useFirestore } from "@/firebase";
 import { collection } from "firebase/firestore";
 import { Users, Grid, UserCheck, UserX, Clock, Loader2, ArrowUpRight } from "lucide-react";
@@ -93,7 +93,7 @@ export default function DashboardPage() {
                     <div key={f.id} className="flex items-center justify-between group">
                       <div className="flex items-center gap-4">
                         <div className="h-12 w-9 rounded-sm bg-slate-100 flex-shrink-0 overflow-hidden relative border border-slate-200">
-                          <Image 
+                          <NextImage 
                             src={f.foto_url || "https://picsum.photos/seed/placeholder/400/533"} 
                             alt={f.nome} 
                             fill 
