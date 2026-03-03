@@ -64,7 +64,6 @@ export default function FuncionariosPage() {
   const [isLiderChecked, setIsLiderChecked] = useState(false);
   const [selectedSectorId, setSelectedSectorId] = useState<string>("");
   
-  // Estados para seleção em massa
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [massUnidade, setMassUnidade] = useState("");
 
@@ -114,7 +113,6 @@ export default function FuncionariosPage() {
       });
   }, [employees, searchTerm, filterUnidade]);
 
-  // Funções de Seleção
   const toggleSelect = (id: string) => {
     setSelectedIds(prev => 
       prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
@@ -245,26 +243,26 @@ export default function FuncionariosPage() {
   }
 
   return (
-    <div className="space-y-8">
-      <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center">
-        <div className="flex items-center gap-4">
+    <div className="space-y-6">
+      <div className="flex flex-col xl:flex-row gap-4 justify-between items-start xl:items-center">
+        <div className="flex flex-col md:flex-row items-start md:items-center gap-4 w-full xl:w-auto">
           <div>
-            <h1 className="text-3xl font-bold tracking-tight text-primary">Funcionários</h1>
-            <p className="text-muted-foreground">Gerencie sua equipe e informações de contato.</p>
+            <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-primary">Funcionários</h1>
+            <p className="text-sm text-muted-foreground">Gerencie sua equipe e informações de contato.</p>
           </div>
           
           {selectedIds.length > 0 && (
-            <div className="flex items-center gap-3 bg-primary/5 px-4 py-2 rounded-full border border-primary/20 animate-in fade-in zoom-in duration-300">
-              <span className="text-xs font-bold text-primary uppercase tracking-wider">{selectedIds.length} selecionados</span>
-              <div className="h-4 w-px bg-primary/20" />
+            <div className="flex items-center gap-3 bg-primary/5 px-4 py-2 rounded-full border border-primary/20 animate-in fade-in zoom-in duration-300 w-full md:w-auto overflow-x-auto">
+              <span className="text-xs font-bold text-primary uppercase tracking-wider whitespace-nowrap">{selectedIds.length} selecionados</span>
+              <div className="h-4 w-px bg-primary/20 shrink-0" />
               <Dialog open={isMassUpdateOpen} onOpenChange={setIsMassUpdateOpen}>
                 <DialogTrigger asChild>
-                  <Button size="sm" variant="outline" className="h-8 border-primary/30 text-primary hover:bg-primary hover:text-white transition-all">
+                  <Button size="sm" variant="outline" className="h-8 border-primary/30 text-primary hover:bg-primary hover:text-white transition-all whitespace-nowrap">
                     <MapPin className="mr-1.5 h-3.5 w-3.5" />
                     Mudar Unidade
                   </Button>
                 </DialogTrigger>
-                <DialogContent>
+                <DialogContent className="sm:max-w-[425px]">
                   <DialogHeader>
                     <DialogTitle>Alteração em Massa</DialogTitle>
                     <DialogDescription>
@@ -282,21 +280,21 @@ export default function FuncionariosPage() {
                       />
                     </div>
                   </div>
-                  <DialogFooter>
+                  <DialogFooter className="flex-col sm:flex-row gap-2">
                     <Button variant="ghost" onClick={() => setIsMassUpdateOpen(false)}>Cancelar</Button>
                     <Button onClick={handleMassUnidadeUpdate} disabled={!massUnidade}>Aplicar Mudança</Button>
                   </DialogFooter>
                 </DialogContent>
               </Dialog>
-              <Button size="sm" variant="ghost" onClick={() => setSelectedIds([])} className="h-8 text-xs hover:bg-transparent hover:underline">Limpar</Button>
+              <Button size="sm" variant="ghost" onClick={() => setSelectedIds([])} className="h-8 text-xs hover:bg-transparent hover:underline whitespace-nowrap">Limpar</Button>
             </div>
           )}
         </div>
         
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2 w-full xl:w-auto">
           <Dialog open={isBulkDialogOpen} onOpenChange={setIsBulkDialogOpen}>
             <DialogTrigger asChild>
-              <Button variant="outline" className="h-11 shadow-sm">
+              <Button variant="outline" className="flex-1 sm:flex-none h-11 shadow-sm">
                 <FileText className="mr-2 h-4 w-4" />
                 Importar Excel
               </Button>
@@ -310,7 +308,7 @@ export default function FuncionariosPage() {
                 <Input type="file" accept=".xlsx, .xls" onChange={(e) => setExcelFile(e.target.files?.[0] || null)} />
               </div>
               <DialogFooter>
-                <Button onClick={handleExcelUpload} disabled={!excelFile || isProcessing}>
+                <Button onClick={handleExcelUpload} disabled={!excelFile || isProcessing} className="w-full sm:w-auto">
                   {isProcessing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Upload className="mr-2 h-4 w-4" />}
                   Importar
                 </Button>
@@ -323,7 +321,7 @@ export default function FuncionariosPage() {
             if (!open) setEditingFunc(null);
           }}>
             <DialogTrigger asChild>
-              <Button className="h-11 shadow-md">
+              <Button className="flex-1 sm:flex-none h-11 shadow-md">
                 <Plus className="mr-2 h-4 w-4" />
                 Novo Funcionário
               </Button>
@@ -339,7 +337,7 @@ export default function FuncionariosPage() {
                     <Label htmlFor="nome">Nome Completo</Label>
                     <Input id="nome" name="nome" defaultValue={editingFunc?.nome} required />
                   </div>
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="grid gap-2">
                       <Label htmlFor="cargo">Cargo</Label>
                       <Input id="cargo" name="cargo" defaultValue={editingFunc?.cargo} required />
@@ -376,7 +374,7 @@ export default function FuncionariosPage() {
                     )}
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="grid gap-2">
                       <Label htmlFor="email">E-mail</Label>
                       <Input id="email" name="email" type="email" defaultValue={editingFunc?.email} />
@@ -405,7 +403,7 @@ export default function FuncionariosPage() {
                     )}
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="grid gap-2">
                       <Label htmlFor="status">Status</Label>
                       <Select name="status" defaultValue={editingFunc?.status || "ativo"}>
@@ -469,110 +467,119 @@ export default function FuncionariosPage() {
           </div>
         </div>
 
-        <Table>
-          <TableHeader>
-            <TableRow className="bg-slate-50">
-              <TableHead className="w-12 px-4">
-                <Checkbox 
-                  checked={selectedIds.length > 0 && selectedIds.length === filteredEmployees.length}
-                  onCheckedChange={toggleSelectAll}
-                />
-              </TableHead>
-              <TableHead>Colaborador</TableHead>
-              <TableHead>Cargo</TableHead>
-              <TableHead>Setor / Sub</TableHead>
-              <TableHead>Unidade</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead className="text-right">Ações</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {filteredEmployees.map((f) => (
-              <TableRow key={f.id} className="group">
-                <TableCell className="px-4">
+        <div className="overflow-x-auto">
+          <Table>
+            <TableHeader>
+              <TableRow className="bg-slate-50">
+                <TableHead className="w-12 px-4">
                   <Checkbox 
-                    checked={selectedIds.includes(f.id)}
-                    onCheckedChange={() => toggleSelect(f.id)}
+                    checked={selectedIds.length > 0 && selectedIds.length === filteredEmployees.length}
+                    onCheckedChange={toggleSelectAll}
                   />
-                </TableCell>
-                <TableCell>
-                  <div className="flex items-center gap-3">
-                    <div className="h-16 w-12 relative rounded-sm overflow-hidden border bg-slate-50 shrink-0 shadow-sm aspect-[3/4]">
-                      <NextImage 
-                        src={f.foto_url || "https://picsum.photos/seed/placeholder/400/533"} 
-                        alt={f.nome} 
-                        fill 
-                        className="object-cover" 
-                      />
-                    </div>
-                    <span className="font-semibold text-sm flex items-center gap-1">
-                      {f.nome}
-                      {f.is_lider && <Crown size={12} style={{ color: 'var(--leadership, #f59e0b)' }} />}
-                    </span>
-                  </div>
-                </TableCell>
-                <TableCell>
-                  <div className="flex flex-col">
-                    <span className="text-sm">{f.cargo}</span>
-                    {f.is_lider && <span className="text-[9px] font-black uppercase tracking-tighter" style={{ color: 'var(--leadership, #d97706)' }}>{f.titulo_lider}</span>}
-                  </div>
-                </TableCell>
-                <TableCell>
-                  <div className="flex flex-col">
-                    <span className="text-xs font-bold text-slate-700">
-                      {sectors?.find(s => s.id === f.setor_id)?.nome || "-"}
-                    </span>
-                    {f.subcategoria && <span className="text-[10px] text-muted-foreground italic">{f.subcategoria}</span>}
-                  </div>
-                </TableCell>
-                <TableCell>
-                   <span className="text-xs text-slate-600 flex items-center gap-1">
-                    {f.unidade ? (
-                      <><MapPin size={10} className="text-muted-foreground" /> {f.unidade}</>
-                    ) : "-"}
-                   </span>
-                </TableCell>
-                <TableCell>
-                  <Badge variant={f.status === 'ativo' ? 'default' : 'secondary'} className="text-[10px] uppercase font-black">
-                    {f.status}
-                  </Badge>
-                </TableCell>
-                <TableCell className="text-right">
-                  <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => {
-                      setEditingFunc(f);
-                      setIsDialogOpen(true);
-                    }}>
-                      <Edit2 className="h-4 w-4" />
-                    </Button>
-                    
-                    <AlertDialog>
-                      <AlertDialogTrigger asChild>
-                        <Button variant="ghost" size="icon" className="h-8 w-8 hover:text-destructive">
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </AlertDialogTrigger>
-                      <AlertDialogContent>
-                        <AlertDialogHeader>
-                          <AlertDialogTitle>Excluir Colaborador</AlertDialogTitle>
-                          <AlertDialogDescription>
-                            Deseja realmente excluir este colaborador? Esta ação não pode ser desfeita.
-                          </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                          <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                          <AlertDialogAction onClick={() => handleDelete(f.id)} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-                            Excluir
-                          </AlertDialogAction>
-                        </AlertDialogFooter>
-                      </AlertDialogContent>
-                    </AlertDialog>
-                  </div>
-                </TableCell>
+                </TableHead>
+                <TableHead className="min-w-[200px]">Colaborador</TableHead>
+                <TableHead className="min-w-[150px]">Cargo</TableHead>
+                <TableHead className="min-w-[150px]">Setor / Sub</TableHead>
+                <TableHead className="min-w-[120px]">Unidade</TableHead>
+                <TableHead className="min-w-[100px]">Status</TableHead>
+                <TableHead className="text-right min-w-[100px]">Ações</TableHead>
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+            </TableHeader>
+            <TableBody>
+              {filteredEmployees.map((f) => (
+                <TableRow key={f.id} className="group">
+                  <TableCell className="px-4">
+                    <Checkbox 
+                      checked={selectedIds.includes(f.id)}
+                      onCheckedChange={() => toggleSelect(f.id)}
+                    />
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex items-center gap-3">
+                      <div className="h-16 w-12 relative rounded-sm overflow-hidden border bg-slate-50 shrink-0 shadow-sm aspect-[3/4]">
+                        <NextImage 
+                          src={f.foto_url || "https://picsum.photos/seed/placeholder/400/533"} 
+                          alt={f.nome} 
+                          fill 
+                          className="object-cover" 
+                        />
+                      </div>
+                      <span className="font-semibold text-sm flex items-center gap-1">
+                        {f.nome}
+                        {f.is_lider && <Crown className="h-3 w-3" style={{ color: 'var(--leadership, #f59e0b)' }} />}
+                      </span>
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex flex-col">
+                      <span className="text-sm">{f.cargo}</span>
+                      {f.is_lider && <span className="text-[9px] font-black uppercase tracking-tighter" style={{ color: 'var(--leadership, #d97706)' }}>{f.titulo_lider}</span>}
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex flex-col">
+                      <span className="text-xs font-bold text-slate-700">
+                        {sectors?.find(s => s.id === f.setor_id)?.nome || "-"}
+                      </span>
+                      {f.subcategoria && <span className="text-[10px] text-muted-foreground italic">{f.subcategoria}</span>}
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <span className="text-xs text-slate-600 flex items-center gap-1">
+                      {f.unidade ? (
+                        <><MapPin size={10} className="text-muted-foreground" /> {f.unidade}</>
+                      ) : "-"}
+                    </span>
+                  </TableCell>
+                  <TableCell>
+                    <Badge variant={f.status === 'ativo' ? 'default' : 'secondary'} className="text-[10px] uppercase font-black">
+                      {f.status}
+                    </Badge>
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <div className="flex justify-end gap-1 md:gap-2 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity">
+                      <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => {
+                        setEditingFunc(f);
+                        setIsDialogOpen(true);
+                      }}>
+                        <Edit2 className="h-4 w-4" />
+                      </Button>
+                      
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button variant="ghost" size="icon" className="h-8 w-8 hover:text-destructive">
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Excluir Colaborador</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              Deseja realmente excluir este colaborador? Esta ação não pode ser desfeita.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter className="flex-col sm:flex-row gap-2">
+                            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                            <AlertDialogAction onClick={() => handleDelete(f.id)} className="bg-destructive text-destructive-foreground hover:bg-destructive/90 w-full sm:w-auto">
+                              Excluir
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))}
+              {filteredEmployees.length === 0 && (
+                <TableRow>
+                  <TableCell colSpan={7} className="h-32 text-center text-muted-foreground">
+                    Nenhum colaborador encontrado.
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </div>
       </div>
     </div>
   );

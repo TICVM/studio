@@ -182,19 +182,19 @@ export default function SetoresPage() {
   }
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight text-primary">Setores</h1>
-          <p className="text-muted-foreground">Gerencie departamentos e sua ordem de exibição.</p>
+          <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-primary">Setores</h1>
+          <p className="text-sm text-muted-foreground">Gerencie departamentos e sua ordem de exibição.</p>
         </div>
         
-        <div className="flex gap-2">
+        <div className="flex gap-2 w-full sm:w-auto">
           <Dialog open={isBulkDialogOpen} onOpenChange={setIsBulkDialogOpen}>
             <DialogTrigger asChild>
-              <Button variant="outline" className="h-11 shadow-sm"><FileText className="mr-2 h-4 w-4" />Importar</Button>
+              <Button variant="outline" className="flex-1 sm:flex-none h-11 shadow-sm"><FileText className="mr-2 h-4 w-4" />Importar</Button>
             </DialogTrigger>
-            <DialogContent>
+            <DialogContent className="sm:max-w-[425px]">
               <DialogHeader>
                 <DialogTitle>Importar Setores</DialogTitle>
                 <DialogDescription>Use uma planilha com as colunas Nome, Ordem e Subcategorias.</DialogDescription>
@@ -203,7 +203,7 @@ export default function SetoresPage() {
                 <Input type="file" accept=".xlsx, .xls" onChange={(e) => setExcelFile(e.target.files?.[0] || null)} />
               </div>
               <DialogFooter>
-                <Button onClick={handleExcelUpload} disabled={!excelFile || isProcessing}>
+                <Button onClick={handleExcelUpload} disabled={!excelFile || isProcessing} className="w-full">
                   {isProcessing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : "Processar Planilha"}
                 </Button>
               </DialogFooter>
@@ -217,17 +217,17 @@ export default function SetoresPage() {
             }
           }}>
             <DialogTrigger asChild>
-              <Button className="h-11 shadow-md"><Plus className="mr-2 h-4 w-4" />Novo Setor</Button>
+              <Button className="flex-1 sm:flex-none h-11 shadow-md"><Plus className="mr-2 h-4 w-4" />Novo Setor</Button>
             </DialogTrigger>
-            <DialogContent className="sm:max-w-[500px]">
+            <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
               <form onSubmit={handleSave}>
                 <DialogHeader>
                   <DialogTitle>{editingSector ? "Editar Setor" : "Criar Novo Setor"}</DialogTitle>
                   <DialogDescription>A ordem define a sequência no Carômetro (números menores aparecem primeiro).</DialogDescription>
                 </DialogHeader>
                 <div className="grid gap-6 py-4">
-                  <div className="grid grid-cols-4 gap-4">
-                    <div className="col-span-3 grid gap-2">
+                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <div className="md:col-span-3 grid gap-2">
                       <Label htmlFor="nome">Nome do Setor</Label>
                       <Input id="nome" name="nome" defaultValue={editingSector?.nome} required />
                     </div>
@@ -247,14 +247,14 @@ export default function SetoresPage() {
                       <div className="flex items-center space-x-2 border p-3 rounded-lg cursor-pointer hover:bg-accent/5">
                         <RadioGroupItem value="stack" id="layout1" />
                         <Label htmlFor="layout1" className="flex items-center gap-2 cursor-pointer font-bold">
-                          <LayoutList size={16} />
+                          <LayoutList className="h-4 w-4" />
                           Abaixo
                         </Label>
                       </div>
                       <div className="flex items-center space-x-2 border p-3 rounded-lg cursor-pointer hover:bg-accent/5">
                         <RadioGroupItem value="grid" id="layout2" />
                         <Label htmlFor="layout2" className="flex items-center gap-2 cursor-pointer font-bold">
-                          <LayoutGrid size={16} />
+                          <LayoutGrid className="h-4 w-4" />
                           Ao Lado
                         </Label>
                       </div>
@@ -263,7 +263,7 @@ export default function SetoresPage() {
                     {layoutMode === 'grid' && (
                       <div className="flex items-center gap-4 bg-slate-50 p-4 rounded-lg border border-dashed">
                         <div className="flex-1 space-y-1">
-                          <Label className="flex items-center gap-2"><Columns size={14} /> Colunas (Desktop)</Label>
+                          <Label className="flex items-center gap-2"><Columns className="h-3.5 w-3.5" /> Colunas (Desktop)</Label>
                           <p className="text-[10px] text-muted-foreground">Quantas subcategorias lado a lado?</p>
                         </div>
                         <Select value={gridColumns} onValueChange={setGridColumns}>
@@ -282,7 +282,7 @@ export default function SetoresPage() {
                   </div>
 
                   <div className="grid gap-2">
-                    <Label htmlFor="subcategorias" className="flex items-center gap-2"><Tags size={14} /> Subcategorias (separadas por vírgula)</Label>
+                    <Label htmlFor="subcategorias" className="flex items-center gap-2"><Tags className="h-3.5 w-3.5" /> Subcategorias (separadas por vírgula)</Label>
                     <Input id="subcategorias" name="subcategorias" placeholder="Ex: Backend, Frontend, DevOps" defaultValue={editingSector?.subcategorias?.join(", ")} />
                   </div>
                 </div>
@@ -305,88 +305,97 @@ export default function SetoresPage() {
             />
           </div>
         </div>
-        <Table>
-          <TableHeader>
-            <TableRow className="bg-slate-50">
-              <TableHead className="w-16 text-center">Ordem</TableHead>
-              <TableHead>Departamento</TableHead>
-              <TableHead>Subcategorias</TableHead>
-              <TableHead>Layout</TableHead>
-              <TableHead className="text-center">Equipe</TableHead>
-              <TableHead className="text-right">Ações</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {filteredSetores.map((setor) => {
-              const count = employees?.filter(f => f.setor_id === setor.id).length || 0;
-              return (
-                <TableRow key={setor.id} className="group">
-                  <TableCell className="text-center">
-                    <Badge variant="outline" className="font-mono text-[10px]">{setor.ordem ?? 0}</Badge>
-                  </TableCell>
-                  <TableCell className="font-bold text-primary">{setor.nome}</TableCell>
-                  <TableCell>
-                    <div className="flex flex-wrap gap-1">
-                      {setor.subcategorias && setor.subcategorias.length > 0 ? (
-                        setor.subcategorias.map(sub => <Badge key={sub} variant="secondary" className="text-[9px] uppercase font-bold">{sub}</Badge>)
-                      ) : (
-                        <span className="text-xs text-muted-foreground italic">Nenhuma</span>
-                      )}
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex flex-col gap-0.5">
-                      <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                        {setor.layoutSubcategorias === 'grid' ? (
-                          <><LayoutGrid size={14} /> Ao Lado</>
+        <div className="overflow-x-auto">
+          <Table>
+            <TableHeader>
+              <TableRow className="bg-slate-50">
+                <TableHead className="w-16 text-center">Ordem</TableHead>
+                <TableHead className="min-w-[150px]">Departamento</TableHead>
+                <TableHead className="min-w-[200px]">Subcategorias</TableHead>
+                <TableHead className="min-w-[120px]">Layout</TableHead>
+                <TableHead className="text-center min-w-[80px]">Equipe</TableHead>
+                <TableHead className="text-right min-w-[100px]">Ações</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {filteredSetores.map((setor) => {
+                const count = employees?.filter(f => f.setor_id === setor.id).length || 0;
+                return (
+                  <TableRow key={setor.id} className="group">
+                    <TableCell className="text-center">
+                      <Badge variant="outline" className="font-mono text-[10px]">{setor.ordem ?? 0}</Badge>
+                    </TableCell>
+                    <TableCell className="font-bold text-primary">{setor.nome}</TableCell>
+                    <TableCell>
+                      <div className="flex flex-wrap gap-1">
+                        {setor.subcategorias && setor.subcategorias.length > 0 ? (
+                          setor.subcategorias.map(sub => <Badge key={sub} variant="secondary" className="text-[9px] uppercase font-bold">{sub}</Badge>)
                         ) : (
-                          <><LayoutList size={14} /> Abaixo</>
+                          <span className="text-xs text-muted-foreground italic">Nenhuma</span>
                         )}
                       </div>
-                      {setor.layoutSubcategorias === 'grid' && (
-                        <span className="text-[10px] font-bold text-primary">{setor.colunasGrid || 2} colunas</span>
-                      )}
-                    </div>
-                  </TableCell>
-                  <TableCell className="text-center">
-                    <div className="inline-flex items-center gap-1.5 text-xs font-semibold px-2 py-1 bg-blue-50 text-blue-700 rounded-full border border-blue-100">
-                      {count}
-                    </div>
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openEdit(setor)}>
-                        <Edit2 className="h-4 w-4" />
-                      </Button>
-                      
-                      <AlertDialog>
-                        <AlertDialogTrigger asChild>
-                          <Button variant="ghost" size="icon" className="h-8 w-8 hover:text-destructive">
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </AlertDialogTrigger>
-                        <AlertDialogContent>
-                          <AlertDialogHeader>
-                            <AlertDialogTitle>Excluir Setor</AlertDialogTitle>
-                            <AlertDialogDescription>
-                              Deseja realmente excluir o setor "{setor.nome}"? Esta ação não poderá ser desfeita.
-                            </AlertDialogDescription>
-                          </AlertDialogHeader>
-                          <AlertDialogFooter>
-                            <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                            <AlertDialogAction onClick={() => handleDelete(setor.id)} className="bg-destructive text-white hover:bg-destructive/90">
-                              Excluir
-                            </AlertDialogAction>
-                          </AlertDialogFooter>
-                        </AlertDialogContent>
-                      </AlertDialog>
-                    </div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex flex-col gap-0.5">
+                        <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                          {setor.layoutSubcategorias === 'grid' ? (
+                            <><LayoutGrid className="h-3.5 w-3.5" /> Ao Lado</>
+                          ) : (
+                            <><LayoutList className="h-3.5 w-3.5" /> Abaixo</>
+                          )}
+                        </div>
+                        {setor.layoutSubcategorias === 'grid' && (
+                          <span className="text-[10px] font-bold text-primary">{setor.colunasGrid || 2} colunas</span>
+                        )}
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-center">
+                      <div className="inline-flex items-center gap-1.5 text-xs font-semibold px-2 py-1 bg-blue-50 text-blue-700 rounded-full border border-blue-100">
+                        {count}
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <div className="flex justify-end gap-1 md:gap-2 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity">
+                        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openEdit(setor)}>
+                          <Edit2 className="h-4 w-4" />
+                        </Button>
+                        
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button variant="ghost" size="icon" className="h-8 w-8 hover:text-destructive">
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Excluir Setor</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                Deseja realmente excluir o setor "{setor.nome}"? Esta ação não poderá ser desfeita.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter className="flex-col sm:flex-row gap-2">
+                              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                              <AlertDialogAction onClick={() => handleDelete(setor.id)} className="bg-destructive text-white hover:bg-destructive/90 w-full sm:w-auto">
+                                Excluir
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
+              {filteredSetores.length === 0 && (
+                <TableRow>
+                  <TableCell colSpan={6} className="h-32 text-center text-muted-foreground">
+                    Nenhum setor cadastrado.
                   </TableCell>
                 </TableRow>
-              );
-            })}
-          </TableBody>
-        </Table>
+              )}
+            </TableBody>
+          </Table>
+        </div>
       </div>
     </div>
   );

@@ -28,36 +28,36 @@ export function AdminSidebar() {
   const logoHeight = settings?.logoHeight || 48;
 
   return (
-    <div className="w-64 bg-sidebar flex flex-col h-screen shrink-0 border-r border-sidebar-border transition-all">
+    <div className="w-full lg:w-64 bg-sidebar flex flex-col h-full shrink-0 border-r border-sidebar-border transition-all">
       <div className="p-6">
         <Link href="/admin/dashboard" className="flex items-center gap-3">
           {logoStyle === "square_with_name" ? (
             <>
               <div 
                 className="bg-primary p-2 rounded-xl text-white relative overflow-hidden shrink-0 shadow-sm"
-                style={{ width: logoHeight, height: logoHeight }}
+                style={{ width: Math.min(logoHeight, 64), height: Math.min(logoHeight, 64) }}
               >
                 {settings?.logoUrl ? (
                   <NextImage src={settings.logoUrl} alt="Logo" fill className="object-contain p-1.5" />
                 ) : (
-                  <Users size={logoHeight * 0.5} />
+                  <Users size={Math.min(logoHeight, 64) * 0.5} />
                 )}
               </div>
               <span 
                 className="font-black tracking-tighter text-sidebar-foreground truncate"
-                style={{ fontSize: Math.max(14, logoHeight * 0.4) }}
+                style={{ fontSize: Math.max(14, Math.min(logoHeight, 64) * 0.4) }}
               >
                 {settings?.systemName || "AdminPanel"}
               </span>
             </>
           ) : (
-            <div className="w-full flex items-center justify-start overflow-hidden" style={{ height: logoHeight }}>
+            <div className="w-full flex items-center justify-start overflow-hidden" style={{ height: Math.min(logoHeight, 64) }}>
               {settings?.logoUrl ? (
                 <img src={settings.logoUrl} alt="Logo" className="h-full w-auto object-contain" />
               ) : (
                 <span 
                   className="font-black tracking-tighter text-sidebar-foreground"
-                  style={{ fontSize: Math.max(14, logoHeight * 0.4) }}
+                  style={{ fontSize: Math.max(14, Math.min(logoHeight, 64) * 0.4) }}
                 >
                   {settings?.systemName || "AdminPanel"}
                 </span>
