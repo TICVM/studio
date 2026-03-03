@@ -2,7 +2,7 @@
 "use client"
 
 import { useState, useEffect, useRef } from "react";
-import { Settings, Save, Palette, Image as ImageIcon, Type, Loader2, Users, Upload, X, Maximize, Layout, Crown, MoveHorizontal, MousePointer2, AlignCenter, AlignLeft, Square, Columns } from "lucide-react";
+import { Settings, Save, Palette, Image as ImageIcon, Type, Loader2, Users, Upload, X, Maximize, Layout, Crown, MoveHorizontal, MousePointer2, AlignCenter, AlignLeft, Square, Columns, CheckCircle2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -49,6 +49,7 @@ export default function ConfiguracoesPage() {
   });
 
   const [isProcessing, setIsProcessing] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
     if (settings) {
@@ -129,10 +130,18 @@ export default function ConfiguracoesPage() {
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
-  const handleSave = async (e: React.FormEvent) => {
-    e.preventDefault();
-    updateDocumentNonBlocking(settingsRef, form);
-    toast({ title: "Configurações salvas", description: "As alterações visuais foram aplicadas." });
+  const handleSave = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    setIsSaving(true);
+    try {
+      updateDocumentNonBlocking(settingsRef, form);
+      toast({ 
+        title: "Configurações salvas!", 
+        description: "As alterações visuais foram publicadas com sucesso." 
+      });
+    } finally {
+      setTimeout(() => setIsSaving(false), 500);
+    }
   };
 
   const ColorPicker = ({ label, id, value, onChange, description }: { label: string, id: string, value: string | undefined, onChange: (v: string) => void, description: string }) => (
@@ -146,6 +155,18 @@ export default function ConfiguracoesPage() {
     </div>
   );
 
+  const SaveButton = () => (
+    <Button 
+      type="button" 
+      onClick={() => handleSave()} 
+      className="w-full h-12 font-bold uppercase tracking-widest mt-6"
+      disabled={isSaving || isProcessing}
+    >
+      {isSaving ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <Save className="mr-2 h-5 w-5" />}
+      Salvar Alterações
+    </Button>
+  );
+
   if (isLoading) {
     return (
       <div className="flex h-[60vh] items-center justify-center">
@@ -155,15 +176,23 @@ export default function ConfiguracoesPage() {
   }
 
   return (
-    <div className="max-w-7xl mx-auto space-y-8">
-      <div className="flex items-end justify-between">
+    <div className="max-w-7xl mx-auto space-y-8 pb-20">
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold tracking-tight text-primary">Estúdio Visual</h1>
           <p className="text-muted-foreground">Personalize cada detalhe da experiência do seu Carômetro.</p>
         </div>
+        <Button 
+          onClick={() => handleSave()} 
+          className="h-12 px-8 font-bold shadow-lg bg-emerald-600 hover:bg-emerald-700"
+          disabled={isSaving || isProcessing}
+        >
+          {isSaving ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <CheckCircle2 className="mr-2 h-5 w-5" />}
+          Publicar Agora
+        </Button>
       </div>
 
-      <form onSubmit={handleSave} className="grid grid-cols-1 xl:grid-cols-4 gap-8">
+      <div className="grid grid-cols-1 xl:grid-cols-4 gap-8 items-start">
         <div className="xl:col-span-3">
           <Tabs defaultValue="marca" className="space-y-6">
             <TabsList className="grid grid-cols-3 w-full max-w-md bg-slate-100 p-1">
@@ -216,6 +245,7 @@ export default function ConfiguracoesPage() {
                       </div>
                     </div>
                   </div>
+                  <SaveButton />
                 </CardContent>
               </Card>
             </TabsContent>
@@ -223,20 +253,23 @@ export default function ConfiguracoesPage() {
             <TabsContent value="cores" className="space-y-6">
               <Card>
                 <CardHeader><CardTitle className="text-lg">Paleta de Cores</CardTitle></CardHeader>
-                <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-10">
-                  <div className="space-y-6">
-                    <h3 className="text-xs font-black uppercase tracking-widest text-muted-foreground border-b pb-2">Sistema e Carômetro</h3>
-                    <ColorPicker label="Cor Primária" id="pc" value={form.primaryColor} onChange={v => setForm({...form, primaryColor: v})} description="Botões e destaques principais." />
-                    <ColorPicker label="Destaque Liderança" id="lc" value={form.leadershipColor} onChange={v => setForm({...form, leadershipColor: v})} description="Coroas e cargos de coordenação." />
-                    <ColorPicker label="Cor de Fundo" id="bc" value={form.backgroundColor} onChange={v => setForm({...form, backgroundColor: v})} description="Fundo principal das páginas." />
-                    <ColorPicker label="Cor do Texto" id="fc" value={form.foregroundColor} onChange={v => setForm({...form, foregroundColor: v})} description="Títulos e parágrafos." />
-                    <ColorPicker label="Destaque Suave" id="ac" value={form.accentColor} onChange={v => setForm({...form, accentColor: v})} description="Badges e fundos secundários." />
+                <CardContent className="space-y-8">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+                    <div className="space-y-6">
+                      <h3 className="text-xs font-black uppercase tracking-widest text-muted-foreground border-b pb-2">Sistema e Carômetro</h3>
+                      <ColorPicker label="Cor Primária" id="pc" value={form.primaryColor} onChange={v => setForm({...form, primaryColor: v})} description="Botões e destaques principais." />
+                      <ColorPicker label="Destaque Liderança" id="lc" value={form.leadershipColor} onChange={v => setForm({...form, leadershipColor: v})} description="Coroas e cargos de coordenação." />
+                      <ColorPicker label="Cor de Fundo" id="bc" value={form.backgroundColor} onChange={v => setForm({...form, backgroundColor: v})} description="Fundo principal das páginas." />
+                      <ColorPicker label="Cor do Texto" id="fc" value={form.foregroundColor} onChange={v => setForm({...form, foregroundColor: v})} description="Títulos e parágrafos." />
+                      <ColorPicker label="Destaque Suave" id="ac" value={form.accentColor} onChange={v => setForm({...form, accentColor: v})} description="Badges e fundos secundários." />
+                    </div>
+                    <div className="space-y-6">
+                      <h3 className="text-xs font-black uppercase tracking-widest text-muted-foreground border-b pb-2">Menu Administrativo</h3>
+                      <ColorPicker label="Fundo Lateral" id="sbc" value={form.sidebarBackgroundColor} onChange={v => setForm({...form, sidebarBackgroundColor: v})} description="Cor do menu lateral admin." />
+                      <ColorPicker label="Texto Lateral" id="sfc" value={form.sidebarForegroundColor} onChange={v => setForm({...form, sidebarForegroundColor: v})} description="Links e ícones da sidebar." />
+                    </div>
                   </div>
-                  <div className="space-y-6">
-                    <h3 className="text-xs font-black uppercase tracking-widest text-muted-foreground border-b pb-2">Menu Administrativo</h3>
-                    <ColorPicker label="Fundo Lateral" id="sbc" value={form.sidebarBackgroundColor} onChange={v => setForm({...form, sidebarBackgroundColor: v})} description="Cor do menu lateral admin." />
-                    <ColorPicker label="Texto Lateral" id="sfc" value={form.sidebarForegroundColor} onChange={v => setForm({...form, sidebarForegroundColor: v})} description="Links e ícones da sidebar." />
-                  </div>
+                  <SaveButton />
                 </CardContent>
               </Card>
             </TabsContent>
@@ -263,8 +296,8 @@ export default function ConfiguracoesPage() {
                       <div className="space-y-3">
                         <Label className="flex items-center gap-2"><MousePointer2 size={14} /> Alinhamento do Texto</Label>
                         <RadioGroup value={form.cardTextAlign} onValueChange={(v: any) => setForm({...form, cardTextAlign: v})} className="flex gap-4">
-                          <div className="flex items-center space-x-2 border px-3 py-2 rounded-lg cursor-pointer"><RadioGroupItem value="center" id="ta1" /><Label htmlFor="ta1" className="flex items-center gap-1 cursor-pointer"><AlignCenter size={14} /> Centro</Label></div>
-                          <div className="flex items-center space-x-2 border px-3 py-2 rounded-lg cursor-pointer"><RadioGroupItem value="left" id="ta2" /><Label htmlFor="ta2" className="flex items-center gap-1 cursor-pointer"><AlignLeft size={14} /> Esquerda</Label></div>
+                          <div className="flex items-center space-x-2 border px-3 py-2 rounded-lg cursor-pointer"><RadioGroupItem value="center" id="ta1" /><Label htmlFor="ta1" className="flex items-center gap-1 cursor-pointer text-xs"><AlignCenter size={14} /> Centro</Label></div>
+                          <div className="flex items-center space-x-2 border px-3 py-2 rounded-lg cursor-pointer"><RadioGroupItem value="left" id="ta2" /><Label htmlFor="ta2" className="flex items-center gap-1 cursor-pointer text-xs"><AlignLeft size={14} /> Esquerda</Label></div>
                         </RadioGroup>
                       </div>
                     </div>
@@ -278,8 +311,8 @@ export default function ConfiguracoesPage() {
                       <div className="space-y-3">
                         <Label>Proporção da Foto</Label>
                         <RadioGroup value={form.cardPhotoAspectRatio} onValueChange={(v: any) => setForm({...form, cardPhotoAspectRatio: v})} className="grid grid-cols-2 gap-3">
-                          <div className="flex items-center space-x-2 border p-2 rounded-lg cursor-pointer"><RadioGroupItem value="3/4" id="ar1" /><Label htmlFor="ar1" className="cursor-pointer">3x4 (Vertical)</Label></div>
-                          <div className="flex items-center space-x-2 border p-2 rounded-lg cursor-pointer"><RadioGroupItem value="1/1" id="ar2" /><Label htmlFor="ar2" className="cursor-pointer">1x1 (Quadrado)</Label></div>
+                          <div className="flex items-center space-x-2 border p-2 rounded-lg cursor-pointer"><RadioGroupItem value="3/4" id="ar1" /><Label htmlFor="ar1" className="cursor-pointer text-xs">3x4 (Vertical)</Label></div>
+                          <div className="flex items-center space-x-2 border p-2 rounded-lg cursor-pointer"><RadioGroupItem value="1/1" id="ar2" /><Label htmlFor="ar2" className="cursor-pointer text-xs">1x1 (Quadrado)</Label></div>
                         </RadioGroup>
                       </div>
                       <div className="flex items-center justify-between p-3 border rounded-lg bg-slate-50">
@@ -290,8 +323,8 @@ export default function ConfiguracoesPage() {
                         <div className="space-y-3 pl-4 border-l-2">
                           <Label>Posição do Selo</Label>
                           <RadioGroup value={form.cardBadgePosition} onValueChange={(v: any) => setForm({...form, cardBadgePosition: v})} className="flex gap-4">
-                            <div className="flex items-center space-x-2 border px-3 py-2 rounded-lg cursor-pointer"><RadioGroupItem value="top" id="bp1" /><Label htmlFor="bp1" className="cursor-pointer text-xs">Topo</Label></div>
-                            <div className="flex items-center space-x-2 border px-3 py-2 rounded-lg cursor-pointer"><RadioGroupItem value="bottom" id="bp2" /><Label htmlFor="bp2" className="cursor-pointer text-xs">Rodapé</Label></div>
+                            <div className="flex items-center space-x-2 border px-3 py-2 rounded-lg cursor-pointer"><RadioGroupItem value="top" id="bp1" /><Label htmlFor="bp1" className="cursor-pointer text-[10px] uppercase font-bold">Topo</Label></div>
+                            <div className="flex items-center space-x-2 border px-3 py-2 rounded-lg cursor-pointer"><RadioGroupItem value="bottom" id="bp2" /><Label htmlFor="bp2" className="cursor-pointer text-[10px] uppercase font-bold">Rodapé</Label></div>
                           </RadioGroup>
                         </div>
                       )}
@@ -312,7 +345,7 @@ export default function ConfiguracoesPage() {
                       <div className="col-span-2 space-y-4">
                         <div className="flex justify-between items-center"><Label>Tamanho da Fonte do Setor</Label><span className="text-xs font-bold">{form.headerFontSize}px</span></div>
                         <Slider value={[form.headerFontSize || 24]} min={16} max={48} step={2} onValueChange={(v) => setForm({...form, headerFontSize: v[0]})} />
-                        <div className="mt-6 p-4 border rounded-xl bg-slate-50 flex items-center justify-center">
+                        <div className="mt-4 p-4 border rounded-xl bg-slate-50 flex items-center justify-center min-h-[100px]">
                           <div className="w-full">
                             <p className="text-[10px] font-black uppercase text-muted-foreground mb-4">Prévia do Cabeçalho:</p>
                             <div className={cn(
@@ -331,32 +364,33 @@ export default function ConfiguracoesPage() {
                       </div>
                     </div>
                   </div>
+                  <SaveButton />
                 </CardContent>
               </Card>
             </TabsContent>
           </Tabs>
         </div>
 
-        {/* Pré-visualização Lateral */}
+        {/* Pré-visualização Lateral Compacta */}
         <div className="space-y-6">
-          <Card className="sticky top-8 overflow-hidden border-none shadow-2xl">
+          <Card className="sticky top-8 overflow-hidden border-none shadow-2xl max-w-[320px] mx-auto">
             <CardHeader className="bg-slate-900 text-white p-4">
-              <CardTitle className="text-xs uppercase tracking-widest opacity-70">Visual Ao Vivo</CardTitle>
+              <CardTitle className="text-[10px] uppercase tracking-widest opacity-70">Painel de Visualização</CardTitle>
             </CardHeader>
             <CardContent className="p-0">
-              <div className="p-6 space-y-8" style={{ backgroundColor: form.backgroundColor }}>
+              <div className="p-4 space-y-6 scale-[0.9] origin-top" style={{ backgroundColor: form.backgroundColor }}>
                 {/* Navbar Preview */}
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2">
                   {form.logoStyle === 'square_with_name' ? (
                     <>
                       <div className="rounded-lg flex items-center justify-center text-white overflow-hidden p-1 shadow-sm shrink-0"
-                        style={{ backgroundColor: form.primaryColor, width: form.logoHeight, height: form.logoHeight }}>
-                        {form.logoUrl ? <img src={form.logoUrl} alt="Logo" className="w-full h-full object-contain" /> : <Users size={20} />}
+                        style={{ backgroundColor: form.primaryColor, width: (form.logoHeight || 32) * 0.8, height: (form.logoHeight || 32) * 0.8 }}>
+                        {form.logoUrl ? <img src={form.logoUrl} alt="Logo" className="w-full h-full object-contain" /> : <Users size={16} />}
                       </div>
-                      <span className="font-black tracking-tighter" style={{ color: form.primaryColor, fontSize: (form.logoHeight || 32) * 0.5 }}>{form.systemName || "Nome"}</span>
+                      <span className="font-black tracking-tighter truncate" style={{ color: form.primaryColor, fontSize: (form.logoHeight || 32) * 0.4 }}>{form.systemName || "Nome"}</span>
                     </>
                   ) : (
-                    <div className="flex items-center justify-start overflow-hidden" style={{ height: form.logoHeight }}>
+                    <div className="flex items-center justify-start overflow-hidden" style={{ height: (form.logoHeight || 32) * 0.8 }}>
                       {form.logoUrl ? <img src={form.logoUrl} alt="Logo" className="h-full w-auto object-contain" /> : <span className="font-black tracking-tighter" style={{ color: form.primaryColor }}>{form.systemName}</span>}
                     </div>
                   )}
@@ -366,32 +400,32 @@ export default function ConfiguracoesPage() {
                 <div className="flex flex-col items-center">
                   <div className={cn(
                     "w-full bg-white transition-all border border-slate-100",
-                    form.cardShowShadow && "shadow-xl"
+                    form.cardShowShadow && "shadow-lg"
                   )} style={{ 
-                    padding: form.cardPadding, 
+                    padding: (form.cardPadding || 24) * 0.7, 
                     borderRadius: form.cardBorderRadius,
                     textAlign: form.cardTextAlign as any
                   }}>
                     {form.cardShowBadge && form.cardBadgePosition === 'top' && (
-                      <div className="mb-4"><span className="px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest" style={{ backgroundColor: form.accentColor, color: form.primaryColor }}>Departamento</span></div>
+                      <div className="mb-3"><span className="px-2 py-0.5 rounded-full text-[8px] font-bold uppercase tracking-widest" style={{ backgroundColor: form.accentColor, color: form.primaryColor }}>Departamento</span></div>
                     )}
                     
-                    <div className="flex justify-center mb-4">
+                    <div className="flex justify-center mb-3">
                       <div className="bg-slate-100 rounded-md overflow-hidden relative shadow-inner" style={{ 
                         width: `${form.cardPhotoSize}%`, 
                         aspectRatio: form.cardPhotoAspectRatio === '3/4' ? '3/4' : '1/1'
                       }}>
-                        <div className="absolute inset-0 flex items-center justify-center text-slate-300"><Users size={32} /></div>
+                        <div className="absolute inset-0 flex items-center justify-center text-slate-300"><Users size={24} /></div>
                       </div>
                     </div>
 
-                    <div className="space-y-1">
-                      <h3 className="font-black text-lg leading-tight" style={{ color: form.primaryColor }}>João Silva</h3>
-                      <p className="text-sm font-medium text-slate-500">Diretor Executivo</p>
+                    <div className="space-y-0.5">
+                      <h3 className="font-black text-sm leading-tight" style={{ color: form.primaryColor }}>João Silva</h3>
+                      <p className="text-[10px] font-medium text-slate-500">Diretor Executivo</p>
                     </div>
 
                     {form.cardShowBadge && form.cardBadgePosition === 'bottom' && (
-                      <div className="mt-4 pt-2"><span className="px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest" style={{ backgroundColor: form.accentColor, color: form.primaryColor }}>Setor</span></div>
+                      <div className="mt-3 pt-1"><span className="px-2 py-0.5 rounded-full text-[8px] font-bold uppercase tracking-widest" style={{ backgroundColor: form.accentColor, color: form.primaryColor }}>Setor</span></div>
                     )}
                   </div>
                 </div>
@@ -399,12 +433,17 @@ export default function ConfiguracoesPage() {
             </CardContent>
           </Card>
           
-          <Button type="submit" className="w-full h-14 shadow-lg text-lg font-black uppercase tracking-widest" disabled={isProcessing}>
-            <Save className="mr-2 h-6 w-6" />
-            Publicar Alterações
-          </Button>
+          <div className="p-4 bg-slate-50 rounded-xl border border-dashed text-center">
+            <p className="text-[10px] text-muted-foreground uppercase font-bold">Resumo do Estilo</p>
+            <div className="mt-2 flex justify-center gap-2">
+              <div className="h-4 w-4 rounded-full border shadow-sm" style={{ backgroundColor: form.primaryColor }} title="Primária" />
+              <div className="h-4 w-4 rounded-full border shadow-sm" style={{ backgroundColor: form.leadershipColor }} title="Liderança" />
+              <div className="h-4 w-4 rounded-full border shadow-sm" style={{ backgroundColor: form.backgroundColor }} title="Fundo" />
+            </div>
+          </div>
         </div>
-      </form>
+      </div>
     </div>
   );
 }
+
