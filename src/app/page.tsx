@@ -164,21 +164,21 @@ export default function Home() {
                   )}>
                     {sectorGroup.subGroups.map(sub => (
                       <div key={sub.name} className="space-y-8">
-                        {/* Título da Subcategoria (com o ponto indicador da imagem) */}
+                        {/* Título da Subcategoria */}
                         {sub.name !== "Geral" && (
                           <div className="flex items-center gap-3">
-                            <div className="h-2 w-2 rounded-full bg-primary shadow-[0_0_8px_rgba(var(--primary),0.5)]" />
+                            <div className="h-2 w-2 rounded-full bg-primary" />
                             <h3 className="text-xs font-black text-slate-400 uppercase tracking-[0.2em]">
                               {sub.name}
                             </h3>
                           </div>
                         )}
 
-                        {/* Grade de Funcionários - Inteligente para não esmagar os cards */}
+                        {/* Grade de Funcionários */}
                         <div className={cn(
                           "grid gap-8",
                           sectorGroup.layoutSubcategorias === 'grid'
-                            ? "grid-cols-1" // Em layout de grade de subcategorias, mantemos funcionários em coluna única por padrão para preservar largura
+                            ? "grid-cols-1" 
                             : "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5"
                         )}>
                           {sub.funcionarios.map(f => (

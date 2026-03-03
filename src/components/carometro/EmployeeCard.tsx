@@ -4,7 +4,7 @@
 import Image from "next/image";
 import { Funcionario, Setor } from "@/types";
 import { Card, CardContent } from "@/components/ui/card";
-import { Crown, Mail, Hash, Building, ArrowRight, Briefcase, Tag } from "lucide-react";
+import { Crown, Mail, Hash, Building, ArrowRight } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -29,7 +29,7 @@ export function EmployeeCard({ funcionario, setor }: EmployeeCardProps) {
         className={`overflow-hidden group cursor-pointer hover:shadow-2xl transition-all duration-300 border-none bg-white h-full flex flex-col shadow-md ${funcionario.is_lider ? 'ring-2 ring-primary/20' : ''}`}
       >
         <CardContent className="p-5 flex flex-col items-center text-center flex-1">
-          {/* Container da Foto - Agora Responsivo e Estável */}
+          {/* Container da Foto */}
           <div className="relative w-full aspect-[3/4] rounded-lg overflow-hidden border-2 border-slate-100 group-hover:border-primary/30 transition-all duration-300 shadow-sm bg-slate-50 mb-5">
             <Image
               src={funcionario.foto_url || "https://picsum.photos/seed/placeholder/400/533"}
