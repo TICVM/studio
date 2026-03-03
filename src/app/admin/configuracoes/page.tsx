@@ -25,29 +25,71 @@ export default function ConfiguracoesPage() {
     primaryColor: "#3b82f6"
   });
 
+  const [isCompressing, setIsCompressing] = useState(false);
+
   useEffect(() => {
     if (settings) {
       setForm(settings);
     }
   }, [settings]);
 
-  const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  // Função para comprimir e redimensionar a imagem
+  const compressImage = (base64Str: string, maxWidth = 400, maxHeight = 400): Promise<string> => {
+    return new Promise((resolve) => {
+      const img = new (window as any).Image();
+      img.src = base64Str;
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        let width = img.width;
+        let height = img.height;
+
+        if (width > height) {
+          if (width > maxWidth) {
+            height *= maxWidth / width;
+            width = maxWidth;
+          }
+        } else {
+          if (height > maxHeight) {
+            width *= maxHeight / height;
+            height = maxHeight;
+          }
+        }
+
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        ctx?.drawImage(img, 0, 0, width, height);
+        // Preserva transparência para logos usando PNG
+        resolve(canvas.toDataURL('image/png'));
+      };
+    });
+  };
+
+  const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    if (file.size > 500 * 1024) { // Limite de 500KB para não sobrecarregar o documento do Firestore
-      toast({
-        variant: "destructive",
-        title: "Arquivo muito grande",
-        description: "O logotipo deve ter no máximo 500KB.",
-      });
-      return;
-    }
-
+    setIsCompressing(true);
     const reader = new FileReader();
-    reader.onload = (event) => {
-      const base64 = event.target?.result as string;
-      setForm(prev => ({ ...prev, logoUrl: base64 }));
+    reader.onload = async (event) => {
+      try {
+        const base64 = event.target?.result as string;
+        // Sempre aplica compressão/redimensionamento para garantir otimização
+        const optimizedLogo = await compressImage(base64);
+        setForm(prev => ({ ...prev, logoUrl: optimizedLogo }));
+        toast({
+          title: "Logo processada",
+          description: "A imagem foi otimizada para o sistema.",
+        });
+      } catch (err) {
+        toast({
+          variant: "destructive",
+          title: "Erro no processamento",
+          description: "Não foi possível otimizar a imagem.",
+        });
+      } finally {
+        setIsCompressing(false);
+      }
     };
     reader.readAsDataURL(file);
   };
@@ -121,8 +163,8 @@ export default function ConfiguracoesPage() {
                       onClick={() => fileInputRef.current?.click()}
                       className="w-32 h-32 border-2 border-dashed rounded-lg flex flex-col items-center justify-center gap-2 cursor-pointer hover:bg-slate-50 transition-colors text-muted-foreground"
                     >
-                      <Upload size={24} />
-                      <span className="text-[10px] font-bold uppercase">Upload</span>
+                      {isCompressing ? <Loader2 className="h-6 w-6 animate-spin" /> : <Upload size={24} />}
+                      <span className="text-[10px] font-bold uppercase">{isCompressing ? "Processando..." : "Upload"}</span>
                     </div>
                   )}
                   <input 
@@ -132,7 +174,7 @@ export default function ConfiguracoesPage() {
                     accept="image/*"
                     className="hidden"
                   />
-                  <p className="text-[10px] text-muted-foreground italic">Recomendado: Imagem PNG ou SVG com fundo transparente (máx. 500KB).</p>
+                  <p className="text-[10px] text-muted-foreground italic">O sistema comprimirá imagens grandes automaticamente.</p>
                 </div>
               </div>
             </CardContent>
@@ -158,7 +200,7 @@ export default function ConfiguracoesPage() {
                   />
                   <div className="flex-1">
                     <Label htmlFor="primaryColor">Cor Primária</Label>
-                    <p className="text-xs text-muted-foreground">Esta cor será aplicada a botões, ícones e destaques.</p>
+                    <p className="text-xs text-muted-foreground">Esta cor será aplicada a botões e destaques.</p>
                     <p className="text-sm font-mono mt-1 font-bold">{form.primaryColor}</p>
                   </div>
                 </div>
@@ -166,7 +208,7 @@ export default function ConfiguracoesPage() {
             </CardContent>
           </Card>
 
-          <Button type="submit" className="w-full h-12 shadow-md">
+          <Button type="submit" className="w-full h-12 shadow-md" disabled={isCompressing}>
             <Save className="mr-2 h-5 w-5" />
             Salvar Alterações
           </Button>
@@ -204,7 +246,7 @@ export default function ConfiguracoesPage() {
               </div>
               
               <div className="text-xs text-muted-foreground text-center bg-slate-100 p-4 rounded-lg">
-                <p>As alterações de cor afetam todos os botões e elementos de destaque do sistema.</p>
+                <p>As alterações de cor e nome são aplicadas instantaneamente em todo o sistema.</p>
               </div>
             </CardContent>
           </Card>

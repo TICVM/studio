@@ -92,7 +92,7 @@ export default function DashboardPage() {
                   .map(f => (
                     <div key={f.id} className="flex items-center justify-between group">
                       <div className="flex items-center gap-4">
-                        <div className="h-12 w-9 rounded-sm bg-slate-100 flex-shrink-0 overflow-hidden relative border border-slate-200">
+                        <div className="h-16 w-12 rounded-sm bg-slate-100 flex-shrink-0 overflow-hidden relative border border-slate-200 aspect-[3/4]">
                           <NextImage 
                             src={f.foto_url || "https://picsum.photos/seed/placeholder/400/533"} 
                             alt={f.nome} 
