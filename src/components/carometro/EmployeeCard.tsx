@@ -44,8 +44,8 @@ export function EmployeeCard({ funcionario, setor }: EmployeeCardProps) {
         variant="secondary" 
         className="text-[9px] font-black uppercase tracking-widest px-3 h-5 border-none rounded-full"
         style={{ 
-          backgroundColor: 'hsl(var(--subcategory-color, var(--accent)))', 
-          color: 'white' 
+          backgroundColor: 'hsl(var(--accent))', 
+          color: 'hsl(var(--accent-foreground))' 
         }}
       >
         {funcionario.subcategoria && funcionario.subcategoria !== "Geral" 
@@ -57,57 +57,64 @@ export function EmployeeCard({ funcionario, setor }: EmployeeCardProps) {
 
   return (
     <>
-      <Card 
-        onClick={() => setIsOpen(true)}
-        className={cn(
-          "overflow-hidden group cursor-pointer hover:shadow-lg transition-all duration-300 border border-slate-100 h-full flex flex-col",
-          showShadow ? "shadow-sm" : "shadow-none"
-        )}
-        style={{ 
-          padding: `${padding}px`,
-          borderRadius: `${borderRadius}px`,
-          textAlign: textAlign as any,
-          backgroundColor: 'hsl(var(--card))'
-        }}
+      <div 
+        className="group relative h-full"
+        style={{ '--hover-color-local': 'var(--hover-color, #3b82f6)' } as any}
       >
-        <CardContent className="p-0 flex flex-col items-stretch text-inherit flex-1">
-          {showBadge && badgePos === 'top' && badgeContent}
+        <Card 
+          onClick={() => setIsOpen(true)}
+          className={cn(
+            "overflow-hidden cursor-pointer transition-all duration-300 h-full flex flex-col border",
+            showShadow ? "shadow-sm" : "shadow-none",
+            "group-hover:shadow-xl group-hover:scale-[1.02] group-hover:border-[var(--hover-color-local)]"
+          )}
+          style={{ 
+            padding: `${padding}px`,
+            borderRadius: `${borderRadius}px`,
+            textAlign: textAlign as any,
+            backgroundColor: 'hsl(var(--card))',
+            borderColor: showShadow ? 'transparent' : 'hsl(var(--border))'
+          }}
+        >
+          <CardContent className="p-0 flex flex-col items-stretch text-inherit flex-1">
+            {showBadge && badgePos === 'top' && badgeContent}
 
-          {/* Container da Foto */}
-          <div className={cn(
-            "relative mx-auto mb-4 rounded-md overflow-hidden bg-slate-100 border border-slate-200",
-            aspectRatio === '3/4' ? "aspect-[3/4]" : "aspect-square"
-          )} style={{ width: `${photoSize}%` }}>
-            <Image
-              src={funcionario.foto_url || "https://picsum.photos/seed/placeholder/400/533"}
-              alt={funcionario.nome}
-              fill
-              className="object-cover"
-              data-ai-hint="employee photo"
-            />
-            {funcionario.is_lider && (
-              <div 
-                className="absolute top-2 right-2 text-white p-1 rounded-full shadow-md z-10"
-                style={{ backgroundColor: 'var(--leadership, #f59e0b)' }}
-              >
-                <Crown size={12} fill="white" />
-              </div>
-            )}
-          </div>
+            {/* Container da Foto */}
+            <div className={cn(
+              "relative mx-auto mb-4 rounded-md overflow-hidden bg-slate-100 border border-slate-200",
+              aspectRatio === '3/4' ? "aspect-[3/4]" : "aspect-square"
+            )} style={{ width: `${photoSize}%` }}>
+              <Image
+                src={funcionario.foto_url || "https://picsum.photos/seed/placeholder/400/533"}
+                alt={funcionario.nome}
+                fill
+                className="object-cover"
+                data-ai-hint="employee photo"
+              />
+              {funcionario.is_lider && (
+                <div 
+                  className="absolute top-2 right-2 text-white p-1 rounded-full shadow-md z-10"
+                  style={{ backgroundColor: 'var(--leadership, #f59e0b)' }}
+                >
+                  <Crown size={12} fill="white" />
+                </div>
+              )}
+            </div>
 
-          {/* Informações do Colaborador */}
-          <div className="space-y-1 w-full flex-1">
-            <h3 className="font-bold text-lg leading-tight" style={{ color: 'hsl(var(--name-color, var(--primary)))' }}>
-              {funcionario.nome}
-            </h3>
-            <p className="text-sm font-medium" style={{ color: 'hsl(var(--job-color, var(--foreground)))' }}>
-              {funcionario.cargo}
-            </p>
-          </div>
+            {/* Informações do Colaborador */}
+            <div className="space-y-1 w-full flex-1">
+              <h3 className="font-bold text-lg leading-tight" style={{ color: 'hsl(var(--name-color, var(--primary)))' }}>
+                {funcionario.nome}
+              </h3>
+              <p className="text-sm font-medium" style={{ color: 'hsl(var(--job-color, var(--foreground)))' }}>
+                {funcionario.cargo}
+              </p>
+            </div>
 
-          {showBadge && badgePos === 'bottom' && badgeContent}
-        </CardContent>
-      </Card>
+            {showBadge && badgePos === 'bottom' && badgeContent}
+          </CardContent>
+        </Card>
+      </div>
 
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
         <DialogContent className="sm:max-w-[400px] p-0 overflow-hidden border-none shadow-2xl">
@@ -140,7 +147,7 @@ export function EmployeeCard({ funcionario, setor }: EmployeeCardProps) {
             <div className="space-y-3">
               <div className="flex flex-col items-center gap-2 mb-2">
                 <div className="flex gap-2">
-                  <Badge variant="secondary" className="text-[10px] font-bold uppercase" style={{ backgroundColor: 'hsl(var(--subcategory-color, var(--accent)))', color: 'white' }}>
+                  <Badge variant="secondary" className="text-[10px] font-bold uppercase" style={{ backgroundColor: 'hsl(var(--accent))', color: 'hsl(var(--accent-foreground))' }}>
                     {funcionario.cargo}
                   </Badge>
                   {funcionario.subcategoria && (

@@ -49,6 +49,12 @@ export function AppearanceManager() {
         root.style.setProperty('--ring', hsl);
       }
 
+      if (settings.hoverColor) {
+        root.style.setProperty('--hover-color', settings.hoverColor);
+      } else if (settings.primaryColor) {
+        root.style.setProperty('--hover-color', settings.primaryColor);
+      }
+
       if (settings.leadershipColor) {
         root.style.setProperty('--leadership', settings.leadershipColor);
       } else {
@@ -71,7 +77,12 @@ export function AppearanceManager() {
         root.style.setProperty('--accent', hexToHsl(settings.accentColor));
       }
 
-      // Novas variáveis específicas de texto
+      if (settings.accentForegroundColor) {
+        root.style.setProperty('--accent-foreground', hexToHsl(settings.accentForegroundColor));
+      } else {
+        root.style.setProperty('--accent-foreground', '0 0% 100%');
+      }
+
       if (settings.nameColor) {
         root.style.setProperty('--name-color', hexToHsl(settings.nameColor));
       } else if (settings.primaryColor) {

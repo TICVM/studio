@@ -41,6 +41,8 @@ export interface SystemSettings {
   cardBackgroundColor?: string;
   foregroundColor?: string;
   accentColor?: string;
+  accentForegroundColor?: string;
+  hoverColor?: string;
   nameColor?: string;
   jobTitleColor?: string;
   sectorHeaderColor?: string;
@@ -49,7 +51,6 @@ export interface SystemSettings {
   sidebarForegroundColor?: string;
   logoStyle: 'square_with_name' | 'rectangular_no_name';
   logoHeight?: number;
-  // Novos campos de Layout
   cardPadding?: number;
   cardBorderRadius?: number;
   cardShowShadow?: boolean;
