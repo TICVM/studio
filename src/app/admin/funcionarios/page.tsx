@@ -2,8 +2,8 @@
 "use client"
 
 import { useState, useMemo, useEffect } from "react";
-import Image from "next/image";
-import { Users, Plus, Edit2, Trash2, Search, FileText, Loader2, AlertCircle, Upload, Crown, Mail, Hash, Building } from "lucide-react";
+import NextImage from "next/image";
+import { Users, Plus, Edit2, Trash2, Search, FileText, Loader2, AlertCircle, Upload, Crown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -33,7 +33,7 @@ import {
 } from "@/components/ui/select";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Checkbox } from "@/components/ui/checkbox";
-import { useMemoFirebase, useCollection, useFirestore, addDocumentNonBlocking, updateDocumentNonBlocking, deleteDocumentNonBlocking, setDocumentNonBlocking } from "@/firebase";
+import { useMemoFirebase, useCollection, useFirestore, addDocumentNonBlocking, updateDocumentNonBlocking, deleteDocumentNonBlocking } from "@/firebase";
 import { collection, doc, serverTimestamp } from "firebase/firestore";
 import { Funcionario, Setor } from "@/types";
 import { useToast } from "@/hooks/use-toast";
@@ -138,81 +138,37 @@ export default function FuncionariosPage() {
         const worksheet = workbook.Sheets[firstSheetName];
         const jsonData = XLSX.utils.sheet_to_json(worksheet) as any[];
 
-        const sectorMap = new Map<string, Setor>();
-        sectors?.forEach(s => sectorMap.set(s.nome.toLowerCase().trim(), s));
-
         let successCount = 0;
-
         for (const row of jsonData) {
-          const nome = row.Nome || row.nome || row.NOME;
-          const cargo = row.Cargo || row.cargo || row.CARGO;
-          const setorString = row.Setor || row.setor || row.SETOR || "";
-          const subcategoria = row.Subcategoria || row.subcategoria || "";
-          const statusRaw = row.Status || row.status || row.STATUS;
-          const fotoUrl = row.Foto || row.foto || row.FOTO || row.FotoURL || row.foto_url;
-          const liderRaw = row.Lider || row.Líder || row.lider || row.lideranca;
-          const tituloLider = row.TituloLider || row.titulo_lider || row.cargo_lider;
-          const email = row.Email || row.email || row.EMAIL;
-          const ramal = row.Ramal || row.ramal || row.RAMAL;
-          const unidade = row.Unidade || row.unidade || row.UNIDADE;
-
+          const nome = row.Nome || row.nome;
+          const cargo = row.Cargo || row.cargo;
           if (nome && cargo) {
-            const sName = setorString.toString().trim().toLowerCase();
-            let targetSector = sectorMap.get(sName);
-            let targetSectorId = targetSector?.id;
-
-            if (!targetSectorId && sName) {
-              const newSectorRef = doc(collection(firestore, "sectors"));
-              const sectorNameRaw = sName.charAt(0).toUpperCase() + sName.slice(1);
-              targetSectorId = newSectorRef.id;
-              
-              const newSector: any = {
-                nome: sectorNameRaw,
-                subcategorias: subcategoria ? [subcategoria.toString()] : [],
-                data_criacao: new Date().toISOString(),
-                createdAt: serverTimestamp(),
-              };
-
-              setDocumentNonBlocking(newSectorRef, newSector, { merge: true });
-              
-              const cachedSector = { ...newSector, id: targetSectorId } as Setor;
-              sectorMap.set(sName, cachedSector);
-            }
-
-            const status = (statusRaw?.toString().toLowerCase() === 'inativo') ? 'inativo' : 'ativo';
-            const isLider = liderRaw?.toString().toLowerCase() === 'sim' || liderRaw === true || liderRaw === 'S';
-            const finalFotoUrl = fotoUrl || `https://picsum.photos/seed/${Math.random()}/400/533`;
-
             addDocumentNonBlocking(employeesRef, {
               nome,
               cargo,
-              setor_id: targetSectorId || "",
-              subcategoria: subcategoria.toString(),
-              status,
-              is_lider: !!isLider,
-              titulo_lider: isLider ? (tituloLider?.toString() || "Líder de Setor") : "",
-              foto_url: finalFotoUrl,
-              email: email?.toString() || "",
-              ramal: ramal?.toString() || "",
-              unidade: unidade?.toString() || "",
+              setor_id: row.SetorID || "",
+              subcategoria: row.Subcategoria || "",
+              status: row.Status?.toLowerCase() === 'inativo' ? 'inativo' : 'ativo',
+              is_lider: !!row.Lider,
+              titulo_lider: row.TituloLider || "",
+              foto_url: row.FotoURL || `https://picsum.photos/seed/${Math.random()}/400/533`,
+              email: row.Email || "",
+              ramal: row.Ramal || "",
+              unidade: row.Unidade || "",
               data_criacao: new Date().toISOString(),
               createdAt: serverTimestamp(),
             });
             successCount++;
           }
         }
-
         toast({ title: "Sucesso", description: `${successCount} colaboradores importados.` });
         setIsBulkDialogOpen(false);
-        setExcelFile(null);
       } catch (error) {
-        console.error("Erro ao processar Excel:", error);
         toast({ variant: "destructive", title: "Erro", description: "Falha ao ler o arquivo Excel." });
       } finally {
         setIsProcessing(false);
       }
     };
-
     reader.readAsArrayBuffer(excelFile);
   };
 
@@ -251,35 +207,15 @@ export default function FuncionariosPage() {
             <DialogContent className="sm:max-w-[500px]">
               <DialogHeader>
                 <DialogTitle>Importar Planilha</DialogTitle>
-                <DialogDescription>
-                  Selecione um arquivo .xlsx para importar colaboradores em massa.
-                </DialogDescription>
+                <DialogDescription>Selecione um arquivo .xlsx para importar.</DialogDescription>
               </DialogHeader>
-              <Alert className="bg-blue-50 border-blue-200">
-                <AlertCircle className="h-4 w-4 text-blue-600" />
-                <AlertDescription className="text-xs text-blue-800">
-                  Colunas esperadas: <b>Nome | Cargo | Setor | Subcategoria | Status | Líder | TituloLider | Foto | Email | Ramal | Unidade</b>
-                </AlertDescription>
-              </Alert>
               <div className="grid gap-4 py-6">
-                <div className="grid gap-2">
-                  <Label htmlFor="excel-file">Arquivo Excel</Label>
-                  <Input 
-                    id="excel-file" 
-                    type="file" 
-                    accept=".xlsx, .xls"
-                    onChange={(e) => setExcelFile(e.target.files?.[0] || null)}
-                  />
-                </div>
+                <Input type="file" accept=".xlsx, .xls" onChange={(e) => setExcelFile(e.target.files?.[0] || null)} />
               </div>
               <DialogFooter>
-                <Button 
-                  onClick={handleExcelUpload} 
-                  className="w-full h-11"
-                  disabled={!excelFile || isProcessing}
-                >
+                <Button onClick={handleExcelUpload} disabled={!excelFile || isProcessing}>
                   {isProcessing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Upload className="mr-2 h-4 w-4" />}
-                  {isProcessing ? "Processando..." : "Importar Planilha"}
+                  Importar
                 </Button>
               </DialogFooter>
             </DialogContent>
@@ -339,16 +275,8 @@ export default function FuncionariosPage() {
                         </SelectContent>
                       </Select>
                     ) : (
-                      <Input 
-                        id="subcategoria" 
-                        name="subcategoria" 
-                        defaultValue={editingFunc?.subcategoria} 
-                        placeholder="Ex: Backend, Acadêmico..." 
-                      />
+                      <Input id="subcategoria" name="subcategoria" defaultValue={editingFunc?.subcategoria} placeholder="Ex: Backend, Acadêmico..." />
                     )}
-                    <p className="text-[10px] text-muted-foreground italic">
-                      Dica: Você pode pré-definir subcategorias na aba de "Setores".
-                    </p>
                   </div>
 
                   <div className="grid grid-cols-2 gap-4">
@@ -369,23 +297,13 @@ export default function FuncionariosPage() {
                   
                   <div className="space-y-4 bg-slate-50 p-4 rounded-lg border">
                     <div className="flex items-center space-x-2">
-                      <Checkbox 
-                        id="is_lider" 
-                        checked={isLiderChecked} 
-                        onCheckedChange={(checked) => setIsLiderChecked(!!checked)} 
-                      />
-                      <Label htmlFor="is_lider" className="text-sm font-bold cursor-pointer">
-                        Destaque como Liderança (aparece no topo do setor)
-                      </Label>
+                      <Checkbox id="is_lider" checked={isLiderChecked} onCheckedChange={(checked) => setIsLiderChecked(!!checked)} />
+                      <Label htmlFor="is_lider" className="text-sm font-bold cursor-pointer">Destaque como Liderança</Label>
                     </div>
                     {isLiderChecked && (
                       <div className="grid gap-2 pl-6">
                         <Label htmlFor="titulo_lider">Título Customizado (ex: Coordenador)</Label>
-                        <Input 
-                          id="titulo_lider" 
-                          name="titulo_lider" 
-                          defaultValue={editingFunc?.titulo_lider || "Líder de Setor"} 
-                        />
+                        <Input id="titulo_lider" name="titulo_lider" defaultValue={editingFunc?.titulo_lider || "Líder de Setor"} />
                       </div>
                     )}
                   </div>
@@ -445,7 +363,7 @@ export default function FuncionariosPage() {
                 <TableCell>
                   <div className="flex items-center gap-3">
                     <div className="h-16 w-12 relative rounded-sm overflow-hidden border bg-slate-50 shrink-0 shadow-sm">
-                      <Image 
+                      <NextImage 
                         src={f.foto_url || "https://picsum.photos/seed/placeholder/400/533"} 
                         alt={f.nome} 
                         fill 
@@ -469,11 +387,7 @@ export default function FuncionariosPage() {
                     <span className="text-xs font-bold text-slate-700">
                       {sectors?.find(s => s.id === f.setor_id)?.nome || "-"}
                     </span>
-                    {f.subcategoria && (
-                      <span className="text-[10px] text-muted-foreground italic">
-                        {f.subcategoria}
-                      </span>
-                    )}
+                    {f.subcategoria && <span className="text-[10px] text-muted-foreground italic">{f.subcategoria}</span>}
                   </div>
                 </TableCell>
                 <TableCell>
