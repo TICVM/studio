@@ -49,7 +49,12 @@ export default function Home() {
       ? sectors 
       : sectors.filter(s => s.id === selectedSetor);
 
-    const sortedSectors = [...relevantSectors].sort((a, b) => a.nome.localeCompare(b.nome));
+    const sortedSectors = [...relevantSectors].sort((a, b) => {
+      const orderA = a.ordem ?? 999;
+      const orderB = b.ordem ?? 999;
+      if (orderA !== orderB) return orderA - orderB;
+      return a.nome.localeCompare(b.nome);
+    });
 
     return sortedSectors.map(sector => {
       const sectorFuncs = filteredEmployees.filter(f => f.setor_id === sector.id);
@@ -114,7 +119,7 @@ export default function Home() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">Todos os Setores</SelectItem>
-                  {sectors?.map(s => (
+                  {sectors?.sort((a, b) => (a.ordem ?? 999) - (b.ordem ?? 999)).map(s => (
                     <SelectItem key={s.id} value={s.id}>{s.nome}</SelectItem>
                   ))}
                 </SelectContent>

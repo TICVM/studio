@@ -2,6 +2,7 @@
 export interface Setor {
   id: string;
   nome: string;
+  ordem?: number; // Prioridade numérica para ordenação
   subcategorias?: string[]; // Lista de subcategorias pré-definidas
   data_criacao: string;
 }

@@ -2,7 +2,7 @@
 "use client"
 
 import { useState } from "react";
-import { Grid, Plus, Edit2, Trash2, Search, Loader2, FileText, Upload, Tags } from "lucide-react";
+import { Grid, Plus, Edit2, Trash2, Search, Loader2, FileText, Upload, Tags, ArrowUpDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -32,17 +32,6 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger,
-} from "@/components/ui/confirm-alert-dialog" // This might be a typo in your filesystem, using local generic one
-import {
-  AlertDialog as ShadcnAlertDialog,
-  AlertDialogAction as ShadcnAction,
-  AlertDialogCancel as ShadcnCancel,
-  AlertDialogContent as ShadcnContent,
-  AlertDialogDescription as ShadcnDescription,
-  AlertDialogFooter as ShadcnFooter,
-  AlertDialogHeader as ShadcnHeader,
-  AlertDialogTitle as ShadcnTitle,
-  AlertDialogTrigger as ShadcnTrigger,
 } from "@/components/ui/alert-dialog";
 import { Label } from "@/components/ui/label";
 import { useMemoFirebase, useCollection, useFirestore, addDocumentNonBlocking, updateDocumentNonBlocking, deleteDocumentNonBlocking } from "@/firebase";
@@ -68,30 +57,38 @@ export default function SetoresPage() {
   const { data: sectors, isLoading: loadingSectors } = useCollection<Setor>(sectorsRef);
   const { data: employees } = useCollection<Funcionario>(employeesRef);
 
-  const filteredSetores = sectors?.filter(s => 
-    s.nome.toLowerCase().includes(searchTerm.toLowerCase())
-  ) || [];
+  const filteredSetores = (sectors || [])
+    .filter(s => s.nome.toLowerCase().includes(searchTerm.toLowerCase()))
+    .sort((a, b) => {
+      const orderA = a.ordem ?? 999;
+      const orderB = b.ordem ?? 999;
+      if (orderA !== orderB) return orderA - orderB;
+      return a.nome.localeCompare(b.nome);
+    });
 
   const handleSave = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
     const nome = formData.get("nome") as string;
+    const ordem = Number(formData.get("ordem")) || 0;
     const subcatsRaw = formData.get("subcategorias") as string;
     
     const subcategorias = subcatsRaw 
       ? subcatsRaw.split(",").map(s => s.trim()).filter(s => s.length > 0)
       : [];
 
+    const data = { 
+      nome, 
+      ordem,
+      subcategorias 
+    };
+
     if (editingSector) {
-      updateDocumentNonBlocking(doc(firestore, "sectors", editingSector.id), { 
-        nome, 
-        subcategorias 
-      });
+      updateDocumentNonBlocking(doc(firestore, "sectors", editingSector.id), data);
       toast({ title: "Sucesso", description: "Setor atualizado." });
     } else {
       addDocumentNonBlocking(sectorsRef, {
-        nome,
-        subcategorias,
+        ...data,
         data_criacao: new Date().toISOString(),
         createdAt: serverTimestamp(),
       });
@@ -128,6 +125,7 @@ export default function SetoresPage() {
           if (nome) {
             addDocumentNonBlocking(sectorsRef, {
               nome,
+              ordem: Number(row.Ordem) || 0,
               subcategorias: row.Subcategorias?.split(',').map((s: string) => s.trim()) || [],
               data_criacao: new Date().toISOString(),
               createdAt: serverTimestamp(),
@@ -159,17 +157,27 @@ export default function SetoresPage() {
       <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center">
         <div>
           <h1 className="text-3xl font-bold tracking-tight text-primary">Setores</h1>
-          <p className="text-muted-foreground">Gerencie departamentos e suas subcategorias.</p>
+          <p className="text-muted-foreground">Gerencie departamentos e sua ordem de exibição.</p>
         </div>
         
         <div className="flex gap-2">
           <Dialog open={isBulkDialogOpen} onOpenChange={setIsBulkDialogOpen}>
             <DialogTrigger asChild>
-              <Button variant="outline" className="h-11"><FileText className="mr-2 h-4 w-4" />Importar</Button>
+              <Button variant="outline" className="h-11 shadow-sm"><FileText className="mr-2 h-4 w-4" />Importar</Button>
             </DialogTrigger>
             <DialogContent>
-              <Input type="file" accept=".xlsx, .xls" onChange={(e) => setExcelFile(e.target.files?.[0] || null)} />
-              <Button onClick={handleExcelUpload} disabled={!excelFile || isProcessing}>Processar</Button>
+              <DialogHeader>
+                <DialogTitle>Importar Setores</DialogTitle>
+                <DialogDescription>Use uma planilha com as colunas Nome, Ordem e Subcategorias.</DialogDescription>
+              </DialogHeader>
+              <div className="py-4">
+                <Input type="file" accept=".xlsx, .xls" onChange={(e) => setExcelFile(e.target.files?.[0] || null)} />
+              </div>
+              <DialogFooter>
+                <Button onClick={handleExcelUpload} disabled={!excelFile || isProcessing}>
+                  {isProcessing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : "Processar Planilha"}
+                </Button>
+              </DialogFooter>
             </DialogContent>
           </Dialog>
 
@@ -184,18 +192,25 @@ export default function SetoresPage() {
               <form onSubmit={handleSave}>
                 <DialogHeader>
                   <DialogTitle>{editingSector ? "Editar Setor" : "Criar Novo Setor"}</DialogTitle>
+                  <DialogDescription>A ordem define a sequência no Carômetro (números menores aparecem primeiro).</DialogDescription>
                 </DialogHeader>
                 <div className="grid gap-6 py-4">
-                  <div className="grid gap-2">
-                    <Label htmlFor="nome">Nome do Setor</Label>
-                    <Input id="nome" name="nome" defaultValue={editingSector?.nome} required />
+                  <div className="grid grid-cols-4 gap-4">
+                    <div className="col-span-3 grid gap-2">
+                      <Label htmlFor="nome">Nome do Setor</Label>
+                      <Input id="nome" name="nome" defaultValue={editingSector?.nome} required />
+                    </div>
+                    <div className="grid gap-2">
+                      <Label htmlFor="ordem">Ordem</Label>
+                      <Input id="ordem" name="ordem" type="number" defaultValue={editingSector?.ordem || 0} />
+                    </div>
                   </div>
                   <div className="grid gap-2">
-                    <Label htmlFor="subcategorias" className="flex items-center gap-2"><Tags size={14} /> Subcategorias (vírgula)</Label>
-                    <Input id="subcategorias" name="subcategorias" defaultValue={editingSector?.subcategorias?.join(", ")} />
+                    <Label htmlFor="subcategorias" className="flex items-center gap-2"><Tags size={14} /> Subcategorias (separadas por vírgula)</Label>
+                    <Input id="subcategorias" name="subcategorias" placeholder="Ex: Backend, Frontend, DevOps" defaultValue={editingSector?.subcategorias?.join(", ")} />
                   </div>
                 </div>
-                <DialogFooter><Button type="submit" className="w-full h-11">Salvar</Button></DialogFooter>
+                <DialogFooter><Button type="submit" className="w-full h-11">Salvar Alterações</Button></DialogFooter>
               </form>
             </DialogContent>
           </Dialog>
@@ -204,47 +219,76 @@ export default function SetoresPage() {
 
       <div className="bg-white rounded-xl shadow-sm border overflow-hidden">
         <div className="p-4 border-b">
-          <Input placeholder="Pesquisar..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
+          <div className="relative w-full max-w-sm">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input 
+              placeholder="Pesquisar departamentos..." 
+              className="pl-10"
+              value={searchTerm} 
+              onChange={(e) => setSearchTerm(e.target.value)} 
+            />
+          </div>
         </div>
         <Table>
-          <TableHeader><TableRow><TableHead>Nome</TableHead><TableHead>Subcategorias</TableHead><TableHead>Membros</TableHead><TableHead className="text-right">Ações</TableHead></TableRow></TableHeader>
+          <TableHeader>
+            <TableRow className="bg-slate-50">
+              <TableHead className="w-16 text-center">Ordem</TableHead>
+              <TableHead>Departamento</TableHead>
+              <TableHead>Subcategorias</TableHead>
+              <TableHead className="text-center">Equipe</TableHead>
+              <TableHead className="text-right">Ações</TableHead>
+            </TableRow>
+          </TableHeader>
           <TableBody>
             {filteredSetores.map((setor) => {
               const count = employees?.filter(f => f.setor_id === setor.id).length || 0;
               return (
                 <TableRow key={setor.id} className="group">
+                  <TableCell className="text-center">
+                    <Badge variant="outline" className="font-mono text-[10px]">{setor.ordem ?? 0}</Badge>
+                  </TableCell>
                   <TableCell className="font-bold text-primary">{setor.nome}</TableCell>
                   <TableCell>
                     <div className="flex flex-wrap gap-1">
-                      {setor.subcategorias?.map(sub => <Badge key={sub} variant="secondary" className="text-[9px] uppercase">{sub}</Badge>)}
+                      {setor.subcategorias && setor.subcategorias.length > 0 ? (
+                        setor.subcategorias.map(sub => <Badge key={sub} variant="secondary" className="text-[9px] uppercase font-bold">{sub}</Badge>)
+                      ) : (
+                        <span className="text-xs text-muted-foreground italic">Nenhuma</span>
+                      )}
                     </div>
                   </TableCell>
-                  <TableCell><Badge variant="outline">{count}</Badge></TableCell>
+                  <TableCell className="text-center">
+                    <div className="inline-flex items-center gap-1.5 text-xs font-semibold px-2 py-1 bg-blue-50 text-blue-700 rounded-full border border-blue-100">
+                      {count}
+                    </div>
+                  </TableCell>
                   <TableCell className="text-right">
                     <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <Button variant="ghost" size="icon" onClick={() => { setEditingSector(setor); setIsDialogOpen(true); }}><Edit2 className="h-4 w-4" /></Button>
+                      <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => { setEditingSector(setor); setIsDialogOpen(true); }}>
+                        <Edit2 className="h-4 w-4" />
+                      </Button>
                       
-                      <ShadcnAlertDialog>
-                        <ShadcnTrigger asChild>
-                          <Button variant="ghost" size="icon" className="hover:text-destructive">
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button variant="ghost" size="icon" className="h-8 w-8 hover:text-destructive">
                             <Trash2 className="h-4 w-4" />
                           </Button>
-                        </ShadcnTrigger>
-                        <ShadcnContent>
-                          <ShadcnHeader>
-                            <ShadcnTitle>Excluir Setor</ShadcnTitle>
-                            <ShadcnDescription>
-                              Deseja realmente excluir este setor? Esta ação não pode ser desfeita.
-                            </ShadcnDescription>
-                          </ShadcnHeader>
-                          <ShadcnFooter>
-                            <ShadcnCancel>Cancelar</ShadcnCancel>
-                            <ShadcnAction onClick={() => handleDelete(setor.id)} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Excluir Setor</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              Deseja realmente excluir o setor "{setor.nome}"? Esta ação não poderá ser desfeita.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                            <AlertDialogAction onClick={() => handleDelete(setor.id)} className="bg-destructive text-white hover:bg-destructive/90">
                               Excluir
-                            </ShadcnAction>
-                          </ShadcnFooter>
-                        </ShadcnContent>
-                      </ShadcnAlertDialog>
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
                     </div>
                   </TableCell>
                 </TableRow>
