@@ -23,6 +23,17 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -121,11 +132,9 @@ export default function FuncionariosPage() {
   };
 
   const handleDelete = (id: string) => {
-    if (window.confirm("Deseja realmente excluir este colaborador?")) {
-      const docRef = doc(firestore, "employees", id);
-      deleteDocumentNonBlocking(docRef);
-      toast({ title: "Excluído", description: "Colaborador removido com sucesso." });
-    }
+    const docRef = doc(firestore, "employees", id);
+    deleteDocumentNonBlocking(docRef);
+    toast({ title: "Excluído", description: "Colaborador removido com sucesso." });
   };
 
   const handleExcelUpload = async () => {
@@ -361,7 +370,7 @@ export default function FuncionariosPage() {
               <TableRow key={f.id} className="group">
                 <TableCell>
                   <div className="flex items-center gap-3">
-                    <div className="h-16 w-12 relative rounded-sm overflow-hidden border bg-slate-50 shrink-0 shadow-sm">
+                    <div className="h-16 w-12 relative rounded-sm overflow-hidden border bg-slate-50 shrink-0 shadow-sm aspect-[3/4]">
                       <NextImage 
                         src={f.foto_url || "https://picsum.photos/seed/placeholder/400/533"} 
                         alt={f.nome} 
@@ -402,9 +411,28 @@ export default function FuncionariosPage() {
                     }}>
                       <Edit2 className="h-4 w-4" />
                     </Button>
-                    <Button variant="ghost" size="icon" className="h-8 w-8 hover:text-destructive" onClick={() => handleDelete(f.id)}>
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
+                    
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button variant="ghost" size="icon" className="h-8 w-8 hover:text-destructive">
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Excluir Colaborador</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            Deseja realmente excluir este colaborador? Esta ação não pode ser desfeita.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                          <AlertDialogAction onClick={() => handleDelete(f.id)} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                            Excluir
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
                   </div>
                 </TableCell>
               </TableRow>

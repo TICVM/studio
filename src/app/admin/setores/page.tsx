@@ -22,6 +22,28 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/confirm-alert-dialog" // This might be a typo in your filesystem, using local generic one
+import {
+  AlertDialog as ShadcnAlertDialog,
+  AlertDialogAction as ShadcnAction,
+  AlertDialogCancel as ShadcnCancel,
+  AlertDialogContent as ShadcnContent,
+  AlertDialogDescription as ShadcnDescription,
+  AlertDialogFooter as ShadcnFooter,
+  AlertDialogHeader as ShadcnHeader,
+  AlertDialogTitle as ShadcnTitle,
+  AlertDialogTrigger as ShadcnTrigger,
+} from "@/components/ui/alert-dialog";
 import { Label } from "@/components/ui/label";
 import { useMemoFirebase, useCollection, useFirestore, addDocumentNonBlocking, updateDocumentNonBlocking, deleteDocumentNonBlocking } from "@/firebase";
 import { collection, doc, serverTimestamp } from "firebase/firestore";
@@ -86,11 +108,9 @@ export default function SetoresPage() {
       toast({ variant: "destructive", title: "Ação negada", description: "O setor possui membros vinculados. Remova-os antes de excluir o setor." });
       return;
     }
-    if (window.confirm("Deseja realmente excluir este setor?")) {
-      const docRef = doc(firestore, "sectors", id);
-      deleteDocumentNonBlocking(docRef);
-      toast({ title: "Excluído", description: "Setor removido com sucesso." });
-    }
+    const docRef = doc(firestore, "sectors", id);
+    deleteDocumentNonBlocking(docRef);
+    toast({ title: "Excluído", description: "Setor removido com sucesso." });
   };
 
   const handleExcelUpload = async () => {
@@ -203,7 +223,28 @@ export default function SetoresPage() {
                   <TableCell className="text-right">
                     <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                       <Button variant="ghost" size="icon" onClick={() => { setEditingSector(setor); setIsDialogOpen(true); }}><Edit2 className="h-4 w-4" /></Button>
-                      <Button variant="ghost" size="icon" className="hover:text-destructive" onClick={() => handleDelete(setor.id)}><Trash2 className="h-4 w-4" /></Button>
+                      
+                      <ShadcnAlertDialog>
+                        <ShadcnTrigger asChild>
+                          <Button variant="ghost" size="icon" className="hover:text-destructive">
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </ShadcnTrigger>
+                        <ShadcnContent>
+                          <ShadcnHeader>
+                            <ShadcnTitle>Excluir Setor</ShadcnTitle>
+                            <ShadcnDescription>
+                              Deseja realmente excluir este setor? Esta ação não pode ser desfeita.
+                            </ShadcnDescription>
+                          </ShadcnHeader>
+                          <ShadcnFooter>
+                            <ShadcnCancel>Cancelar</ShadcnCancel>
+                            <ShadcnAction onClick={() => handleDelete(setor.id)} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                              Excluir
+                            </ShadcnAction>
+                          </ShadcnFooter>
+                        </ShadcnContent>
+                      </ShadcnAlertDialog>
                     </div>
                   </TableCell>
                 </TableRow>
