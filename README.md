@@ -2,7 +2,14 @@
 
 Este é um sistema de gestão visual de colaboradores (Carômetro) desenvolvido com **Next.js 15**, **Tailwind CSS**, **Shadcn/UI** e **Firebase**.
 
-## 🚀 Como publicar no GitHub
+## 🚀 Como abrir o Terminal
+
+Antes de publicar, você precisa abrir o terminal na pasta do seu projeto:
+- **Windows**: Procure por "PowerShell" ou "Terminal" no menu Iniciar.
+- **Mac**: Pressione `Command + Espaço` e digite "Terminal".
+- **VS Code**: Use o atalho `Ctrl + '` (crase) para abrir o terminal interno.
+
+## 📦 Como publicar no GitHub
 
 Siga os passos abaixo no seu terminal (na pasta raiz do projeto):
 
