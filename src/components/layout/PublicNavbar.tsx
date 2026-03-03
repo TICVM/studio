@@ -18,27 +18,27 @@ export function PublicNavbar() {
 
   return (
     <nav className="sticky top-0 z-50 w-full border-b bg-white/80 backdrop-blur-md">
-      <div className="container mx-auto px-4 h-16 flex items-center justify-between">
-        <Link href="/" className="flex items-center gap-2 h-full py-2">
+      <div className="container mx-auto px-4 h-20 flex items-center justify-between">
+        <Link href="/" className="flex items-center gap-3 h-full py-3">
           {logoStyle === "square_with_name" ? (
             <>
-              <div className="bg-primary p-1.5 rounded-lg text-white relative w-10 h-10 overflow-hidden shrink-0">
+              <div className="bg-primary p-2 rounded-xl text-white relative w-12 h-12 overflow-hidden shrink-0 shadow-sm">
                 {settings?.logoUrl ? (
-                  <NextImage src={settings.logoUrl} alt="Logo" fill className="object-contain p-1" />
+                  <NextImage src={settings.logoUrl} alt="Logo" fill className="object-contain p-1.5" />
                 ) : (
-                  <Users size={20} />
+                  <Users size={24} />
                 )}
               </div>
-              <span className="text-xl font-bold tracking-tight text-primary truncate max-w-[150px] sm:max-w-xs">
+              <span className="text-2xl font-black tracking-tighter text-primary truncate max-w-[200px] sm:max-w-md">
                 {settings?.systemName || "PessoasEmpresa"}
               </span>
             </>
           ) : (
-            <div className="relative h-full aspect-[4/1] flex items-center">
+            <div className="relative h-14 flex items-center">
               {settings?.logoUrl ? (
-                <img src={settings.logoUrl} alt="Logo" className="h-full w-auto object-contain py-1" />
+                <img src={settings.logoUrl} alt="Logo" className="h-full w-auto object-contain" />
               ) : (
-                <span className="text-xl font-bold tracking-tight text-primary">
+                <span className="text-2xl font-black tracking-tighter text-primary">
                   {settings?.systemName || "PessoasEmpresa"}
                 </span>
               )}
@@ -46,15 +46,15 @@ export function PublicNavbar() {
           )}
         </Link>
         <div className="flex items-center gap-4">
-          <Button variant="ghost" asChild className="hidden sm:flex">
+          <Button variant="ghost" asChild className="hidden sm:flex h-11">
             <Link href="/admin/login">
               <Lock className="mr-2 h-4 w-4" />
               Área Administrativa
             </Link>
           </Button>
-          <Button variant="outline" size="icon" asChild className="sm:hidden">
+          <Button variant="outline" size="icon" asChild className="sm:hidden h-11 w-11">
             <Link href="/admin/login">
-              <Lock className="h-4 w-4" />
+              <Lock className="h-5 w-5" />
             </Link>
           </Button>
         </div>

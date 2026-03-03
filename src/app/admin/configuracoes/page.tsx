@@ -2,7 +2,7 @@
 "use client"
 
 import { useState, useEffect, useRef } from "react";
-import { Settings, Save, Palette, Image as ImageIcon, Type, Loader2, Users, Upload, X, Layout } from "lucide-react";
+import { Settings, Save, Palette, Image as ImageIcon, Type, Loader2, Users, Upload, X } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -27,7 +27,7 @@ export default function ConfiguracoesPage() {
     logoStyle: "square_with_name"
   });
 
-  const [isCompressing, setIsCompressing] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
 
   useEffect(() => {
     if (settings) {
@@ -77,7 +77,6 @@ export default function ConfiguracoesPage() {
     reader.onload = async (event) => {
       try {
         const base64 = event.target?.result as string;
-        // Ajustamos max width para 800 para logos retangulares
         const optimizedLogo = await compressImage(base64, 800, 400);
         setForm(prev => ({ ...prev, logoUrl: optimizedLogo }));
         toast({
@@ -96,8 +95,6 @@ export default function ConfiguracoesPage() {
     };
     reader.readAsDataURL(file);
   };
-
-  const [isProcessing, setIsProcessing] = useState(false);
 
   const removeLogo = () => {
     setForm(prev => ({ ...prev, logoUrl: "" }));
@@ -246,41 +243,41 @@ export default function ConfiguracoesPage() {
         <div className="space-y-6">
           <Card className="border-none shadow-sm bg-slate-50 sticky top-8">
             <CardHeader>
-              <CardTitle className="text-sm uppercase tracking-widest text-muted-foreground">Pré-visualização</CardTitle>
+              <CardTitle className="text-sm uppercase tracking-widest text-muted-foreground">Pré-visualização (Cabeçalho)</CardTitle>
             </CardHeader>
             <CardContent className="space-y-8">
-              <div className="p-4 bg-white rounded-lg shadow-sm border space-y-4">
-                <div className="flex items-center gap-3 border-b pb-4">
+              <div className="p-4 bg-white rounded-xl shadow-md border space-y-4">
+                <div className="flex items-center gap-3 border-b pb-4 h-16">
                   {form.logoStyle === 'square_with_name' ? (
                     <>
                       <div 
-                        className="w-10 h-10 rounded-lg flex items-center justify-center text-white overflow-hidden p-1"
+                        className="w-12 h-12 rounded-xl flex items-center justify-center text-white overflow-hidden p-1.5 shadow-sm"
                         style={{ backgroundColor: form.primaryColor }}
                       >
                         {form.logoUrl ? (
                           <img src={form.logoUrl} alt="Logo" className="w-full h-full object-contain" />
                         ) : (
-                          <Users size={20} />
+                          <Users size={24} />
                         )}
                       </div>
-                      <span className="font-bold text-lg" style={{ color: form.primaryColor }}>
+                      <span className="font-black text-2xl tracking-tighter" style={{ color: form.primaryColor }}>
                         {form.systemName || "Nome do Sistema"}
                       </span>
                     </>
                   ) : (
-                    <div className="h-10 w-full flex items-center justify-start overflow-hidden">
+                    <div className="h-14 flex items-center justify-start overflow-hidden">
                       {form.logoUrl ? (
-                        <img src={form.logoUrl} alt="Logo" className="h-full object-contain" />
+                        <img src={form.logoUrl} alt="Logo" className="h-full w-auto object-contain" />
                       ) : (
-                        <span className="font-bold text-lg" style={{ color: form.primaryColor }}>{form.systemName}</span>
+                        <span className="font-black text-2xl tracking-tighter" style={{ color: form.primaryColor }}>{form.systemName}</span>
                       )}
                     </div>
                   )}
                 </div>
                 
-                <div className="space-y-2">
+                <div className="space-y-3">
                   <div 
-                    className="h-8 w-full rounded-md" 
+                    className="h-10 w-full rounded-lg shadow-sm" 
                     style={{ backgroundColor: form.primaryColor }}
                   />
                   <div className="h-4 w-2/3 bg-slate-100 rounded" />
@@ -288,7 +285,7 @@ export default function ConfiguracoesPage() {
               </div>
               
               <div className="text-xs text-muted-foreground text-center bg-slate-100 p-4 rounded-lg">
-                <p>O estilo selecionado altera como o cabeçalho aparece em todas as telas.</p>
+                <p>O logotipo foi ampliado para garantir uma presença visual mais forte em todas as telas.</p>
               </div>
             </CardContent>
           </Card>

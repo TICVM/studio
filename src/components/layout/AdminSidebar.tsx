@@ -32,23 +32,23 @@ export function AdminSidebar() {
         <Link href="/admin/dashboard" className="flex items-center gap-3">
           {logoStyle === "square_with_name" ? (
             <>
-              <div className="bg-primary p-2 rounded-lg text-white relative w-10 h-10 overflow-hidden shrink-0">
+              <div className="bg-primary p-2 rounded-xl text-white relative w-12 h-12 overflow-hidden shrink-0 shadow-sm">
                 {settings?.logoUrl ? (
-                  <NextImage src={settings.logoUrl} alt="Logo" fill className="object-contain p-1" />
+                  <NextImage src={settings.logoUrl} alt="Logo" fill className="object-contain p-1.5" />
                 ) : (
                   <Users size={24} />
                 )}
               </div>
-              <span className="text-lg font-bold tracking-tight text-sidebar-foreground truncate">
+              <span className="text-xl font-black tracking-tighter text-sidebar-foreground truncate">
                 {settings?.systemName || "AdminPanel"}
               </span>
             </>
           ) : (
-            <div className="h-12 w-full flex items-center justify-start overflow-hidden">
+            <div className="h-16 w-full flex items-center justify-start overflow-hidden">
               {settings?.logoUrl ? (
                 <img src={settings.logoUrl} alt="Logo" className="h-full w-auto object-contain" />
               ) : (
-                <span className="text-lg font-bold tracking-tight text-sidebar-foreground">
+                <span className="text-xl font-black tracking-tighter text-sidebar-foreground">
                   {settings?.systemName || "AdminPanel"}
                 </span>
               )}
