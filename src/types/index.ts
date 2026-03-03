@@ -42,6 +42,7 @@ export interface SystemSettings {
   showBirthdayIcon?: boolean;
   logoUrl: string;
   primaryColor: string;
+  birthdayColor?: string;
   leadershipColor?: string;
   backgroundColor?: string;
   cardBackgroundColor?: string;

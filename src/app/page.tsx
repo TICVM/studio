@@ -146,6 +146,8 @@ export default function Home() {
 
   const monthNames = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
 
+  const bdayColor = settings?.birthdayColor || "#ec4899";
+
   return (
     <div className="min-h-screen flex flex-col" style={{ backgroundColor: 'hsl(var(--background))' }}>
       <PublicNavbar />
@@ -153,18 +155,24 @@ export default function Home() {
       <main className="flex-1 container mx-auto px-4 py-8 space-y-10">
         {/* Aniversariantes do Mês (Destaque Festivo) */}
         {settings?.showBirthdays !== false && anniversaries.length > 0 && !hasActiveFilters && (
-          <section className="bg-gradient-to-r from-pink-500/10 via-purple-500/10 to-blue-500/10 p-6 md:p-8 rounded-[2rem] border border-pink-100 shadow-sm animate-in fade-in slide-in-from-top-4 duration-700">
+          <section 
+            className="p-6 md:p-8 rounded-[2rem] border shadow-sm animate-in fade-in slide-in-from-top-4 duration-700"
+            style={{ 
+              backgroundColor: `${bdayColor}10`,
+              borderColor: `${bdayColor}30`
+            }}
+          >
             <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-8 gap-4">
               <div className="space-y-1">
-                <div className="flex items-center gap-2 text-pink-600">
+                <div className="flex items-center gap-2" style={{ color: bdayColor }}>
                   <Cake size={20} className="animate-bounce" />
                   <span className="text-[10px] font-black uppercase tracking-[0.2em]">Celebração do Mês</span>
                 </div>
                 <h2 className="text-3xl font-black tracking-tighter text-slate-800">
-                  Aniversariantes de <span className="text-pink-600 underline decoration-pink-200 decoration-4 underline-offset-4">{monthNames[currentMonth]}</span>
+                  Aniversariantes de <span className="underline decoration-4 underline-offset-4" style={{ color: bdayColor, textDecorationColor: `${bdayColor}30` }}>{monthNames[currentMonth]}</span>
                 </h2>
               </div>
-              <div className="flex items-center gap-2 bg-white/80 backdrop-blur-sm px-4 py-2 rounded-full border border-pink-100/50 self-start sm:self-auto">
+              <div className="flex items-center gap-2 bg-white/80 backdrop-blur-sm px-4 py-2 rounded-full border self-start sm:self-auto" style={{ borderColor: `${bdayColor}20` }}>
                 <Sparkles size={16} className="text-amber-500" />
                 <span className="text-[11px] font-bold text-slate-600 uppercase tracking-wider">Parabéns aos colegas!</span>
               </div>
@@ -178,8 +186,11 @@ export default function Home() {
                   <div key={f.id} className="flex-shrink-0 group">
                     <div className={cn(
                       "relative w-36 h-48 rounded-[1.5rem] overflow-hidden border-4 transition-all duration-500",
-                      isToday ? "border-pink-400 shadow-xl shadow-pink-200 scale-105" : "border-white shadow-md group-hover:scale-105"
-                    )}>
+                      isToday ? "shadow-xl scale-105" : "border-white shadow-md group-hover:scale-105"
+                    )} style={{ 
+                      borderColor: isToday ? bdayColor : 'white',
+                      boxShadow: isToday ? `0 10px 25px -5px ${bdayColor}40` : undefined
+                    }}>
                       <NextImage 
                         src={f.foto_url || "https://picsum.photos/seed/placeholder/400/533"} 
                         alt={f.nome} 
@@ -187,15 +198,18 @@ export default function Home() {
                         className="object-cover"
                       />
                       <div className={cn(
-                        "absolute inset-x-0 bottom-0 p-3 flex flex-col justify-end min-h-[60%]",
-                        isToday ? "bg-gradient-to-t from-pink-600/90 via-pink-500/40 to-transparent" : "bg-gradient-to-t from-black/80 via-black/20 to-transparent"
-                      )}>
+                        "absolute inset-x-0 bottom-0 p-3 flex flex-col justify-end min-h-[60%]"
+                      )} style={{
+                        background: isToday 
+                          ? `linear-gradient(to top, ${bdayColor}F0, ${bdayColor}40, transparent)` 
+                          : `linear-gradient(to top, rgba(0,0,0,0.8), rgba(0,0,0,0.2), transparent)`
+                      }}>
                         <p className="text-xs font-black text-white truncate mb-0.5">{f.nome.split(' ')[0]}</p>
                         <div className="flex items-center gap-1.5">
                           <div className={cn(
                             "px-2 py-0.5 rounded-full text-[8px] font-black uppercase tracking-widest",
-                            isToday ? "bg-white text-pink-600 animate-pulse" : "bg-white/20 text-white backdrop-blur-md"
-                          )}>
+                            isToday ? "bg-white animate-pulse" : "bg-white/20 text-white backdrop-blur-md"
+                          )} style={{ color: isToday ? bdayColor : 'white' }}>
                             {isToday ? "Hoje! 🎉" : `Dia ${birthDay}`}
                           </div>
                         </div>

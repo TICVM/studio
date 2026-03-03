@@ -61,6 +61,12 @@ export function AppearanceManager() {
         root.style.setProperty('--leadership', '#f59e0b');
       }
 
+      if (settings.birthdayColor) {
+        root.style.setProperty('--birthday', settings.birthdayColor);
+      } else {
+        root.style.setProperty('--birthday', '#ec4899');
+      }
+
       if (settings.backgroundColor) {
         root.style.setProperty('--background', hexToHsl(settings.backgroundColor));
       }

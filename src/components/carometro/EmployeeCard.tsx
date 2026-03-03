@@ -38,6 +38,7 @@ export function EmployeeCard({ funcionario, setor }: EmployeeCardProps) {
   const showBadge = settings?.cardShowBadge ?? true;
   const badgePos = settings?.cardBadgePosition || 'bottom';
   const showBirthdayIcon = settings?.showBirthdayIcon ?? true;
+  const bdayColor = settings?.birthdayColor || "#ec4899";
 
   // Verificar se o aniversário é hoje de forma robusta
   const isBirthdayToday = useMemo(() => {
@@ -118,7 +119,8 @@ export function EmployeeCard({ funcionario, setor }: EmployeeCardProps) {
               )}
               {isBirthdayToday && showBirthdayIcon && (
                 <div 
-                  className="absolute bottom-2 left-2 bg-pink-500 text-white p-1.5 rounded-full shadow-lg z-20 animate-bounce"
+                  className="absolute bottom-2 left-2 text-white p-1.5 rounded-full shadow-lg z-20 animate-bounce"
+                  style={{ backgroundColor: bdayColor }}
                 >
                   <Cake size={14} fill="white" />
                 </div>
@@ -129,7 +131,7 @@ export function EmployeeCard({ funcionario, setor }: EmployeeCardProps) {
             <div className="space-y-1 w-full flex-1">
               <h3 className="font-bold text-lg leading-tight flex items-center justify-center gap-1.5" style={{ color: 'hsl(var(--name-color, var(--primary)))' }}>
                 {funcionario.nome}
-                {isBirthdayToday && showBirthdayIcon && <span className="text-pink-500 text-xs">🎂</span>}
+                {isBirthdayToday && showBirthdayIcon && <span style={{ color: bdayColor }} className="text-xs">🎂</span>}
               </h3>
               <p className="text-sm font-medium" style={{ color: 'hsl(var(--job-color, var(--foreground)))' }}>
                 {funcionario.cargo}
@@ -143,10 +145,13 @@ export function EmployeeCard({ funcionario, setor }: EmployeeCardProps) {
 
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
         <DialogContent className="sm:max-w-[400px] p-0 overflow-hidden border-none shadow-2xl">
-          <div className={cn(
-            "p-6 text-white transition-colors",
-            isBirthdayToday ? "bg-gradient-to-r from-pink-500 to-purple-600" : "bg-primary"
-          )} style={{ backgroundColor: isBirthdayToday ? undefined : 'hsl(var(--primary))' }}>
+          <div 
+            className="p-6 text-white transition-colors"
+            style={{ 
+              backgroundColor: isBirthdayToday ? bdayColor : 'hsl(var(--primary))',
+              backgroundImage: isBirthdayToday ? `linear-gradient(to right, ${bdayColor}, ${bdayColor}CC)` : undefined
+            }}
+          >
             <DialogHeader>
               <DialogTitle className="text-xl font-bold flex items-center gap-2 text-white">
                 {funcionario.nome}
@@ -170,10 +175,10 @@ export function EmployeeCard({ funcionario, setor }: EmployeeCardProps) {
           
           <div className="p-6 grid gap-4" style={{ backgroundColor: 'hsl(var(--card))' }}>
             <div className="flex justify-center">
-              <div className={cn(
-                "relative w-40 aspect-[3/4] rounded-lg overflow-hidden shadow-lg border-4 -mt-16 bg-slate-100",
-                isBirthdayToday ? "border-pink-200" : "border-white"
-              )}>
+              <div 
+                className="relative w-40 aspect-[3/4] rounded-lg overflow-hidden shadow-lg border-4 -mt-16 bg-slate-100"
+                style={{ borderColor: isBirthdayToday ? `${bdayColor}30` : "white" }}
+              >
                 <Image
                   src={funcionario.foto_url || "https://picsum.photos/seed/placeholder/400/533"}
                   alt={funcionario.nome}

@@ -50,6 +50,7 @@ export default function ConfiguracoesPage() {
     showBirthdayIcon: true,
     logoUrl: "",
     primaryColor: "#3b82f6",
+    birthdayColor: "#ec4899",
     leadershipColor: "#f59e0b",
     backgroundColor: "#f8fafc",
     cardBackgroundColor: "#ffffff",
@@ -91,6 +92,7 @@ export default function ConfiguracoesPage() {
         showBirthdays: settings.showBirthdays ?? true,
         showBirthdayIcon: settings.showBirthdayIcon ?? true,
         leadershipColor: settings.leadershipColor || "#f59e0b",
+        birthdayColor: settings.birthdayColor || "#ec4899",
         backgroundColor: settings.backgroundColor || "#f8fafc",
         cardBackgroundColor: settings.cardBackgroundColor || "#ffffff",
         foregroundColor: settings.foregroundColor || "#020617",
@@ -276,7 +278,6 @@ export default function ConfiguracoesPage() {
             </TabsContent>
 
             <TabsContent value="cores" className="space-y-6">
-              {/* Conteúdo mantido conforme original */}
               <Card>
                 <CardHeader><CardTitle>Personalização Cromática</CardTitle></CardHeader>
                 <CardContent className="space-y-10">
@@ -291,12 +292,14 @@ export default function ConfiguracoesPage() {
                       <ColorPickerField label="Texto dos Selos" id="afc" value={form.accentForegroundColor} onChange={v => setForm({...form, accentForegroundColor: v})} description="Cor do texto dentro dos selos." />
                     </div>
                     <div className="space-y-6">
-                      <h3 className="text-xs font-black uppercase text-primary border-b pb-2">Hierarquia de Textos</h3>
+                      <h3 className="text-xs font-black uppercase text-primary border-b pb-2">Cores Temáticas</h3>
+                      <ColorPickerField label="Cor de Aniversário" id="abc" value={form.birthdayColor} onChange={v => setForm({...form, birthdayColor: v})} description="Banner, ícones e destaque festivo." />
+                      <ColorPickerField label="Destaque Liderança" id="lc" value={form.leadershipColor} onChange={v => setForm({...form, leadershipColor: v})} description="Coroa e cargos de gestão." />
+                      <h3 className="text-xs font-black uppercase text-primary border-b pb-2 pt-2">Hierarquia de Textos</h3>
                       <ColorPickerField label="Cor do Nome" id="nc" value={form.nameColor} onChange={v => setForm({...form, nameColor: v})} description="Destaque para o nome do colaborador." />
                       <ColorPickerField label="Cor do Cargo" id="jtc" value={form.jobTitleColor} onChange={v => setForm({...form, jobTitleColor: v})} description="Informação da posição." />
                       <ColorPickerField label="Cor do Título do Setor" id="shc" value={form.sectorHeaderColor} onChange={v => setForm({...form, sectorHeaderColor: v})} description="Títulos de departamento." />
                       <ColorPickerField label="Cor da Subcategoria" id="scc" value={form.subCategoryColor} onChange={v => setForm({...form, subCategoryColor: v})} description="Selo específico de divisão." />
-                      <ColorPickerField label="Destaque Liderança" id="lc" value={form.leadershipColor} onChange={v => setForm({...form, leadershipColor: v})} description="Coroa e cargos de gestão." />
                       <ColorPickerField label="Cor Geral / Infos" id="fc" value={form.foregroundColor} onChange={v => setForm({...form, foregroundColor: v})} description="Outras informações básicas." />
                     </div>
                   </div>
@@ -336,10 +339,10 @@ export default function ConfiguracoesPage() {
                       </div>
                       <div className="space-y-3">
                         <Label className="flex items-center gap-2"><MousePointer2 size={14} /> Alinhamento do Texto</Label>
-                        <RadioGroup value={form.cardTextAlign} onValueChange={(v: any) => setForm({...form, cardTextAlign: v})} className="flex gap-4">
+                        <支配RadioGroup value={form.cardTextAlign} onValueChange={(v: any) => setForm({...form, cardTextAlign: v})} className="flex gap-4">
                           <div className="flex items-center space-x-2 border px-3 py-2 rounded-lg cursor-pointer"><RadioGroupItem value="center" id="ta1" /><Label htmlFor="ta1" className="cursor-pointer text-xs font-medium">Centro</Label></div>
                           <div className="flex items-center space-x-2 border px-3 py-2 rounded-lg cursor-pointer"><RadioGroupItem value="left" id="ta2" /><Label htmlFor="ta2" className="cursor-pointer text-xs font-medium">Esquerda</Label></div>
-                        </RadioGroup>
+                        </支配RadioGroup>
                       </div>
                     </div>
 
@@ -448,7 +451,7 @@ export default function ConfiguracoesPage() {
                       }}>
                         <div className="absolute inset-0 flex items-center justify-center text-slate-300"><Users size={20} /></div>
                         {form.showBirthdayIcon && (
-                          <div className="absolute bottom-1.5 left-1.5 bg-pink-500 text-white p-1 rounded-full shadow-lg"><Cake size={10} /></div>
+                          <div className="absolute bottom-1.5 left-1.5 text-white p-1 rounded-full shadow-lg" style={{ backgroundColor: form.birthdayColor }}><Cake size={10} /></div>
                         )}
                       </div>
                     </div>
