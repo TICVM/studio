@@ -191,19 +191,20 @@ export default function Home() {
                           </h3>
                         )}
 
-                        {/* Grade de Funcionários */}
+                        {/* Grade de Funcionários - Sincronizada com o layout do setor */}
                         <div className={cn(
                           "grid gap-8",
                           sectorGroup.layoutSubcategorias === 'grid'
-                            ? "grid-cols-1 sm:grid-cols-2" 
+                            ? (sectorGroup.colunasGrid && sectorGroup.colunasGrid >= 3 ? "grid-cols-1" : "grid-cols-1 sm:grid-cols-2")
                             : "grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5"
                         )}>
                           {sub.funcionarios.map(f => (
-                            <EmployeeCard 
-                              key={f.id} 
-                              funcionario={f} 
-                              setor={sectorGroup}
-                            />
+                            <div key={f.id} className="flex justify-center h-full">
+                              <EmployeeCard 
+                                funcionario={f} 
+                                setor={sectorGroup}
+                              />
+                            </div>
                           ))}
                         </div>
                       </div>

@@ -57,11 +57,11 @@ export function EmployeeCard({ funcionario, setor }: EmployeeCardProps) {
 
   return (
     <>
-      <div className="group relative h-full">
+      <div className="group relative h-full w-full max-w-[280px]">
         <Card 
           onClick={() => setIsOpen(true)}
           className={cn(
-            "overflow-hidden cursor-pointer transition-all duration-300 h-full flex flex-col border",
+            "overflow-hidden cursor-pointer transition-all duration-300 h-full flex flex-col border w-full",
             showShadow ? "shadow-sm" : "shadow-none",
             "group-hover:scale-[1.02] group-hover:!border-[var(--hover-color)] group-hover:!shadow-[0_10px_30px_-5px_var(--hover-color)]"
           )}
@@ -73,12 +73,12 @@ export function EmployeeCard({ funcionario, setor }: EmployeeCardProps) {
             borderColor: showShadow ? 'transparent' : 'hsl(var(--border))',
           }}
         >
-          <CardContent className="p-0 flex flex-col items-stretch text-inherit flex-1">
+          <CardContent className="p-0 flex flex-col items-center text-inherit flex-1 w-full">
             {showBadge && badgePos === 'top' && badgeContent}
 
             {/* Container da Foto */}
             <div className={cn(
-              "relative mx-auto mb-4 rounded-md overflow-hidden bg-slate-100 border border-slate-200",
+              "relative mb-4 rounded-md overflow-hidden bg-slate-100 border border-slate-200",
               aspectRatio === '3/4' ? "aspect-[3/4]" : "aspect-square"
             )} style={{ width: `${photoSize}%` }}>
               <Image
