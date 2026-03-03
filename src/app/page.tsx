@@ -135,7 +135,7 @@ export default function Home() {
             </h1>
             <div className="flex items-center gap-2">
               <p className="text-sm" style={{ color: 'hsl(var(--foreground))' }}>
-                {filteredEmployees.length} colaboradores encontrados.
+                {filteredEmployees.length} {settings?.countLabel || "colaboradores encontrados."}
               </p>
               {hasActiveFilters && (
                 <Button 

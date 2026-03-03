@@ -155,6 +155,7 @@
       "properties": {
         "systemName": { "type": "string" },
         "heroTitle": { "type": "string", "description": "The main title displayed on the public page." },
+        "countLabel": { "type": "string", "description": "The label following the employee count." },
         "logoUrl": { "type": "string" },
         "primaryColor": { "type": "string" },
         "leadershipColor": { "type": "string" },

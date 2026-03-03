@@ -44,6 +44,7 @@ export default function ConfiguracoesPage() {
   const [form, setForm] = useState<Partial<SystemSettings>>({
     systemName: "",
     heroTitle: "",
+    countLabel: "",
     logoUrl: "",
     primaryColor: "#3b82f6",
     leadershipColor: "#f59e0b",
@@ -193,6 +194,11 @@ export default function ConfiguracoesPage() {
                       <Label htmlFor="heroTitle">Título do Cabeçalho</Label>
                       <Input id="heroTitle" value={form.heroTitle} onChange={e => setForm({...form, heroTitle: e.target.value})} placeholder="Ex: Retrato Corporativo" />
                       <p className="text-[10px] text-muted-foreground">O título principal que aparece acima da lista de funcionários.</p>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="countLabel">Rótulo de Contagem</Label>
+                      <Input id="countLabel" value={form.countLabel} onChange={e => setForm({...form, countLabel: e.target.value})} placeholder="Ex: colaboradores encontrados" />
+                      <p className="text-[10px] text-muted-foreground">O texto que aparece após o número total de colaboradores.</p>
                     </div>
                   </div>
                   
