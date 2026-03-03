@@ -120,6 +120,14 @@ export default function FuncionariosPage() {
     setEditingFunc(null);
   };
 
+  const handleDelete = (id: string) => {
+    if (window.confirm("Deseja realmente excluir este colaborador?")) {
+      const docRef = doc(firestore, "employees", id);
+      deleteDocumentNonBlocking(docRef);
+      toast({ title: "Excluído", description: "Colaborador removido com sucesso." });
+    }
+  };
+
   const handleExcelUpload = async () => {
     if (!excelFile) {
       toast({ variant: "destructive", title: "Erro", description: "Selecione um arquivo Excel." });
@@ -169,14 +177,6 @@ export default function FuncionariosPage() {
       }
     };
     reader.readAsArrayBuffer(excelFile);
-  };
-
-  const handleDelete = (id: string) => {
-    if (window.confirm("Deseja realmente excluir este colaborador?")) {
-      const docRef = doc(firestore, "employees", id);
-      deleteDocumentNonBlocking(docRef);
-      toast({ title: "Excluído", description: "Colaborador removido com sucesso." });
-    }
   };
 
   if (loadingEmployees) {
