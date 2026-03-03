@@ -104,14 +104,18 @@ export default function Home() {
   const headerFontSize = settings?.headerFontSize || 24;
 
   return (
-    <div className="min-h-screen flex flex-col bg-slate-50/30">
+    <div className="min-h-screen flex flex-col" style={{ backgroundColor: 'hsl(var(--background))' }}>
       <PublicNavbar />
       
       <main className="flex-1 container mx-auto px-4 py-8 space-y-10">
-        <div className="flex flex-col md:flex-row gap-4 items-center justify-between bg-white p-6 rounded-xl shadow-sm border border-slate-100">
+        <div className="flex flex-col md:flex-row gap-4 items-center justify-between p-6 rounded-xl shadow-sm border border-slate-100" style={{ backgroundColor: 'hsl(var(--card))' }}>
           <div className="space-y-1">
-            <h1 className="text-2xl font-bold text-primary tracking-tight">{settings?.systemName || "Equipe Corporativa"}</h1>
-            <p className="text-muted-foreground text-sm">Consulte ramais e informações dos colaboradores.</p>
+            <h1 className="text-2xl font-bold tracking-tight" style={{ color: 'hsl(var(--primary))' }}>
+              {settings?.systemName || "Equipe Corporativa"}
+            </h1>
+            <p className="text-sm opacity-70" style={{ color: 'hsl(var(--foreground))' }}>
+              Consulte ramais e informações dos colaboradores.
+            </p>
           </div>
           
           <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
@@ -156,10 +160,16 @@ export default function Home() {
                   {/* Cabeçalho do Setor Configurável */}
                   <div className={cn(
                     "flex items-center gap-4 transition-all",
-                    headerStyle === 'box_background' && "bg-primary text-primary-foreground p-4 rounded-xl",
-                    headerStyle === 'full_underline' && "border-b-2 border-primary pb-2"
-                  )}>
-                    <h2 className="font-black tracking-tight" style={{ fontSize: headerFontSize, color: headerStyle === 'box_background' ? 'white' : 'var(--primary)' }}>
+                    headerStyle === 'box_background' && "p-4 rounded-xl",
+                    headerStyle === 'full_underline' && "border-b-2 pb-2"
+                  )} style={{ 
+                    backgroundColor: headerStyle === 'box_background' ? 'hsl(var(--primary))' : 'transparent',
+                    borderBottomColor: headerStyle === 'full_underline' ? 'hsl(var(--primary))' : 'transparent'
+                  }}>
+                    <h2 className="font-black tracking-tight" style={{ 
+                      fontSize: headerFontSize, 
+                      color: headerStyle === 'box_background' ? 'white' : 'hsl(var(--primary))' 
+                    }}>
                       {sectorGroup.nome}
                     </h2>
                     {headerStyle === 'line_right' && <div className="h-px flex-1 bg-slate-200" />}
@@ -176,7 +186,7 @@ export default function Home() {
                       <div key={sub.name} className="space-y-4">
                         {/* Título da Subcategoria */}
                         {sub.name !== "Geral" && (
-                          <h3 className="text-sm font-bold text-slate-400 uppercase tracking-widest pl-1">
+                          <h3 className="text-sm font-bold opacity-40 uppercase tracking-widest pl-1" style={{ color: 'hsl(var(--foreground))' }}>
                             {sub.name}
                           </h3>
                         )}
@@ -202,7 +212,7 @@ export default function Home() {
                 </section>
               ))
             ) : (
-              <div className="text-center py-20 bg-white rounded-xl border border-dashed">
+              <div className="text-center py-20 rounded-xl border border-dashed" style={{ backgroundColor: 'hsl(var(--card))' }}>
                 <Search className="h-10 w-10 text-slate-200 mx-auto mb-3" />
                 <h3 className="text-lg font-bold text-slate-400">Nenhum resultado</h3>
                 <p className="text-slate-300 text-sm">Refine sua busca ou filtros.</p>
@@ -212,9 +222,9 @@ export default function Home() {
         )}
       </main>
 
-      <footer className="border-t bg-white py-8 mt-16">
+      <footer className="border-t py-8 mt-16" style={{ backgroundColor: 'hsl(var(--card))' }}>
         <div className="container mx-auto px-4 text-center">
-          <p className="text-[10px] font-bold text-slate-300 uppercase tracking-widest">
+          <p className="text-[10px] font-bold opacity-30 uppercase tracking-widest" style={{ color: 'hsl(var(--foreground))' }}>
             &copy; {new Date().getFullYear()} {settings?.systemName || "PessoasEmpresa"} &bull; Carômetro
           </p>
         </div>

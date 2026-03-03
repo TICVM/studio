@@ -43,7 +43,10 @@ export function EmployeeCard({ funcionario, setor }: EmployeeCardProps) {
       <Badge 
         variant="secondary" 
         className="text-[9px] font-black uppercase tracking-widest px-3 h-5 border-none rounded-full"
-        style={{ backgroundColor: 'var(--accent)', color: 'var(--primary)' }}
+        style={{ 
+          backgroundColor: 'hsl(var(--accent))', 
+          color: 'hsl(var(--primary))' 
+        }}
       >
         {funcionario.subcategoria && funcionario.subcategoria !== "Geral" 
           ? funcionario.subcategoria 
@@ -94,10 +97,10 @@ export function EmployeeCard({ funcionario, setor }: EmployeeCardProps) {
 
           {/* Informações do Colaborador */}
           <div className="space-y-1 w-full flex-1">
-            <h3 className="font-bold text-lg leading-tight" style={{ color: 'var(--primary)' }}>
+            <h3 className="font-bold text-lg leading-tight" style={{ color: 'hsl(var(--primary))' }}>
               {funcionario.nome}
             </h3>
-            <p className="text-sm text-slate-500 font-medium">
+            <p className="text-sm font-medium opacity-70" style={{ color: 'hsl(var(--foreground))' }}>
               {funcionario.cargo}
             </p>
           </div>
@@ -108,7 +111,7 @@ export function EmployeeCard({ funcionario, setor }: EmployeeCardProps) {
 
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
         <DialogContent className="sm:max-w-[400px] p-0 overflow-hidden border-none shadow-2xl">
-          <div className="bg-primary p-6 text-white">
+          <div className="bg-primary p-6 text-white" style={{ backgroundColor: 'hsl(var(--primary))' }}>
             <DialogHeader>
               <DialogTitle className="text-xl font-bold flex items-center gap-2 text-white">
                 {funcionario.nome}
@@ -122,7 +125,7 @@ export function EmployeeCard({ funcionario, setor }: EmployeeCardProps) {
             </DialogHeader>
           </div>
           
-          <div className="p-6 grid gap-4">
+          <div className="p-6 grid gap-4" style={{ backgroundColor: 'hsl(var(--card))' }}>
             <div className="flex justify-center">
               <div className="relative w-40 aspect-[3/4] rounded-lg overflow-hidden shadow-lg border-4 border-white -mt-16 bg-slate-100">
                 <Image
@@ -137,7 +140,7 @@ export function EmployeeCard({ funcionario, setor }: EmployeeCardProps) {
             <div className="space-y-3">
               <div className="flex flex-col items-center gap-2 mb-2">
                 <div className="flex gap-2">
-                  <Badge variant="secondary" className="text-[10px] font-bold uppercase">
+                  <Badge variant="secondary" className="text-[10px] font-bold uppercase" style={{ backgroundColor: 'hsl(var(--accent))', color: 'hsl(var(--primary))' }}>
                     {funcionario.cargo}
                   </Badge>
                   {funcionario.subcategoria && (
@@ -150,12 +153,12 @@ export function EmployeeCard({ funcionario, setor }: EmployeeCardProps) {
 
               {funcionario.email && (
                 <div className="flex items-center gap-3 p-2 rounded-md bg-slate-50 border border-slate-100">
-                  <div className="h-7 w-7 rounded-full bg-white flex items-center justify-center border shadow-sm text-primary">
+                  <div className="h-7 w-7 rounded-full bg-white flex items-center justify-center border shadow-sm text-primary" style={{ color: 'hsl(var(--primary))' }}>
                     <Mail size={14} />
                   </div>
                   <div className="flex flex-col">
                     <span className="text-[9px] font-bold text-muted-foreground uppercase">E-mail</span>
-                    <a href={`mailto:${funcionario.email}`} className="text-xs font-semibold hover:text-primary transition-colors">
+                    <a href={`mailto:${funcionario.email}`} className="text-xs font-semibold hover:opacity-70 transition-colors" style={{ color: 'hsl(var(--foreground))' }}>
                       {funcionario.email}
                     </a>
                   </div>
@@ -165,23 +168,23 @@ export function EmployeeCard({ funcionario, setor }: EmployeeCardProps) {
               <div className="grid grid-cols-2 gap-3">
                 {funcionario.ramal && (
                   <div className="flex items-center gap-3 p-2 rounded-md bg-slate-50 border border-slate-100">
-                    <div className="h-7 w-7 rounded-full bg-white flex items-center justify-center border shadow-sm text-primary">
+                    <div className="h-7 w-7 rounded-full bg-white flex items-center justify-center border shadow-sm text-primary" style={{ color: 'hsl(var(--primary))' }}>
                       <Hash size={14} />
                     </div>
                     <div className="flex flex-col">
                       <span className="text-[9px] font-bold text-muted-foreground uppercase">Ramal</span>
-                      <span className="text-xs font-bold">{funcionario.ramal}</span>
+                      <span className="text-xs font-bold" style={{ color: 'hsl(var(--foreground))' }}>{funcionario.ramal}</span>
                     </div>
                   </div>
                 )}
                 {funcionario.unidade && (
                   <div className="flex items-center gap-3 p-2 rounded-md bg-slate-50 border border-slate-100">
-                    <div className="h-7 w-7 rounded-full bg-white flex items-center justify-center border shadow-sm text-primary">
+                    <div className="h-7 w-7 rounded-full bg-white flex items-center justify-center border shadow-sm text-primary" style={{ color: 'hsl(var(--primary))' }}>
                       <Building size={14} />
                     </div>
                     <div className="flex flex-col">
                       <span className="text-[9px] font-bold text-muted-foreground uppercase">Unidade</span>
-                      <span className="text-xs font-bold">{funcionario.unidade}</span>
+                      <span className="text-xs font-bold" style={{ color: 'hsl(var(--foreground))' }}>{funcionario.unidade}</span>
                     </div>
                   </div>
                 )}
