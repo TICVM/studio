@@ -5,7 +5,7 @@ import { useState, useMemo } from "react";
 import { PublicNavbar } from "@/components/layout/PublicNavbar";
 import { EmployeeCard } from "@/components/carometro/EmployeeCard";
 import { Input } from "@/components/ui/input";
-import { Search, Filter, Loader2 } from "lucide-react";
+import { Search, Filter, Loader2, MapPin, Building } from "lucide-react";
 import { useMemoFirebase, useCollection, useFirestore, useDoc } from "@/firebase";
 import { collection, query, where, doc } from "firebase/firestore";
 import { Funcionario, Setor, SystemSettings } from "@/types";
@@ -21,6 +21,7 @@ import { cn } from "@/lib/utils";
 export default function Home() {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedSetor, setSelectedSetor] = useState("all");
+  const [selectedUnidade, setSelectedUnidade] = useState("all");
   const firestore = useFirestore();
 
   const settingsRef = useMemoFirebase(() => doc(firestore, "settings", "appearance"), [firestore]);
@@ -37,15 +38,25 @@ export default function Home() {
   const { data: employees, isLoading: loadingEmployees } = useCollection<Funcionario>(activeEmployeesQuery);
   const { data: sectors, isLoading: loadingSectors } = useCollection<Setor>(sectorsQuery);
 
+  // Extrair unidades únicas dos funcionários para o filtro
+  const unidadesDisponiveis = useMemo(() => {
+    if (!employees) return [];
+    const units = employees
+      .map(f => f.unidade)
+      .filter((u): u is string => !!u && u.trim() !== "");
+    return Array.from(new Set(units)).sort();
+  }, [employees]);
+
   const filteredEmployees = useMemo(() => {
     if (!employees) return [];
     return employees.filter((f) => {
       const matchesSearch = f.nome.toLowerCase().includes(searchTerm.toLowerCase()) || 
                            f.cargo.toLowerCase().includes(searchTerm.toLowerCase());
       const matchesSetor = selectedSetor === "all" || f.setor_id === selectedSetor;
-      return matchesSearch && matchesSetor;
+      const matchesUnidade = selectedUnidade === "all" || f.unidade === selectedUnidade;
+      return matchesSearch && matchesSetor && matchesUnidade;
     });
-  }, [employees, searchTerm, selectedSetor]);
+  }, [employees, searchTerm, selectedSetor, selectedUnidade]);
 
   const groupedEmployees = useMemo(() => {
     if (!sectors) return [];
@@ -108,8 +119,8 @@ export default function Home() {
       <PublicNavbar />
       
       <main className="flex-1 container mx-auto px-4 py-8 space-y-10">
-        <div className="flex flex-col md:flex-row gap-4 items-center justify-between p-6 rounded-xl shadow-sm border border-slate-100" style={{ backgroundColor: 'hsl(var(--card))' }}>
-          <div className="space-y-1">
+        <div className="flex flex-col lg:flex-row gap-6 items-center justify-between p-6 rounded-xl shadow-sm border border-slate-100" style={{ backgroundColor: 'hsl(var(--card))' }}>
+          <div className="space-y-1 flex-shrink-0">
             <h1 className="text-2xl font-bold tracking-tight" style={{ color: 'hsl(var(--primary))' }}>
               {settings?.systemName || "Equipe Corporativa"}
             </h1>
@@ -118,32 +129,51 @@ export default function Home() {
             </p>
           </div>
           
-          <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
-            <div className="relative w-full sm:w-64">
+          <div className="flex flex-col sm:flex-row gap-3 w-full lg:w-auto items-center">
+            <div className="relative w-full sm:flex-1 lg:w-64">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input 
-                placeholder="Buscar..." 
-                className="pl-9 h-10"
+                placeholder="Buscar por nome ou cargo..." 
+                className="pl-9 h-11"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
             </div>
             
-            <div className="w-full sm:w-48">
-              <Select value={selectedSetor} onValueChange={setSelectedSetor}>
-                <SelectTrigger className="h-10">
-                  <div className="flex items-center gap-2">
-                    <Filter className="h-4 w-4 text-muted-foreground" />
-                    <SelectValue placeholder="Setor" />
-                  </div>
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todos os Setores</SelectItem>
-                  {sectors?.sort((a, b) => (a.ordem ?? 999) - (b.ordem ?? 999)).map(s => (
-                    <SelectItem key={s.id} value={s.id}>{s.nome}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+            <div className="flex gap-2 w-full sm:w-auto">
+              <div className="w-full sm:w-48">
+                <Select value={selectedSetor} onValueChange={setSelectedSetor}>
+                  <SelectTrigger className="h-11">
+                    <div className="flex items-center gap-2">
+                      <Filter className="h-4 w-4 text-muted-foreground" />
+                      <SelectValue placeholder="Setor" />
+                    </div>
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todos os Setores</SelectItem>
+                    {sectors?.sort((a, b) => (a.ordem ?? 999) - (b.ordem ?? 999)).map(s => (
+                      <SelectItem key={s.id} value={s.id}>{s.nome}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="w-full sm:w-48">
+                <Select value={selectedUnidade} onValueChange={setSelectedUnidade}>
+                  <SelectTrigger className="h-11">
+                    <div className="flex items-center gap-2">
+                      <MapPin className="h-4 w-4 text-muted-foreground" />
+                      <SelectValue placeholder="Unidade" />
+                    </div>
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todas as Unidades</SelectItem>
+                    {unidadesDisponiveis.map(u => (
+                      <SelectItem key={u} value={u}>{u}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
           </div>
         </div>
@@ -216,7 +246,7 @@ export default function Home() {
               <div className="text-center py-20 rounded-xl border border-dashed" style={{ backgroundColor: 'hsl(var(--card))' }}>
                 <Search className="h-10 w-10 text-slate-200 mx-auto mb-3" />
                 <h3 className="text-lg font-bold text-slate-400">Nenhum resultado</h3>
-                <p className="text-slate-300 text-sm">Refine sua busca ou filtros.</p>
+                <p className="text-slate-300 text-sm">Refine sua busca ou filtros por setor e unidade.</p>
               </div>
             )}
           </div>
