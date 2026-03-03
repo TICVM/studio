@@ -3,7 +3,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, Users, Grid, LogOut, ChevronRight, Settings } from "lucide-react";
+import { LayoutDashboard, Users, Grid, LogOut, ChevronRight, Settings, ShieldCheck } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { useDoc, useMemoFirebase, useFirestore } from "@/firebase";
@@ -15,6 +15,7 @@ const NAV_ITEMS = [
   { label: "Dashboard", href: "/admin/dashboard", icon: LayoutDashboard },
   { label: "Funcionários", href: "/admin/funcionarios", icon: Users },
   { label: "Setores", href: "/admin/setores", icon: Grid },
+  { label: "Administradores", href: "/admin/administradores", icon: ShieldCheck },
   { label: "Configurações", href: "/admin/configuracoes", icon: Settings },
 ];
 
