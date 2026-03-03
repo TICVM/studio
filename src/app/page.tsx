@@ -5,7 +5,7 @@ import { useState, useMemo } from "react";
 import { PublicNavbar } from "@/components/layout/PublicNavbar";
 import { EmployeeCard } from "@/components/carometro/EmployeeCard";
 import { Input } from "@/components/ui/input";
-import { Search, Filter, Loader2, MapPin, X } from "lucide-react";
+import { Search, Filter, Loader2, MapPin, X, Building2 } from "lucide-react";
 import { useMemoFirebase, useCollection, useFirestore, useDoc } from "@/firebase";
 import { collection, query, where, doc } from "firebase/firestore";
 import { Funcionario, Setor, SystemSettings } from "@/types";
@@ -182,9 +182,9 @@ export default function Home() {
 
               <div className="w-full sm:w-44">
                 <Select value={selectedUnidade} onValueChange={setSelectedUnidade}>
-                  <SelectTrigger className="h-11">
+                  <SelectTrigger className="h-11 border-primary/20">
                     <div className="flex items-center gap-2 truncate">
-                      <MapPin className="h-4 w-4 text-muted-foreground shrink-0" />
+                      <MapPin className="h-4 w-4 text-primary shrink-0" />
                       <SelectValue placeholder="Unidade" />
                     </div>
                   </SelectTrigger>

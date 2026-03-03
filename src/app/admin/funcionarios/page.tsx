@@ -3,7 +3,7 @@
 
 import { useState, useMemo, useEffect } from "react";
 import NextImage from "next/image";
-import { Users, Plus, Edit2, Trash2, Search, FileText, Loader2, Upload, Crown, MapPin, CheckSquare, Square } from "lucide-react";
+import { Users, Plus, Edit2, Trash2, Search, FileText, Loader2, Upload, Crown, MapPin, Filter } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -54,6 +54,7 @@ export default function FuncionariosPage() {
   const firestore = useFirestore();
   const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState("");
+  const [filterUnidade, setFilterUnidade] = useState("all");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isBulkDialogOpen, setIsBulkDialogOpen] = useState(false);
   const [isMassUpdateOpen, setIsMassUpdateOpen] = useState(false);
@@ -90,18 +91,28 @@ export default function FuncionariosPage() {
     return sector?.subcategorias || [];
   }, [sectors, selectedSectorId]);
 
+  const unidadesDisponiveis = useMemo(() => {
+    if (!employees) return [];
+    const units = employees
+      .map(f => f.unidade)
+      .filter((u): u is string => !!u && u.trim() !== "");
+    return Array.from(new Set(units)).sort();
+  }, [employees]);
+
   const filteredEmployees = useMemo(() => {
     return (employees || [])
-      .filter(f => 
-        f.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        f.cargo.toLowerCase().includes(searchTerm.toLowerCase())
-      )
+      .filter(f => {
+        const matchesSearch = f.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                            f.cargo.toLowerCase().includes(searchTerm.toLowerCase());
+        const matchesUnidade = filterUnidade === "all" || f.unidade === filterUnidade;
+        return matchesSearch && matchesUnidade;
+      })
       .sort((a, b) => {
         if (a.is_lider && !b.is_lider) return -1;
         if (!a.is_lider && b.is_lider) return 1;
         return a.nome.localeCompare(b.nome);
       });
-  }, [employees, searchTerm]);
+  }, [employees, searchTerm, filterUnidade]);
 
   // Funções de Seleção
   const toggleSelect = (id: string) => {
@@ -378,7 +389,7 @@ export default function FuncionariosPage() {
 
                   <div className="grid gap-2">
                     <Label htmlFor="unidade">Unidade / Localização</Label>
-                    <Input id="unidade" name="unidade" defaultValue={editingFunc?.unidade} />
+                    <Input id="unidade" name="unidade" defaultValue={editingFunc?.unidade} placeholder="Ex: Unidade I, Unidade II, Matriz..." />
                   </div>
                   
                   <div className="space-y-4 bg-slate-50 p-4 rounded-lg border">
@@ -421,15 +432,40 @@ export default function FuncionariosPage() {
       </div>
 
       <div className="bg-white rounded-xl shadow-sm border overflow-hidden">
-        <div className="p-4 border-b flex items-center justify-between gap-4">
+        <div className="p-4 border-b flex flex-col sm:flex-row items-center justify-between gap-4 bg-slate-50/50">
           <div className="relative w-full max-w-sm">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input 
-              placeholder="Buscar..." 
-              className="pl-10"
+              placeholder="Buscar por nome ou cargo..." 
+              className="pl-10 bg-white"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
+          </div>
+          
+          <div className="flex items-center gap-2 w-full sm:w-auto">
+            <Filter className="h-4 w-4 text-muted-foreground shrink-0" />
+            <Select value={filterUnidade} onValueChange={setFilterUnidade}>
+              <SelectTrigger className="w-full sm:w-48 bg-white h-9 border-slate-200">
+                <SelectValue placeholder="Filtrar por Unidade" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todas as Unidades</SelectItem>
+                {unidadesDisponiveis.map(u => (
+                  <SelectItem key={u} value={u}>{u}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {filterUnidade !== "all" && (
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                className="h-9 w-9 text-destructive"
+                onClick={() => setFilterUnidade("all")}
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            )}
           </div>
         </div>
 
