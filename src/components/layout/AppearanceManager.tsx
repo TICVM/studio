@@ -53,11 +53,16 @@ export function AppearanceManager() {
       if (settings.leadershipColor) {
         root.style.setProperty('--leadership', settings.leadershipColor);
       } else {
-        root.style.setProperty('--leadership', '#f59e0b'); // Fallback para amber-500
+        root.style.setProperty('--leadership', '#f59e0b');
       }
 
       if (settings.backgroundColor) {
         root.style.setProperty('--background', hexToHsl(settings.backgroundColor));
+      }
+
+      // Injeção da cor de fundo dos cards (usando card-background customizado ou fallback)
+      if (settings.cardBackgroundColor) {
+        root.style.setProperty('--card', hexToHsl(settings.cardBackgroundColor));
       }
 
       if (settings.foregroundColor) {

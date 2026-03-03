@@ -38,6 +38,7 @@ export interface SystemSettings {
   primaryColor: string;
   leadershipColor?: string;
   backgroundColor?: string;
+  cardBackgroundColor?: string;
   foregroundColor?: string;
   accentColor?: string;
   sidebarBackgroundColor?: string;

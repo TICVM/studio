@@ -57,13 +57,14 @@ export function EmployeeCard({ funcionario, setor }: EmployeeCardProps) {
       <Card 
         onClick={() => setIsOpen(true)}
         className={cn(
-          "overflow-hidden group cursor-pointer hover:shadow-lg transition-all duration-300 border border-slate-100 bg-white h-full flex flex-col",
+          "overflow-hidden group cursor-pointer hover:shadow-lg transition-all duration-300 border border-slate-100 h-full flex flex-col",
           showShadow ? "shadow-sm" : "shadow-none"
         )}
         style={{ 
           padding: `${padding}px`,
           borderRadius: `${borderRadius}px`,
-          textAlign: textAlign as any
+          textAlign: textAlign as any,
+          backgroundColor: 'hsl(var(--card))'
         }}
       >
         <CardContent className="p-0 flex flex-col items-stretch text-inherit flex-1">
