@@ -1,13 +1,13 @@
 
 "use client"
 
-import { useState, useEffect } from "react";
-import { Settings, Save, Palette, Image, Type, Loader2, Users } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
+import { Settings, Save, Palette, Image as ImageIcon, Type, Loader2, Users, Upload, X } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { useFirestore, useDoc, useMemoFirebase, setDocumentNonBlocking } from "@/firebase";
+import { useFirestore, useDoc, useMemoFirebase, updateDocumentNonBlocking } from "@/firebase";
 import { doc } from "firebase/firestore";
 import { SystemSettings } from "@/types";
 import { useToast } from "@/hooks/use-toast";
@@ -15,6 +15,7 @@ import { useToast } from "@/hooks/use-toast";
 export default function ConfiguracoesPage() {
   const firestore = useFirestore();
   const { toast } = useToast();
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const settingsRef = useMemoFirebase(() => doc(firestore, "settings", "appearance"), [firestore]);
   const { data: settings, isLoading } = useDoc<SystemSettings>(settingsRef);
 
@@ -30,9 +31,35 @@ export default function ConfiguracoesPage() {
     }
   }, [settings]);
 
+  const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 500 * 1024) { // Limite de 500KB para não sobrecarregar o documento do Firestore
+      toast({
+        variant: "destructive",
+        title: "Arquivo muito grande",
+        description: "O logotipo deve ter no máximo 500KB.",
+      });
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const base64 = event.target?.result as string;
+      setForm(prev => ({ ...prev, logoUrl: base64 }));
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const removeLogo = () => {
+    setForm(prev => ({ ...prev, logoUrl: "" }));
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
+
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
-    setDocumentNonBlocking(settingsRef, form, { merge: true });
+    updateDocumentNonBlocking(settingsRef, form);
     toast({
       title: "Configurações salvas",
       description: "As alterações foram aplicadas ao sistema.",
@@ -74,14 +101,39 @@ export default function ConfiguracoesPage() {
                   placeholder="Ex: Carômetro Empresa X"
                 />
               </div>
+              
               <div className="space-y-2">
-                <Label htmlFor="logoUrl">URL do Logotipo</Label>
-                <Input 
-                  id="logoUrl" 
-                  value={form.logoUrl} 
-                  onChange={e => setForm({...form, logoUrl: e.target.value})} 
-                  placeholder="https://suaempresa.com/logo.png"
-                />
+                <Label>Logotipo da Empresa</Label>
+                <div className="flex flex-col gap-4">
+                  {form.logoUrl ? (
+                    <div className="relative w-32 h-32 border rounded-lg overflow-hidden bg-slate-50 flex items-center justify-center p-2">
+                      <img src={form.logoUrl} alt="Preview Logo" className="max-w-full max-h-full object-contain" />
+                      <button 
+                        type="button"
+                        onClick={removeLogo}
+                        className="absolute top-1 right-1 bg-destructive text-white p-1 rounded-full shadow-sm hover:bg-destructive/90"
+                      >
+                        <X size={14} />
+                      </button>
+                    </div>
+                  ) : (
+                    <div 
+                      onClick={() => fileInputRef.current?.click()}
+                      className="w-32 h-32 border-2 border-dashed rounded-lg flex flex-col items-center justify-center gap-2 cursor-pointer hover:bg-slate-50 transition-colors text-muted-foreground"
+                    >
+                      <Upload size={24} />
+                      <span className="text-[10px] font-bold uppercase">Upload</span>
+                    </div>
+                  )}
+                  <input 
+                    type="file" 
+                    ref={fileInputRef}
+                    onChange={handleLogoUpload}
+                    accept="image/*"
+                    className="hidden"
+                  />
+                  <p className="text-[10px] text-muted-foreground italic">Recomendado: Imagem PNG ou SVG com fundo transparente (máx. 500KB).</p>
+                </div>
               </div>
             </CardContent>
           </Card>
@@ -129,11 +181,11 @@ export default function ConfiguracoesPage() {
               <div className="p-4 bg-white rounded-lg shadow-sm border space-y-4">
                 <div className="flex items-center gap-3">
                   <div 
-                    className="w-10 h-10 rounded-lg flex items-center justify-center text-white"
+                    className="w-10 h-10 rounded-lg flex items-center justify-center text-white overflow-hidden p-1"
                     style={{ backgroundColor: form.primaryColor }}
                   >
                     {form.logoUrl ? (
-                      <img src={form.logoUrl} alt="Logo" className="w-6 h-6 object-contain" />
+                      <img src={form.logoUrl} alt="Logo" className="w-full h-full object-contain" />
                     ) : (
                       <Users size={20} />
                     )}
