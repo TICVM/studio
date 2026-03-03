@@ -116,12 +116,13 @@ export default function SetoresPage() {
   const handleDelete = (id: string) => {
     const memberCount = employees?.filter(f => f.setor_id === id).length || 0;
     if (memberCount > 0) {
-      toast({ variant: "destructive", title: "Ação negada", description: "Setor possui membros." });
+      toast({ variant: "destructive", title: "Ação negada", description: "O setor possui membros vinculados. Remova-os antes de excluir o setor." });
       return;
     }
     if (window.confirm("Deseja realmente excluir este setor?")) {
-      deleteDocumentNonBlocking(doc(firestore, "sectors", id));
-      toast({ title: "Excluído", description: "Setor removido." });
+      const docRef = doc(firestore, "sectors", id);
+      deleteDocumentNonBlocking(docRef);
+      toast({ title: "Excluído", description: "Setor removido com sucesso." });
     }
   };
 
