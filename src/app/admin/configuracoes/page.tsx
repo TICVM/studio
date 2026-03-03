@@ -339,10 +339,10 @@ export default function ConfiguracoesPage() {
                       </div>
                       <div className="space-y-3">
                         <Label className="flex items-center gap-2"><MousePointer2 size={14} /> Alinhamento do Texto</Label>
-                        <支配RadioGroup value={form.cardTextAlign} onValueChange={(v: any) => setForm({...form, cardTextAlign: v})} className="flex gap-4">
+                        <RadioGroup value={form.cardTextAlign} onValueChange={(v: any) => setForm({...form, cardTextAlign: v})} className="flex gap-4">
                           <div className="flex items-center space-x-2 border px-3 py-2 rounded-lg cursor-pointer"><RadioGroupItem value="center" id="ta1" /><Label htmlFor="ta1" className="cursor-pointer text-xs font-medium">Centro</Label></div>
                           <div className="flex items-center space-x-2 border px-3 py-2 rounded-lg cursor-pointer"><RadioGroupItem value="left" id="ta2" /><Label htmlFor="ta2" className="cursor-pointer text-xs font-medium">Esquerda</Label></div>
-                        </支配RadioGroup>
+                        </RadioGroup>
                       </div>
                     </div>
 
