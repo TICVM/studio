@@ -57,15 +57,15 @@
           "type": "string",
           "description": "Unique identifier for the Employee entity."
         },
-        "fullName": {
+        "nome": {
           "type": "string",
           "description": "The full name of the employee."
         },
-        "jobTitle": {
+        "cargo": {
           "type": "string",
           "description": "The job title or position of the employee."
         },
-        "birthDate": {
+        "data_nascimento": {
           "type": "string",
           "description": "The birth date of the employee.",
           "format": "date"
@@ -83,7 +83,7 @@
           "type": "string",
           "description": "The physical unit or branch where the employee works."
         },
-        "photoUrl": {
+        "foto_url": {
           "type": "string",
           "description": "URL pointing to the employee's profile photo.",
           "format": "uri"
@@ -116,9 +116,9 @@
       },
       "required": [
         "id",
-        "fullName",
-        "jobTitle",
-        "photoUrl",
+        "nome",
+        "cargo",
+        "foto_url",
         "setor_id",
         "createdAt"
       ]

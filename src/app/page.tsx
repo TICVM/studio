@@ -40,7 +40,9 @@ export default function Home() {
   const { data: employees, isLoading: loadingEmployees } = useCollection<Funcionario>(activeEmployeesQuery);
   const { data: sectors, isLoading: loadingSectors } = useCollection<Setor>(sectorsQuery);
 
-  const currentMonth = new Date().getMonth(); // 0-11
+  const today = new Date();
+  const currentMonth = today.getUTCMonth(); // 0-11
+  const currentDay = today.getUTCDate();
 
   // Extrair unidades únicas
   const unidadesDisponiveis = useMemo(() => {
@@ -56,7 +58,8 @@ export default function Home() {
     if (!employees || !settings?.showBirthdays) return [];
     return employees.filter(f => {
       if (!f.data_nascimento) return false;
-      const birthMonth = new Date(f.data_nascimento).getUTCMonth();
+      const birthDate = new Date(f.data_nascimento);
+      const birthMonth = birthDate.getUTCMonth();
       return birthMonth === currentMonth;
     }).sort((a, b) => {
       const dayA = new Date(a.data_nascimento!).getUTCDate();
@@ -148,49 +151,64 @@ export default function Home() {
       <PublicNavbar />
       
       <main className="flex-1 container mx-auto px-4 py-8 space-y-10">
-        {/* Aniversariantes do Mês */}
+        {/* Aniversariantes do Mês (Destaque Festivo) */}
         {settings?.showBirthdays && anniversaries.length > 0 && !hasActiveFilters && (
-          <section className="bg-gradient-to-r from-pink-500/10 via-purple-500/10 to-blue-500/10 p-6 rounded-3xl border border-pink-100 shadow-sm animate-in fade-in slide-in-from-top-4 duration-700">
-            <div className="flex items-center justify-between mb-8">
+          <section className="bg-gradient-to-r from-pink-500/10 via-purple-500/10 to-blue-500/10 p-6 md:p-8 rounded-[2rem] border border-pink-100 shadow-sm animate-in fade-in slide-in-from-top-4 duration-700">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-8 gap-4">
               <div className="space-y-1">
                 <div className="flex items-center gap-2 text-pink-600">
                   <Cake size={20} className="animate-bounce" />
-                  <span className="text-xs font-black uppercase tracking-widest">Destaque do Mês</span>
+                  <span className="text-[10px] font-black uppercase tracking-[0.2em]">Celebração do Mês</span>
                 </div>
-                <h2 className="text-2xl font-black tracking-tight text-slate-800">
-                  Aniversariantes de <span className="text-pink-600">{monthNames[currentMonth]}</span>
+                <h2 className="text-3xl font-black tracking-tighter text-slate-800">
+                  Aniversariantes de <span className="text-pink-600 underline decoration-pink-200 decoration-4 underline-offset-4">{monthNames[currentMonth]}</span>
                 </h2>
               </div>
-              <div className="hidden sm:flex items-center gap-2 bg-white/60 px-4 py-2 rounded-full border border-pink-100/50">
+              <div className="flex items-center gap-2 bg-white/80 backdrop-blur-sm px-4 py-2 rounded-full border border-pink-100/50 self-start sm:self-auto">
                 <Sparkles size={16} className="text-amber-500" />
-                <span className="text-xs font-bold text-slate-600">Celebrando talentos</span>
+                <span className="text-[11px] font-bold text-slate-600 uppercase tracking-wider">Parabéns aos colegas!</span>
               </div>
             </div>
 
-            <div className="flex gap-4 overflow-x-auto pb-4 scrollbar-hide -mx-2 px-2">
-              {anniversaries.map(f => (
-                <div key={f.id} className="flex-shrink-0 group">
-                  <div className="relative w-32 h-44 rounded-2xl overflow-hidden border-2 border-white shadow-md group-hover:scale-105 transition-transform duration-300">
-                    <NextImage 
-                      src={f.foto_url || "https://picsum.photos/seed/placeholder/400/533"} 
-                      alt={f.nome} 
-                      fill 
-                      className="object-cover"
-                    />
-                    <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 to-transparent p-2">
-                      <p className="text-[10px] font-black text-white truncate">{f.nome.split(' ')[0]}</p>
-                      <div className="flex items-center gap-1 text-[9px] font-bold text-pink-300">
-                        <Cake size={8} />
-                        Dia {new Date(f.data_nascimento!).getUTCDate()}
+            <div className="flex gap-6 overflow-x-auto pb-6 pt-2 scrollbar-hide -mx-4 px-4">
+              {anniversaries.map(f => {
+                const birthDay = new Date(f.data_nascimento!).getUTCDate();
+                const isToday = birthDay === currentDay;
+                return (
+                  <div key={f.id} className="flex-shrink-0 group">
+                    <div className={cn(
+                      "relative w-36 h-48 rounded-[1.5rem] overflow-hidden border-4 transition-all duration-500",
+                      isToday ? "border-pink-400 shadow-xl shadow-pink-200 scale-105" : "border-white shadow-md group-hover:scale-105"
+                    )}>
+                      <NextImage 
+                        src={f.foto_url || "https://picsum.photos/seed/placeholder/400/533"} 
+                        alt={f.nome} 
+                        fill 
+                        className="object-cover"
+                      />
+                      <div className={cn(
+                        "absolute inset-x-0 bottom-0 p-3 flex flex-col justify-end min-h-[60%]",
+                        isToday ? "bg-gradient-to-t from-pink-600/90 via-pink-500/40 to-transparent" : "bg-gradient-to-t from-black/80 via-black/20 to-transparent"
+                      )}>
+                        <p className="text-xs font-black text-white truncate mb-0.5">{f.nome.split(' ')[0]}</p>
+                        <div className="flex items-center gap-1.5">
+                          <div className={cn(
+                            "px-2 py-0.5 rounded-full text-[8px] font-black uppercase tracking-widest",
+                            isToday ? "bg-white text-pink-600 animate-pulse" : "bg-white/20 text-white backdrop-blur-md"
+                          )}>
+                            {isToday ? "Hoje! 🎉" : `Dia ${birthDay}`}
+                          </div>
+                        </div>
                       </div>
                     </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </section>
         )}
 
+        {/* Filtros e Cabeçalho Principal */}
         <div className="flex flex-col lg:flex-row gap-6 items-center justify-between p-6 rounded-xl shadow-sm border border-slate-100" style={{ backgroundColor: 'hsl(var(--card))' }}>
           <div className="space-y-1 flex-shrink-0">
             <h1 className="text-2xl font-bold tracking-tight" style={{ color: 'hsl(var(--primary))' }}>

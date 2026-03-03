@@ -4,14 +4,14 @@
 import Image from "next/image";
 import { Funcionario, Setor, SystemSettings } from "@/types";
 import { Card, CardContent } from "@/components/ui/card";
-import { Crown, Mail, Hash, Building, Users } from "lucide-react";
+import { Crown, Mail, Hash, Building, Users, Cake } from "lucide-react";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Badge } from "@/components/ui/badge";
 import { useDoc, useMemoFirebase, useFirestore } from "@/firebase";
 import { doc } from "firebase/firestore";
@@ -37,6 +37,14 @@ export function EmployeeCard({ funcionario, setor }: EmployeeCardProps) {
   const aspectRatio = settings?.cardPhotoAspectRatio || '3/4';
   const showBadge = settings?.cardShowBadge ?? true;
   const badgePos = settings?.cardBadgePosition || 'bottom';
+
+  // Verificar se o aniversário é hoje
+  const isBirthdayToday = useMemo(() => {
+    if (!funcionario.data_nascimento) return false;
+    const today = new Date();
+    const birthDate = new Date(funcionario.data_nascimento);
+    return today.getUTCMonth() === birthDate.getUTCMonth() && today.getUTCDate() === birthDate.getUTCDate();
+  }, [funcionario.data_nascimento]);
 
   const badgeContent = (
     <div className={cn("pt-2", badgePos === 'top' && "pt-0 mb-4")}>
@@ -96,12 +104,20 @@ export function EmployeeCard({ funcionario, setor }: EmployeeCardProps) {
                   <Crown size={12} fill="white" />
                 </div>
               )}
+              {isBirthdayToday && (
+                <div 
+                  className="absolute bottom-2 left-2 bg-pink-500 text-white p-1.5 rounded-full shadow-lg z-20 animate-bounce"
+                >
+                  <Cake size={14} fill="white" />
+                </div>
+              )}
             </div>
 
             {/* Informações do Colaborador */}
             <div className="space-y-1 w-full flex-1">
-              <h3 className="font-bold text-lg leading-tight" style={{ color: 'hsl(var(--name-color, var(--primary)))' }}>
+              <h3 className="font-bold text-lg leading-tight flex items-center justify-center gap-1.5" style={{ color: 'hsl(var(--name-color, var(--primary)))' }}>
                 {funcionario.nome}
+                {isBirthdayToday && <span className="text-pink-500 text-xs">🎂</span>}
               </h3>
               <p className="text-sm font-medium" style={{ color: 'hsl(var(--job-color, var(--foreground)))' }}>
                 {funcionario.cargo}
@@ -115,23 +131,37 @@ export function EmployeeCard({ funcionario, setor }: EmployeeCardProps) {
 
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
         <DialogContent className="sm:max-w-[400px] p-0 overflow-hidden border-none shadow-2xl">
-          <div className="bg-primary p-6 text-white" style={{ backgroundColor: 'hsl(var(--primary))' }}>
+          <div className={cn(
+            "p-6 text-white transition-colors",
+            isBirthdayToday ? "bg-gradient-to-r from-pink-500 to-purple-600" : "bg-primary"
+          )} style={{ backgroundColor: isBirthdayToday ? undefined : 'hsl(var(--primary))' }}>
             <DialogHeader>
               <DialogTitle className="text-xl font-bold flex items-center gap-2 text-white">
                 {funcionario.nome}
                 {funcionario.is_lider && <Crown size={18} fill="white" />}
+                {isBirthdayToday && <Cake size={18} className="animate-bounce" />}
               </DialogTitle>
-              {funcionario.is_lider && (
-                <span className="text-white/80 font-bold uppercase text-[10px] mt-1">
-                  {funcionario.titulo_lider || "Líder"}
-                </span>
-              )}
+              <div className="flex flex-col gap-1 mt-1">
+                {funcionario.is_lider && (
+                  <span className="text-white/80 font-bold uppercase text-[10px]">
+                    {funcionario.titulo_lider || "Líder"}
+                  </span>
+                )}
+                {isBirthdayToday && (
+                  <span className="text-white font-black uppercase text-[10px] bg-white/20 px-2 py-0.5 rounded-full self-start">
+                    Aniversariante do Dia! 🥳
+                  </span>
+                )}
+              </div>
             </DialogHeader>
           </div>
           
           <div className="p-6 grid gap-4" style={{ backgroundColor: 'hsl(var(--card))' }}>
             <div className="flex justify-center">
-              <div className="relative w-40 aspect-[3/4] rounded-lg overflow-hidden shadow-lg border-4 border-white -mt-16 bg-slate-100">
+              <div className={cn(
+                "relative w-40 aspect-[3/4] rounded-lg overflow-hidden shadow-lg border-4 -mt-16 bg-slate-100",
+                isBirthdayToday ? "border-pink-200" : "border-white"
+              )}>
                 <Image
                   src={funcionario.foto_url || "https://picsum.photos/seed/placeholder/400/533"}
                   alt={funcionario.nome}
