@@ -1,3 +1,4 @@
+
 "use client"
 
 import { useState } from "react";
@@ -12,6 +13,8 @@ import { useAuth, useFirestore } from "@/firebase";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { doc, getDoc, setDoc, serverTimestamp } from "firebase/firestore";
 import { useToast } from "@/hooks/use-toast";
+import { errorEmitter } from '@/firebase/error-emitter';
+import { FirestorePermissionError } from '@/firebase/errors';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -30,17 +33,25 @@ export default function LoginPage() {
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
 
-      // Garantir que o perfil administrativo existe nas Regras de Segurança
+      // Garantir que o perfil administrativo existe
       const adminRef = doc(db, "admin_profiles", user.uid);
       const adminSnap = await getDoc(adminRef);
 
       if (!adminSnap.exists()) {
-        await setDoc(adminRef, {
+        const data = {
           id: user.uid,
           email: user.email,
           fullName: user.displayName || "Administrador",
           role: "admin",
           createdAt: serverTimestamp()
+        };
+        
+        setDoc(adminRef, data).catch(async () => {
+          errorEmitter.emit('permission-error', new FirestorePermissionError({
+            path: adminRef.path,
+            operation: 'create',
+            requestResourceData: data,
+          }));
         });
       }
 
@@ -50,7 +61,6 @@ export default function LoginPage() {
       });
       router.push("/admin/dashboard");
     } catch (error: any) {
-      console.error(error);
       toast({
         variant: "destructive",
         title: "Erro no login",

@@ -23,7 +23,7 @@ service cloud.firestore {
     match /admin_profiles/{adminId} {
       allow get: if isOwner(adminId) || isAdmin();
       allow list: if isAdmin();
-      allow create: if isOwner(adminId);
+      allow create: if isOwner(adminId) || isAdmin();
       allow update: if isOwner(adminId) || isAdmin();
       allow delete: if isAdmin();
     }

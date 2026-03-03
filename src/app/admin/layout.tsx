@@ -9,6 +9,8 @@ import { doc, getDoc, setDoc, serverTimestamp } from "firebase/firestore";
 import { Loader2, Menu } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
+import { errorEmitter } from '@/firebase/error-emitter';
+import { FirestorePermissionError } from '@/firebase/errors';
 
 export default function AdminLayout({
   children,
@@ -42,17 +44,24 @@ export default function AdminLayout({
         const adminSnap = await getDoc(adminRef);
         
         if (!adminSnap.exists()) {
-          await setDoc(adminRef, {
+          const data = {
             id: user.uid,
             email: user.email,
             fullName: user.displayName || "Administrador",
             role: "admin",
             createdAt: serverTimestamp()
+          };
+          
+          setDoc(adminRef, data).catch(async () => {
+            errorEmitter.emit('permission-error', new FirestorePermissionError({
+              path: adminRef.path,
+              operation: 'create',
+              requestResourceData: data,
+            }));
           });
         }
         setIsAdminVerified(true);
       } catch (e) {
-        console.error("Erro ao verificar/criar perfil administrativo:", e);
         setIsAdminVerified(true); 
       }
     };

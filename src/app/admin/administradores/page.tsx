@@ -2,7 +2,7 @@
 "use client"
 
 import { useState } from "react";
-import { ShieldCheck, Plus, Trash2, Mail, User, Loader2, Search, Lock, Key } from "lucide-react";
+import { ShieldCheck, Plus, Trash2, Mail, User, Loader2, Search, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -40,7 +40,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
-import { initializeApp, getApp, getApps } from "firebase/app";
+import { initializeApp } from "firebase/app";
 import { getAuth, createUserWithEmailAndPassword, signOut } from "firebase/auth";
 import { firebaseConfig } from "@/firebase/config";
 
@@ -74,14 +74,14 @@ export default function AdministradoresPage() {
       const secondaryApp = initializeApp(firebaseConfig, secondaryAppName);
       const secondaryAuth = getAuth(secondaryApp);
 
-      // Criar o usuário no Firebase Auth
+      // Criar o usuário no Firebase Auth (Aguardar auth é necessário)
       const userCredential = await createUserWithEmailAndPassword(secondaryAuth, email, password);
       const uid = userCredential.user.uid;
 
       // Deslogar da instância secundária imediatamente
       await signOut(secondaryAuth);
 
-      // Criar o perfil no Firestore
+      // Criar o perfil no Firestore (Mutações Firestore não são aguardadas)
       const newAdminRef = doc(firestore, "admin_profiles", uid);
       const data = {
         id: uid,
@@ -91,12 +91,18 @@ export default function AdministradoresPage() {
         createdAt: serverTimestamp()
       };
 
-      await setDoc(newAdminRef, data);
+      setDoc(newAdminRef, data)
+        .catch(async () => {
+          errorEmitter.emit('permission-error', new FirestorePermissionError({
+            path: newAdminRef.path,
+            operation: 'create',
+            requestResourceData: data,
+          }));
+        });
       
       toast({ title: "Sucesso", description: "Novo administrador criado e autorizado." });
       setIsDialogOpen(false);
     } catch (error: any) {
-      console.error(error);
       let message = "Não foi possível criar o administrador.";
       if (error.code === 'auth/email-already-in-use') message = "Este e-mail já está sendo usado.";
       if (error.code === 'auth/weak-password') message = "A senha deve ter pelo menos 6 caracteres.";
@@ -114,7 +120,7 @@ export default function AdministradoresPage() {
   const handleDelete = (id: string) => {
     const docRef = doc(firestore, "admin_profiles", id);
     deleteDocumentNonBlocking(docRef);
-    toast({ title: "Removido", description: "Acesso administrativo revogado no banco de dados. (Nota: O usuário ainda existirá no Auth até ser excluído manualmente no console)." });
+    toast({ title: "Removido", description: "Acesso administrativo revogado." });
   };
 
   if (isLoading) {
@@ -145,7 +151,7 @@ export default function AdministradoresPage() {
               <DialogHeader>
                 <DialogTitle>Criar Administrador</DialogTitle>
                 <DialogDescription>
-                  O sistema criará automaticamente a conta no Firebase Auth e liberará o acesso.
+                  O sistema criará automaticamente a conta no Firebase Auth e liberará o acesso no banco de dados.
                 </DialogDescription>
               </DialogHeader>
               <div className="grid gap-4 py-4">
@@ -245,7 +251,7 @@ export default function AdministradoresPage() {
                           <AlertDialogTitle>Revogar Acesso</AlertDialogTitle>
                           <AlertDialogDescription>
                             Deseja realmente remover as permissões administrativas de {admin.fullName}? 
-                            Isso apagará o perfil do banco de dados, mas não excluirá a conta de autenticação (isso deve ser feito no console do Firebase).
+                            Isso apagará o perfil do banco de dados.
                           </AlertDialogDescription>
                         </AlertDialogHeader>
                         <AlertDialogFooter>
