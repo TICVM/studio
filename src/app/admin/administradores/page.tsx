@@ -2,7 +2,7 @@
 "use client"
 
 import { useState } from "react";
-import { ShieldCheck, Plus, Trash2, Mail, User, Loader2, Search } from "lucide-react";
+import { ShieldCheck, Plus, Trash2, Mail, User, Loader2, Search, Lock, Key } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -40,11 +40,15 @@ import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
+import { initializeApp, getApp, getApps } from "firebase/app";
+import { getAuth, createUserWithEmailAndPassword, signOut } from "firebase/auth";
+import { firebaseConfig } from "@/firebase/config";
 
 export default function AdministradoresPage() {
   const firestore = useFirestore();
   const { toast } = useToast();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isCreating, setIsCreating] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
 
   const adminProfilesRef = useMemoFirebase(() => collection(firestore, "admin_profiles"), [firestore]);
@@ -55,46 +59,62 @@ export default function AdministradoresPage() {
     admin.email?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const handleCreateAdmin = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleCreateAdmin = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    setIsCreating(true);
+    
     const formData = new FormData(e.currentTarget);
     const email = formData.get("email") as string;
+    const password = formData.get("password") as string;
     const fullName = formData.get("fullName") as string;
-    const uid = formData.get("uid") as string;
 
-    if (!uid) {
-        toast({ variant: "destructive", title: "Erro", description: "O UID do Firebase Auth é obrigatório." });
-        return;
-    }
+    try {
+      // Usar uma instância secundária do Firebase para não deslogar o admin atual
+      const secondaryAppName = `secondary-${Date.now()}`;
+      const secondaryApp = initializeApp(firebaseConfig, secondaryAppName);
+      const secondaryAuth = getAuth(secondaryApp);
 
-    const newAdminRef = doc(firestore, "admin_profiles", uid);
-    const data = {
+      // Criar o usuário no Firebase Auth
+      const userCredential = await createUserWithEmailAndPassword(secondaryAuth, email, password);
+      const uid = userCredential.user.uid;
+
+      // Deslogar da instância secundária imediatamente
+      await signOut(secondaryAuth);
+
+      // Criar o perfil no Firestore
+      const newAdminRef = doc(firestore, "admin_profiles", uid);
+      const data = {
         id: uid,
         email,
         fullName,
         role: "admin",
         createdAt: serverTimestamp()
-    };
+      };
 
-    setDoc(newAdminRef, data)
-        .then(() => {
-            toast({ title: "Sucesso", description: "Novo administrador autorizado." });
-            setIsDialogOpen(false);
-        })
-        .catch(async () => {
-            const permissionError = new FirestorePermissionError({
-                path: newAdminRef.path,
-                operation: 'write',
-                requestResourceData: data,
-            });
-            errorEmitter.emit('permission-error', permissionError);
-        });
+      await setDoc(newAdminRef, data);
+      
+      toast({ title: "Sucesso", description: "Novo administrador criado e autorizado." });
+      setIsDialogOpen(false);
+    } catch (error: any) {
+      console.error(error);
+      let message = "Não foi possível criar o administrador.";
+      if (error.code === 'auth/email-already-in-use') message = "Este e-mail já está sendo usado.";
+      if (error.code === 'auth/weak-password') message = "A senha deve ter pelo menos 6 caracteres.";
+      
+      toast({ 
+        variant: "destructive", 
+        title: "Erro na criação", 
+        description: message 
+      });
+    } finally {
+      setIsCreating(false);
+    }
   };
 
   const handleDelete = (id: string) => {
     const docRef = doc(firestore, "admin_profiles", id);
     deleteDocumentNonBlocking(docRef);
-    toast({ title: "Removido", description: "Acesso administrativo revogado." });
+    toast({ title: "Removido", description: "Acesso administrativo revogado no banco de dados. (Nota: O usuário ainda existirá no Auth até ser excluído manualmente no console)." });
   };
 
   if (isLoading) {
@@ -123,28 +143,46 @@ export default function AdministradoresPage() {
           <DialogContent className="sm:max-w-[425px]">
             <form onSubmit={handleCreateAdmin}>
               <DialogHeader>
-                <DialogTitle>Autorizar Administrador</DialogTitle>
+                <DialogTitle>Criar Administrador</DialogTitle>
                 <DialogDescription>
-                  Insira o UID do usuário (encontrado no console do Firebase) para conceder permissões.
+                  O sistema criará automaticamente a conta no Firebase Auth e liberará o acesso.
                 </DialogDescription>
               </DialogHeader>
               <div className="grid gap-4 py-4">
                 <div className="grid gap-2">
-                  <Label htmlFor="uid">UID do Firebase</Label>
-                  <Input id="uid" name="uid" placeholder="ex: gHZ9n7s2b9X8..." required />
-                  <p className="text-[10px] text-muted-foreground">O usuário deve existir no Firebase Authentication.</p>
-                </div>
-                <div className="grid gap-2">
                   <Label htmlFor="fullName">Nome Completo</Label>
-                  <Input id="fullName" name="fullName" placeholder="Nome do Admin" required />
+                  <div className="relative">
+                    <User className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                    <Input id="fullName" name="fullName" placeholder="Nome do Admin" className="pl-10" required />
+                  </div>
                 </div>
                 <div className="grid gap-2">
                   <Label htmlFor="email">E-mail</Label>
-                  <Input id="email" name="email" type="email" placeholder="admin@empresa.com" required />
+                  <div className="relative">
+                    <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                    <Input id="email" name="email" type="email" placeholder="admin@empresa.com" className="pl-10" required />
+                  </div>
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="password">Senha Temporária</Label>
+                  <div className="relative">
+                    <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                    <Input id="password" name="password" type="password" placeholder="Mínimo 6 caracteres" className="pl-10" required />
+                  </div>
+                  <p className="text-[10px] text-muted-foreground italic">Informe esta senha para que o novo admin possa acessar.</p>
                 </div>
               </div>
               <DialogFooter>
-                <Button type="submit" className="w-full h-11">Conceder Acesso</Button>
+                <Button type="submit" className="w-full h-11" disabled={isCreating}>
+                  {isCreating ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Criando Conta...
+                    </>
+                  ) : (
+                    "Criar e Autorizar"
+                  )}
+                </Button>
               </DialogFooter>
             </form>
           </DialogContent>
@@ -182,7 +220,10 @@ export default function AdministradoresPage() {
                       <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold">
                         {admin.fullName?.substring(0, 2).toUpperCase() || "AD"}
                       </div>
-                      <span className="font-semibold">{admin.fullName}</span>
+                      <div className="flex flex-col">
+                        <span className="font-semibold">{admin.fullName}</span>
+                        <span className="text-[9px] font-mono text-muted-foreground uppercase">UID: {admin.id.substring(0, 8)}...</span>
+                      </div>
                     </div>
                   </TableCell>
                   <TableCell className="text-sm text-muted-foreground">{admin.email}</TableCell>
@@ -204,6 +245,7 @@ export default function AdministradoresPage() {
                           <AlertDialogTitle>Revogar Acesso</AlertDialogTitle>
                           <AlertDialogDescription>
                             Deseja realmente remover as permissões administrativas de {admin.fullName}? 
+                            Isso apagará o perfil do banco de dados, mas não excluirá a conta de autenticação (isso deve ser feito no console do Firebase).
                           </AlertDialogDescription>
                         </AlertDialogHeader>
                         <AlertDialogFooter>
