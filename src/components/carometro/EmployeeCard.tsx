@@ -26,11 +26,11 @@ export function EmployeeCard({ funcionario, setor }: EmployeeCardProps) {
     <>
       <Card 
         onClick={() => setIsOpen(true)}
-        className={`overflow-hidden group cursor-pointer hover:shadow-xl transition-all duration-300 border-none bg-white h-full flex flex-col shadow-sm ${funcionario.is_lider ? 'ring-2 ring-primary/20' : ''}`}
+        className="overflow-hidden group cursor-pointer hover:shadow-lg transition-all duration-300 border border-slate-100 bg-white h-full flex flex-col shadow-sm"
       >
-        <CardContent className="p-4 flex flex-col items-center text-center flex-1">
-          {/* Container da Foto */}
-          <div className="relative w-full aspect-[3/4] rounded-md overflow-hidden border border-slate-100 group-hover:border-primary/20 transition-all duration-300 bg-slate-50 mb-4">
+        <CardContent className="p-6 flex flex-col items-center text-center flex-1 space-y-4">
+          {/* Container da Foto (3:4 aspect ratio) */}
+          <div className="relative w-3/4 aspect-[3/4] rounded-md overflow-hidden bg-slate-100 border border-slate-200">
             <Image
               src={funcionario.foto_url || "https://picsum.photos/seed/placeholder/400/533"}
               alt={funcionario.nome}
@@ -50,19 +50,24 @@ export function EmployeeCard({ funcionario, setor }: EmployeeCardProps) {
 
           {/* Informações do Colaborador */}
           <div className="space-y-1 w-full">
-            <h3 className="font-bold text-base text-primary leading-tight truncate px-1">
+            <h3 className="font-bold text-lg text-primary leading-tight">
               {funcionario.nome}
             </h3>
-            <p className="text-xs text-muted-foreground truncate px-1">
+            <p className="text-sm text-slate-500 font-medium">
               {funcionario.cargo}
             </p>
-            {funcionario.subcategoria && (
-              <div className="pt-1">
-                <Badge variant="secondary" className="text-[9px] font-bold uppercase tracking-wider h-5">
-                  {funcionario.subcategoria}
-                </Badge>
-              </div>
-            )}
+          </div>
+
+          {/* Badge do Setor no Rodapé (Igual ao modelo) */}
+          <div className="pt-2">
+            <Badge 
+              variant="secondary" 
+              className="text-[9px] font-bold uppercase tracking-widest px-3 h-5 bg-blue-50 text-blue-600 border-none rounded-full"
+            >
+              {funcionario.subcategoria && funcionario.subcategoria !== "Geral" 
+                ? funcionario.subcategoria 
+                : (setor?.nome || "Setor")}
+            </Badge>
           </div>
         </CardContent>
       </Card>
@@ -71,12 +76,12 @@ export function EmployeeCard({ funcionario, setor }: EmployeeCardProps) {
         <DialogContent className="sm:max-w-[400px] p-0 overflow-hidden border-none shadow-2xl">
           <div className="bg-primary p-6 text-white">
             <DialogHeader>
-              <DialogTitle className="text-xl font-bold flex items-center gap-2">
+              <DialogTitle className="text-xl font-bold flex items-center gap-2 text-white">
                 {funcionario.nome}
                 {funcionario.is_lider && <Crown size={18} fill="white" />}
               </DialogTitle>
               {funcionario.is_lider && (
-                <span className="text-primary-foreground/80 font-bold uppercase text-[10px] mt-1">
+                <span className="text-white/80 font-bold uppercase text-[10px] mt-1">
                   {funcionario.titulo_lider || "Líder"}
                 </span>
               )}
@@ -98,14 +103,14 @@ export function EmployeeCard({ funcionario, setor }: EmployeeCardProps) {
             <div className="space-y-3">
               <div className="flex flex-col items-center gap-2 mb-2">
                 <div className="flex gap-2">
+                  <Badge variant="secondary" className="text-[10px] font-bold uppercase">
+                    {funcionario.cargo}
+                  </Badge>
                   {funcionario.subcategoria && (
-                    <Badge variant="secondary" className="text-[10px] font-bold uppercase">
+                    <Badge variant="outline" className="text-[10px] font-bold uppercase">
                       {funcionario.subcategoria}
                     </Badge>
                   )}
-                  <Badge className="text-[10px] font-bold uppercase">
-                    {funcionario.cargo}
-                  </Badge>
                 </div>
               </div>
 

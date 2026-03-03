@@ -147,9 +147,9 @@ export default function Home() {
             {groupedEmployees.length > 0 ? (
               groupedEmployees.map(sectorGroup => (
                 <section key={sectorGroup.id} className="space-y-6">
-                  {/* Cabeçalho do Setor */}
+                  {/* Cabeçalho do Setor (Igual ao modelo) */}
                   <div className="flex items-center gap-4">
-                    <h2 className="text-xl font-black text-primary uppercase tracking-tight border-l-4 border-primary pl-3">
+                    <h2 className="text-2xl font-bold text-primary tracking-tight">
                       {sectorGroup.nome}
                     </h2>
                     <div className="h-px flex-1 bg-slate-200" />
@@ -166,17 +166,17 @@ export default function Home() {
                       <div key={sub.name} className="space-y-4">
                         {/* Título da Subcategoria */}
                         {sub.name !== "Geral" && (
-                          <h3 className="text-[11px] font-black text-slate-400 uppercase tracking-widest pl-1">
+                          <h3 className="text-sm font-bold text-slate-400 uppercase tracking-widest pl-1">
                             {sub.name}
                           </h3>
                         )}
 
                         {/* Grade de Funcionários */}
                         <div className={cn(
-                          "grid gap-6",
+                          "grid gap-8",
                           sectorGroup.layoutSubcategorias === 'grid'
-                            ? "grid-cols-1" 
-                            : "grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6"
+                            ? "grid-cols-1 sm:grid-cols-2" 
+                            : "grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5"
                         )}>
                           {sub.funcionarios.map(f => (
                             <EmployeeCard 
