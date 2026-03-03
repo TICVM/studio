@@ -3,7 +3,7 @@
 
 import { useState, useMemo, useEffect } from "react";
 import NextImage from "next/image";
-import { Users, Plus, Edit2, Trash2, Search, FileText, Loader2, Upload, Crown, MapPin, Filter } from "lucide-react";
+import { Users, Plus, Edit2, Trash2, Search, FileText, Loader2, Upload, Crown, MapPin, Filter, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
