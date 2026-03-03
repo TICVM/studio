@@ -107,11 +107,7 @@ export default function FuncionariosPage() {
         const matchesUnidade = filterUnidade === "all" || f.unidade === filterUnidade;
         return matchesSearch && matchesUnidade;
       })
-      .sort((a, b) => {
-        if (a.is_lider && !b.is_lider) return -1;
-        if (!a.is_lider && b.is_lider) return 1;
-        return a.nome.localeCompare(b.nome);
-      });
+      .sort((a, b) => a.nome.localeCompare(b.nome));
   }, [employees, searchTerm, filterUnidade]);
 
   const toggleSelect = (id: string) => {
