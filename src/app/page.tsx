@@ -16,6 +16,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { cn } from "@/lib/utils";
 
 export default function Home() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -144,7 +145,12 @@ export default function Home() {
                     <div className="h-px w-full bg-slate-200" />
                   </div>
                   
-                  <div className="space-y-12">
+                  <div className={cn(
+                    "gap-x-8 gap-y-12",
+                    sectorGroup.layoutSubcategorias === 'grid' 
+                      ? "grid grid-cols-1 lg:grid-cols-2" 
+                      : "flex flex-col"
+                  )}>
                     {sectorGroup.subGroups.map(sub => (
                       <div key={sub.name} className="space-y-6">
                         {sub.name !== "Geral" && (
@@ -155,7 +161,12 @@ export default function Home() {
                             </h3>
                           </div>
                         )}
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                        <div className={cn(
+                          "grid gap-6",
+                          sectorGroup.layoutSubcategorias === 'grid'
+                            ? "grid-cols-1 xl:grid-cols-2"
+                            : "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
+                        )}>
                           {sub.funcionarios.map(f => (
                             <EmployeeCard 
                               key={f.id} 

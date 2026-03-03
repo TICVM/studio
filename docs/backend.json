@@ -19,6 +19,11 @@
           "type": "integer",
           "description": "Numeric priority for sorting sectors in the UI."
         },
+        "layoutSubcategorias": {
+          "type": "string",
+          "enum": ["stack", "grid"],
+          "description": "Determines if subcategories are stacked vertically or displayed side-by-side."
+        },
         "subcategorias": {
           "type": "array",
           "items": { "type": "string" },

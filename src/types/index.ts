@@ -4,6 +4,7 @@ export interface Setor {
   nome: string;
   ordem?: number;
   subcategorias?: string[];
+  layoutSubcategorias?: 'stack' | 'grid';
   data_criacao: string;
 }
 

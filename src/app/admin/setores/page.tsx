@@ -2,7 +2,7 @@
 "use client"
 
 import { useState } from "react";
-import { Grid, Plus, Edit2, Trash2, Search, Loader2, FileText, Upload, Tags, ArrowUpDown } from "lucide-react";
+import { Grid, Plus, Edit2, Trash2, Search, Loader2, FileText, Upload, Tags, LayoutList, LayoutGrid } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -34,6 +34,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Label } from "@/components/ui/label";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useMemoFirebase, useCollection, useFirestore, addDocumentNonBlocking, updateDocumentNonBlocking, deleteDocumentNonBlocking } from "@/firebase";
 import { collection, doc, serverTimestamp } from "firebase/firestore";
 import { Setor, Funcionario } from "@/types";
@@ -50,6 +51,7 @@ export default function SetoresPage() {
   const [editingSector, setEditingSector] = useState<Setor | null>(null);
   const [excelFile, setExcelFile] = useState<File | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [layoutMode, setLayoutMode] = useState<'stack' | 'grid'>('stack');
 
   const sectorsRef = useMemoFirebase(() => collection(firestore, "sectors"), [firestore]);
   const employeesRef = useMemoFirebase(() => collection(firestore, "employees"), [firestore]);
@@ -80,7 +82,8 @@ export default function SetoresPage() {
     const data = { 
       nome, 
       ordem,
-      subcategorias 
+      subcategorias,
+      layoutSubcategorias: layoutMode
     };
 
     if (editingSector) {
@@ -97,6 +100,12 @@ export default function SetoresPage() {
 
     setIsDialogOpen(false);
     setEditingSector(null);
+  };
+
+  const openEdit = (setor: Setor) => {
+    setEditingSector(setor);
+    setLayoutMode(setor.layoutSubcategorias || 'stack');
+    setIsDialogOpen(true);
   };
 
   const handleDelete = (id: string) => {
@@ -127,6 +136,7 @@ export default function SetoresPage() {
               nome,
               ordem: Number(row.Ordem) || 0,
               subcategorias: row.Subcategorias?.split(',').map((s: string) => s.trim()) || [],
+              layoutSubcategorias: 'stack',
               data_criacao: new Date().toISOString(),
               createdAt: serverTimestamp(),
             });
@@ -183,7 +193,10 @@ export default function SetoresPage() {
 
           <Dialog open={isDialogOpen} onOpenChange={(open) => {
             setIsDialogOpen(open);
-            if (!open) setEditingSector(null);
+            if (!open) {
+              setEditingSector(null);
+              setLayoutMode('stack');
+            }
           }}>
             <DialogTrigger asChild>
               <Button className="h-11 shadow-md"><Plus className="mr-2 h-4 w-4" />Novo Setor</Button>
@@ -205,6 +218,31 @@ export default function SetoresPage() {
                       <Input id="ordem" name="ordem" type="number" defaultValue={editingSector?.ordem || 0} />
                     </div>
                   </div>
+
+                  <div className="space-y-3">
+                    <Label>Layout das Subcategorias</Label>
+                    <RadioGroup 
+                      value={layoutMode} 
+                      onValueChange={(val: 'stack' | 'grid') => setLayoutMode(val)}
+                      className="grid grid-cols-2 gap-4"
+                    >
+                      <div className="flex items-center space-x-2 border p-3 rounded-lg cursor-pointer hover:bg-accent/5">
+                        <RadioGroupItem value="stack" id="layout1" />
+                        <Label htmlFor="layout1" className="flex items-center gap-2 cursor-pointer font-bold">
+                          <LayoutList size={16} />
+                          Abaixo
+                        </Label>
+                      </div>
+                      <div className="flex items-center space-x-2 border p-3 rounded-lg cursor-pointer hover:bg-accent/5">
+                        <RadioGroupItem value="grid" id="layout2" />
+                        <Label htmlFor="layout2" className="flex items-center gap-2 cursor-pointer font-bold">
+                          <LayoutGrid size={16} />
+                          Ao Lado
+                        </Label>
+                      </div>
+                    </RadioGroup>
+                  </div>
+
                   <div className="grid gap-2">
                     <Label htmlFor="subcategorias" className="flex items-center gap-2"><Tags size={14} /> Subcategorias (separadas por vírgula)</Label>
                     <Input id="subcategorias" name="subcategorias" placeholder="Ex: Backend, Frontend, DevOps" defaultValue={editingSector?.subcategorias?.join(", ")} />
@@ -235,6 +273,7 @@ export default function SetoresPage() {
               <TableHead className="w-16 text-center">Ordem</TableHead>
               <TableHead>Departamento</TableHead>
               <TableHead>Subcategorias</TableHead>
+              <TableHead>Layout</TableHead>
               <TableHead className="text-center">Equipe</TableHead>
               <TableHead className="text-right">Ações</TableHead>
             </TableRow>
@@ -257,6 +296,15 @@ export default function SetoresPage() {
                       )}
                     </div>
                   </TableCell>
+                  <TableCell>
+                    <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                      {setor.layoutSubcategorias === 'grid' ? (
+                        <><LayoutGrid size={14} /> Ao Lado</>
+                      ) : (
+                        <><LayoutList size={14} /> Abaixo</>
+                      )}
+                    </div>
+                  </TableCell>
                   <TableCell className="text-center">
                     <div className="inline-flex items-center gap-1.5 text-xs font-semibold px-2 py-1 bg-blue-50 text-blue-700 rounded-full border border-blue-100">
                       {count}
@@ -264,7 +312,7 @@ export default function SetoresPage() {
                   </TableCell>
                   <TableCell className="text-right">
                     <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => { setEditingSector(setor); setIsDialogOpen(true); }}>
+                      <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openEdit(setor)}>
                         <Edit2 className="h-4 w-4" />
                       </Button>
                       
