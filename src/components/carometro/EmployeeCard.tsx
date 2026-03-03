@@ -12,6 +12,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { useState } from "react";
+import { Badge } from "@/components/ui/badge";
 
 interface EmployeeCardProps {
   funcionario: Funcionario;
@@ -25,10 +26,11 @@ export function EmployeeCard({ funcionario, setor }: EmployeeCardProps) {
     <>
       <Card 
         onClick={() => setIsOpen(true)}
-        className={`overflow-hidden group cursor-pointer hover:shadow-xl transition-all duration-300 border-none bg-white ${funcionario.is_lider ? 'ring-2 ring-primary/10' : ''}`}
+        className={`overflow-hidden group cursor-pointer hover:shadow-2xl transition-all duration-300 border-none bg-white h-full flex flex-col shadow-md ${funcionario.is_lider ? 'ring-2 ring-primary/20' : ''}`}
       >
-        <CardContent className="p-6 flex flex-col items-center text-center space-y-4">
-          <div className="relative w-36 aspect-[3/4] rounded-lg overflow-hidden border-2 border-muted group-hover:border-primary transition-all duration-300 shadow-sm bg-slate-50">
+        <CardContent className="p-5 flex flex-col items-center text-center flex-1">
+          {/* Container da Foto - Agora Responsivo e Estável */}
+          <div className="relative w-full aspect-[3/4] rounded-lg overflow-hidden border-2 border-slate-100 group-hover:border-primary/30 transition-all duration-300 shadow-sm bg-slate-50 mb-5">
             <Image
               src={funcionario.foto_url || "https://picsum.photos/seed/placeholder/400/533"}
               alt={funcionario.nome}
@@ -45,31 +47,28 @@ export function EmployeeCard({ funcionario, setor }: EmployeeCardProps) {
               </div>
             )}
           </div>
-          <div className="space-y-1">
-            <div className="flex flex-col items-center gap-1">
-              {funcionario.is_lider && (
-                <span 
-                  className="text-[10px] font-black uppercase tracking-widest mb-1"
-                  style={{ color: 'var(--leadership, #d97706)' }}
-                >
-                  {funcionario.titulo_lider || "Líder de Setor"}
-                </span>
-              )}
-              <h3 className="font-headline text-lg font-bold text-primary leading-tight">
+
+          {/* Informações do Colaborador */}
+          <div className="flex-1 flex flex-col items-center justify-between w-full gap-2">
+            <div className="space-y-1">
+              <h3 className="font-bold text-lg text-primary leading-tight px-2">
                 {funcionario.nome}
               </h3>
+              <p className="text-sm font-medium text-slate-500">
+                {funcionario.cargo}
+              </p>
             </div>
-            <p className="text-sm font-medium text-muted-foreground">
-              {funcionario.cargo}
-            </p>
+
             {funcionario.subcategoria && (
-              <span className="inline-block px-2 py-0.5 mt-2 rounded-full bg-slate-100 text-[9px] font-bold uppercase tracking-wider text-slate-500 border">
+              <Badge variant="secondary" className="mt-2 text-[9px] font-black uppercase tracking-wider bg-slate-100 text-slate-500 border-none py-1">
                 {funcionario.subcategoria}
-              </span>
+              </Badge>
             )}
           </div>
-          <div className="pt-2 opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1 text-[10px] font-bold text-primary uppercase">
-            Ver Detalhes <ArrowRight size={10} />
+
+          {/* Rodapé do Cartão */}
+          <div className="mt-6 pt-4 border-t w-full flex items-center justify-center gap-1.5 text-[10px] font-black text-slate-300 uppercase tracking-tighter group-hover:text-primary transition-colors">
+            Ver Detalhes <ArrowRight size={10} className="transition-transform group-hover:translate-x-1" />
           </div>
         </CardContent>
       </Card>
@@ -82,13 +81,11 @@ export function EmployeeCard({ funcionario, setor }: EmployeeCardProps) {
                 {funcionario.nome}
                 {funcionario.is_lider && <Crown size={20} fill="white" />}
               </DialogTitle>
-              <div className="flex flex-wrap gap-2 mt-1">
-                {funcionario.is_lider && (
-                  <span className="text-primary-foreground/90 font-bold uppercase text-xs">
-                    {funcionario.titulo_lider || "Líder"}
-                  </span>
-                )}
-              </div>
+              {funcionario.is_lider && (
+                <span className="text-primary-foreground/90 font-bold uppercase text-xs mt-1">
+                  {funcionario.titulo_lider || "Líder"}
+                </span>
+              )}
             </DialogHeader>
           </div>
           
@@ -108,15 +105,13 @@ export function EmployeeCard({ funcionario, setor }: EmployeeCardProps) {
               <div className="flex flex-col items-center gap-2 mb-4">
                 <div className="flex gap-2">
                   {funcionario.subcategoria && (
-                    <span className="text-[10px] bg-slate-100 text-slate-700 px-2 py-1 rounded font-bold uppercase border flex items-center gap-1">
-                      <Tag size={10} />
+                    <Badge variant="secondary" className="text-[10px] font-bold uppercase py-1">
                       {funcionario.subcategoria}
-                    </span>
+                    </Badge>
                   )}
-                  <div className="flex items-center gap-1 text-[10px] font-bold text-primary uppercase bg-primary/5 px-2 py-1 rounded border border-primary/10">
-                    <Briefcase size={10} />
+                  <Badge className="text-[10px] font-bold uppercase py-1">
                     {funcionario.cargo}
-                  </div>
+                  </Badge>
                 </div>
               </div>
 
