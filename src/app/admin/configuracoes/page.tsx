@@ -2,7 +2,7 @@
 "use client"
 
 import { useState, useEffect, useRef } from "react";
-import { Settings, Save, Palette, Image as ImageIcon, Type, Loader2, Users, Upload, X, Maximize, Layout, Crown, MoveHorizontal, MousePointer2, AlignCenter, AlignLeft, Square, Columns, CheckCircle2 } from "lucide-react";
+import { Settings, Save, Palette, Image as ImageIcon, Type, Loader2, Users, Upload, X, Maximize, Layout, Crown, MoveHorizontal, MousePointer2, AlignCenter, AlignLeft, Square, Columns, CheckCircle2, Tags } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -53,6 +53,7 @@ export default function ConfiguracoesPage() {
     nameColor: "#3b82f6",
     jobTitleColor: "#64748b",
     sectorHeaderColor: "#1e293b",
+    subCategoryColor: "#3b82f6",
     sidebarBackgroundColor: "#0f172a",
     sidebarForegroundColor: "#f8fafc",
     logoStyle: "square_with_name",
@@ -86,6 +87,7 @@ export default function ConfiguracoesPage() {
         nameColor: settings.nameColor || settings.primaryColor || "#3b82f6",
         jobTitleColor: settings.jobTitleColor || "#64748b",
         sectorHeaderColor: settings.sectorHeaderColor || settings.primaryColor || "#1e293b",
+        subCategoryColor: settings.subCategoryColor || settings.primaryColor || "#3b82f6",
         sidebarBackgroundColor: settings.sidebarBackgroundColor || "#0f172a",
         sidebarForegroundColor: settings.sidebarForegroundColor || "#f8fafc",
         cardPadding: settings.cardPadding ?? 24,
@@ -260,7 +262,8 @@ export default function ConfiguracoesPage() {
                       <h3 className="text-xs font-black uppercase tracking-widest text-primary border-b pb-2">Ambiente e Cartões</h3>
                       <ColorPickerField label="Fundo da Página" id="bc" value={form.backgroundColor} onChange={v => setForm({...form, backgroundColor: v})} description="Fundo principal do carômetro." />
                       <ColorPickerField label="Fundo dos Cards" id="cbc" value={form.cardBackgroundColor} onChange={v => setForm({...form, cardBackgroundColor: v})} description="Fundo interno de cada colaborador." />
-                      <ColorPickerField label="Cor de Acento (Badges)" id="ac" value={form.accentColor} onChange={v => setForm({...form, accentColor: v})} description="Fundo das tags de setor/subcategoria." />
+                      <ColorPickerField label="Cor de Acento (Badges)" id="ac" value={form.accentColor} onChange={v => setForm({...form, accentColor: v})} description="Fundo das tags de setor." />
+                      <ColorPickerField label="Cor da Subcategoria" id="scc" value={form.subCategoryColor} onChange={v => setForm({...form, subCategoryColor: v})} description="Cor do selo de subcategoria." />
                       <ColorPickerField label="Destaque Liderança" id="lc" value={form.leadershipColor} onChange={v => setForm({...form, leadershipColor: v})} description="Coroa e cargos de gestão." />
                     </div>
                     <div className="space-y-6">
@@ -424,7 +427,7 @@ export default function ConfiguracoesPage() {
                     backgroundColor: form.cardBackgroundColor || "#ffffff"
                   }}>
                     {form.cardShowBadge && form.cardBadgePosition === 'top' && (
-                      <div className="mb-3"><span className="px-2 py-0.5 rounded-full text-[7px] font-bold uppercase tracking-widest" style={{ backgroundColor: form.accentColor, color: form.primaryColor }}>Departamento</span></div>
+                      <div className="mb-3"><span className="px-2 py-0.5 rounded-full text-[7px] font-bold uppercase tracking-widest" style={{ backgroundColor: form.subCategoryColor, color: 'white' }}>Subcategoria</span></div>
                     )}
                     
                     <div className="flex justify-center mb-3">
@@ -442,7 +445,7 @@ export default function ConfiguracoesPage() {
                     </div>
 
                     {form.cardShowBadge && form.cardBadgePosition === 'bottom' && (
-                      <div className="mt-3 pt-1"><span className="px-2 py-0.5 rounded-full text-[7px] font-bold uppercase tracking-widest" style={{ backgroundColor: form.accentColor, color: form.primaryColor }}>Setor</span></div>
+                      <div className="mt-3 pt-1"><span className="px-2 py-0.5 rounded-full text-[7px] font-bold uppercase tracking-widest" style={{ backgroundColor: form.subCategoryColor, color: 'white' }}>Setor</span></div>
                     )}
                   </div>
                 </div>
@@ -456,6 +459,7 @@ export default function ConfiguracoesPage() {
                <div className="flex items-center gap-2 text-[10px] font-bold"><div className="h-3 w-3 rounded shadow-sm border" style={{ backgroundColor: form.nameColor }} /> Nome</div>
                <div className="flex items-center gap-2 text-[10px] font-bold"><div className="h-3 w-3 rounded shadow-sm border" style={{ backgroundColor: form.jobTitleColor }} /> Cargo</div>
                <div className="flex items-center gap-2 text-[10px] font-bold"><div className="h-3 w-3 rounded shadow-sm border" style={{ backgroundColor: form.sectorHeaderColor }} /> Título Setor</div>
+               <div className="flex items-center gap-2 text-[10px] font-bold"><div className="h-3 w-3 rounded shadow-sm border" style={{ backgroundColor: form.subCategoryColor }} /> Subcategoria</div>
             </div>
           </div>
         </div>

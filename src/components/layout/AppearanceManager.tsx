@@ -88,6 +88,12 @@ export function AppearanceManager() {
         root.style.setProperty('--sector-header-color', hexToHsl(settings.primaryColor));
       }
 
+      if (settings.subCategoryColor) {
+        root.style.setProperty('--subcategory-color', hexToHsl(settings.subCategoryColor));
+      } else if (settings.primaryColor) {
+        root.style.setProperty('--subcategory-color', hexToHsl(settings.primaryColor));
+      }
+
       if (settings.sidebarBackgroundColor) {
         root.style.setProperty('--sidebar-background', hexToHsl(settings.sidebarBackgroundColor));
         root.style.setProperty('--sidebar-border', hexToHsl(settings.sidebarBackgroundColor));

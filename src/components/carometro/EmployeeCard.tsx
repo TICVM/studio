@@ -44,8 +44,8 @@ export function EmployeeCard({ funcionario, setor }: EmployeeCardProps) {
         variant="secondary" 
         className="text-[9px] font-black uppercase tracking-widest px-3 h-5 border-none rounded-full"
         style={{ 
-          backgroundColor: 'hsl(var(--accent))', 
-          color: 'hsl(var(--primary))' 
+          backgroundColor: 'hsl(var(--subcategory-color, var(--accent)))', 
+          color: 'white' 
         }}
       >
         {funcionario.subcategoria && funcionario.subcategoria !== "Geral" 
@@ -140,7 +140,7 @@ export function EmployeeCard({ funcionario, setor }: EmployeeCardProps) {
             <div className="space-y-3">
               <div className="flex flex-col items-center gap-2 mb-2">
                 <div className="flex gap-2">
-                  <Badge variant="secondary" className="text-[10px] font-bold uppercase" style={{ backgroundColor: 'hsl(var(--accent))', color: 'hsl(var(--primary))' }}>
+                  <Badge variant="secondary" className="text-[10px] font-bold uppercase" style={{ backgroundColor: 'hsl(var(--subcategory-color, var(--accent)))', color: 'white' }}>
                     {funcionario.cargo}
                   </Badge>
                   {funcionario.subcategoria && (

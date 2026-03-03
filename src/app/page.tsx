@@ -186,7 +186,7 @@ export default function Home() {
                       <div key={sub.name} className="space-y-4">
                         {/* Título da Subcategoria */}
                         {sub.name !== "Geral" && (
-                          <h3 className="text-sm font-bold opacity-40 uppercase tracking-widest pl-1" style={{ color: 'hsl(var(--foreground))' }}>
+                          <h3 className="text-sm font-bold uppercase tracking-widest pl-1" style={{ color: 'hsl(var(--subcategory-color, var(--primary)))' }}>
                             {sub.name}
                           </h3>
                         )}

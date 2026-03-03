@@ -44,6 +44,7 @@ export interface SystemSettings {
   nameColor?: string;
   jobTitleColor?: string;
   sectorHeaderColor?: string;
+  subCategoryColor?: string;
   sidebarBackgroundColor?: string;
   sidebarForegroundColor?: string;
   logoStyle: 'square_with_name' | 'rectangular_no_name';
