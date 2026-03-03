@@ -380,7 +380,7 @@ export default function ConfiguracoesPage() {
 
                 <div className="flex flex-col items-center">
                   <div className={cn(
-                    "w-full transition-all border border-transparent",
+                    "w-full transition-all border border-transparent hover:!border-[var(--hover-color)] hover:!shadow-[0_10px_30px_-5px_var(--hover-color)]",
                     form.cardShowShadow && "shadow-lg"
                   )} style={{ 
                     padding: (form.cardPadding || 24) * 0.7, 
@@ -388,7 +388,8 @@ export default function ConfiguracoesPage() {
                     textAlign: form.cardTextAlign as any,
                     backgroundColor: form.cardBackgroundColor || "#ffffff",
                     borderColor: form.cardShowShadow ? 'transparent' : '#e2e8f0',
-                  }}>
+                    '--hover-color': form.hoverColor || form.primaryColor
+                  } as any}>
                     {form.cardShowBadge && form.cardBadgePosition === 'top' && (
                       <div className="mb-3"><span className="px-2 py-0.5 rounded-full text-[7px] font-bold uppercase tracking-widest" style={{ backgroundColor: form.accentColor, color: form.accentForegroundColor }}>Selo</span></div>
                     )}

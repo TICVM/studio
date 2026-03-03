@@ -57,23 +57,20 @@ export function EmployeeCard({ funcionario, setor }: EmployeeCardProps) {
 
   return (
     <>
-      <div 
-        className="group relative h-full"
-        style={{ '--hover-color-local': 'var(--hover-color, #3b82f6)' } as any}
-      >
+      <div className="group relative h-full">
         <Card 
           onClick={() => setIsOpen(true)}
           className={cn(
             "overflow-hidden cursor-pointer transition-all duration-300 h-full flex flex-col border",
             showShadow ? "shadow-sm" : "shadow-none",
-            "group-hover:shadow-xl group-hover:scale-[1.02] group-hover:border-[var(--hover-color-local)]"
+            "group-hover:scale-[1.02] group-hover:!border-[var(--hover-color)] group-hover:!shadow-[0_10px_30px_-5px_var(--hover-color)]"
           )}
           style={{ 
             padding: `${padding}px`,
             borderRadius: `${borderRadius}px`,
             textAlign: textAlign as any,
             backgroundColor: 'hsl(var(--card))',
-            borderColor: showShadow ? 'transparent' : 'hsl(var(--border))'
+            borderColor: showShadow ? 'transparent' : 'hsl(var(--border))',
           }}
         >
           <CardContent className="p-0 flex flex-col items-stretch text-inherit flex-1">
