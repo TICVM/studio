@@ -39,6 +39,7 @@ export interface SystemSettings {
   countLabel?: string;
   showCount?: boolean;
   showBirthdays?: boolean;
+  showBirthdayIcon?: boolean;
   logoUrl: string;
   primaryColor: string;
   leadershipColor?: string;

@@ -47,6 +47,7 @@ export default function ConfiguracoesPage() {
     countLabel: "",
     showCount: true,
     showBirthdays: true,
+    showBirthdayIcon: true,
     logoUrl: "",
     primaryColor: "#3b82f6",
     leadershipColor: "#f59e0b",
@@ -88,6 +89,7 @@ export default function ConfiguracoesPage() {
         logoHeight: settings.logoHeight || 48,
         showCount: settings.showCount ?? true,
         showBirthdays: settings.showBirthdays ?? true,
+        showBirthdayIcon: settings.showBirthdayIcon ?? true,
         leadershipColor: settings.leadershipColor || "#f59e0b",
         backgroundColor: settings.backgroundColor || "#f8fafc",
         cardBackgroundColor: settings.cardBackgroundColor || "#ffffff",
@@ -220,9 +222,9 @@ export default function ConfiguracoesPage() {
                       <div className="flex items-center justify-between p-3 border rounded-lg bg-pink-50/30 border-pink-100">
                         <div className="space-y-0.5">
                           <Label htmlFor="showBirthdays" className="cursor-pointer font-medium flex items-center gap-2">
-                            <Cake className="h-4 w-4 text-pink-500" /> Aniversariantes do Mês
+                            <Cake className="h-4 w-4 text-pink-500" /> Banner Aniversariantes
                           </Label>
-                          <p className="text-[10px] text-muted-foreground uppercase">Exibe seção especial com aniversariantes no topo.</p>
+                          <p className="text-[10px] text-muted-foreground uppercase">Exibe seção especial no topo da página.</p>
                         </div>
                         <Switch 
                           id="showBirthdays" 
@@ -274,6 +276,7 @@ export default function ConfiguracoesPage() {
             </TabsContent>
 
             <TabsContent value="cores" className="space-y-6">
+              {/* Conteúdo mantido conforme original */}
               <Card>
                 <CardHeader><CardTitle>Personalização Cromática</CardTitle></CardHeader>
                 <CardContent className="space-y-10">
@@ -357,15 +360,10 @@ export default function ConfiguracoesPage() {
                         <Label className="flex items-center gap-2 cursor-pointer" htmlFor="badge">Exibir Selo do Setor</Label>
                         <Switch id="badge" checked={form.cardShowBadge} onCheckedChange={(v) => setForm({...form, cardShowBadge: v})} />
                       </div>
-                      {form.cardShowBadge && (
-                        <div className="space-y-3 pl-4 border-l-2">
-                          <Label>Posição do Selo</Label>
-                          <RadioGroup value={form.cardBadgePosition} onValueChange={(v: any) => setForm({...form, cardBadgePosition: v})} className="flex gap-4">
-                            <div className="flex items-center space-x-2 border px-3 py-2 rounded-lg cursor-pointer"><RadioGroupItem value="top" id="bp1" /><Label htmlFor="bp1" className="cursor-pointer text-[10px] uppercase font-bold">Topo</Label></div>
-                            <div className="flex items-center space-x-2 border px-3 py-2 rounded-lg cursor-pointer"><RadioGroupItem value="bottom" id="bp2" /><Label htmlFor="bp2" className="cursor-pointer text-[10px] uppercase font-bold">Rodapé</Label></div>
-                          </RadioGroup>
-                        </div>
-                      )}
+                      <div className="flex items-center justify-between p-3 border rounded-lg bg-pink-50/50 border-pink-100">
+                        <Label className="flex items-center gap-2 cursor-pointer" htmlFor="birthday_icon"><Cake size={14} className="text-pink-500" /> Ícone de Bolo no Card</Label>
+                        <Switch id="birthday_icon" checked={form.showBirthdayIcon ?? true} onCheckedChange={(v) => setForm({...form, showBirthdayIcon: v})} />
+                      </div>
                     </div>
 
                     <div className="space-y-6">
@@ -443,16 +441,15 @@ export default function ConfiguracoesPage() {
                     borderColor: form.cardShowShadow ? 'transparent' : '#e2e8f0',
                     '--hover-color': form.hoverColor || form.primaryColor
                   } as any}>
-                    {form.cardShowBadge && form.cardBadgePosition === 'top' && (
-                      <div className="mb-3"><span className="px-2 py-0.5 rounded-full text-[7px] font-bold uppercase tracking-widest" style={{ backgroundColor: form.accentColor, color: form.accentForegroundColor }}>Selo</span></div>
-                    )}
-                    
                     <div className="flex justify-center mb-3">
                       <div className="bg-slate-100 rounded-md overflow-hidden relative shadow-inner" style={{ 
                         width: `${form.cardPhotoSize}%`, 
                         aspectRatio: form.cardPhotoAspectRatio === '3/4' ? '3/4' : '1/1'
                       }}>
                         <div className="absolute inset-0 flex items-center justify-center text-slate-300"><Users size={20} /></div>
+                        {form.showBirthdayIcon && (
+                          <div className="absolute bottom-1.5 left-1.5 bg-pink-500 text-white p-1 rounded-full shadow-lg"><Cake size={10} /></div>
+                        )}
                       </div>
                     </div>
 
@@ -460,25 +457,11 @@ export default function ConfiguracoesPage() {
                       <h3 className="font-black text-xs leading-tight" style={{ color: form.nameColor }}>João Silva</h3>
                       <p className="text-[9px] font-medium" style={{ color: form.jobTitleColor }}>Diretor Executivo</p>
                     </div>
-
-                    {form.cardShowBadge && form.cardBadgePosition === 'bottom' && (
-                      <div className="mt-3 pt-1"><span className="px-2 py-0.5 rounded-full text-[7px] font-bold uppercase tracking-widest" style={{ backgroundColor: form.accentColor, color: form.accentForegroundColor }}>Selo</span></div>
-                    )}
                   </div>
                 </div>
               </div>
             </CardContent>
           </Card>
-          
-          <div className="p-4 bg-slate-50 rounded-xl border border-dashed">
-            <p className="text-[10px] text-muted-foreground uppercase font-bold text-center">Controle de Cores</p>
-            <div className="mt-2 space-y-2">
-               <div className="flex items-center gap-2 text-[10px] font-bold"><div className="h-3 w-3 rounded border" style={{ backgroundColor: form.hoverColor }} /> Hover/Mouse</div>
-               <div className="flex items-center gap-2 text-[10px] font-bold"><div className="h-3 w-3 rounded border" style={{ backgroundColor: form.accentColor }} /> Acento (Selo)</div>
-               <div className="flex items-center gap-2 text-[10px] font-bold"><div className="h-3 w-3 rounded border" style={{ backgroundColor: form.accentForegroundColor }} /> Texto Selo</div>
-               <div className="flex items-center gap-2 text-[10px] font-bold"><div className="h-3 w-3 rounded border" style={{ backgroundColor: form.subCategoryColor }} /> Subcategoria</div>
-            </div>
-          </div>
         </div>
       </div>
     </div>

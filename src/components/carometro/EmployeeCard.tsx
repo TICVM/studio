@@ -37,14 +37,26 @@ export function EmployeeCard({ funcionario, setor }: EmployeeCardProps) {
   const aspectRatio = settings?.cardPhotoAspectRatio || '3/4';
   const showBadge = settings?.cardShowBadge ?? true;
   const badgePos = settings?.cardBadgePosition || 'bottom';
+  const showBirthdayIcon = settings?.showBirthdayIcon ?? true;
 
-  // Verificar se o aniversário é hoje e se a função está habilitada
+  // Verificar se o aniversário é hoje de forma robusta
   const isBirthdayToday = useMemo(() => {
-    if (!funcionario.data_nascimento || settings?.showBirthdays === false) return false;
-    const today = new Date();
-    const birthDate = new Date(funcionario.data_nascimento);
-    return today.getUTCMonth() === birthDate.getUTCMonth() && today.getUTCDate() === birthDate.getUTCDate();
-  }, [funcionario.data_nascimento, settings?.showBirthdays]);
+    if (!funcionario.data_nascimento) return false;
+    
+    // Pegar data local do navegador
+    const now = new Date();
+    const currentMonth = now.getMonth() + 1; // 1-12
+    const currentDay = now.getDate();
+
+    // Parsear data de nascimento (YYYY-MM-DD)
+    const parts = funcionario.data_nascimento.split('-');
+    if (parts.length !== 3) return false;
+
+    const birthMonth = parseInt(parts[1], 10);
+    const birthDay = parseInt(parts[2], 10);
+
+    return currentMonth === birthMonth && currentDay === birthDay;
+  }, [funcionario.data_nascimento]);
 
   const badgeContent = (
     <div className={cn("pt-2", badgePos === 'top' && "pt-0 mb-4")}>
@@ -104,7 +116,7 @@ export function EmployeeCard({ funcionario, setor }: EmployeeCardProps) {
                   <Crown size={12} fill="white" />
                 </div>
               )}
-              {isBirthdayToday && (
+              {isBirthdayToday && showBirthdayIcon && (
                 <div 
                   className="absolute bottom-2 left-2 bg-pink-500 text-white p-1.5 rounded-full shadow-lg z-20 animate-bounce"
                 >
@@ -117,7 +129,7 @@ export function EmployeeCard({ funcionario, setor }: EmployeeCardProps) {
             <div className="space-y-1 w-full flex-1">
               <h3 className="font-bold text-lg leading-tight flex items-center justify-center gap-1.5" style={{ color: 'hsl(var(--name-color, var(--primary)))' }}>
                 {funcionario.nome}
-                {isBirthdayToday && <span className="text-pink-500 text-xs">🎂</span>}
+                {isBirthdayToday && showBirthdayIcon && <span className="text-pink-500 text-xs">🎂</span>}
               </h3>
               <p className="text-sm font-medium" style={{ color: 'hsl(var(--job-color, var(--foreground)))' }}>
                 {funcionario.cargo}
