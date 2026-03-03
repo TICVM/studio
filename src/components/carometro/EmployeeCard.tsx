@@ -2,9 +2,9 @@
 "use client"
 
 import Image from "next/image";
-import { Funcionario, Setor } from "@/types";
+import { Funcionario, Setor, SystemSettings } from "@/types";
 import { Card, CardContent } from "@/components/ui/card";
-import { Crown, Mail, Hash, Building } from "lucide-react";
+import { Crown, Mail, Hash, Building, Users } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -13,6 +13,9 @@ import {
 } from "@/components/ui/dialog";
 import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
+import { useDoc, useMemoFirebase, useFirestore } from "@/firebase";
+import { doc } from "firebase/firestore";
+import { cn } from "@/lib/utils";
 
 interface EmployeeCardProps {
   funcionario: Funcionario;
@@ -21,16 +24,56 @@ interface EmployeeCardProps {
 
 export function EmployeeCard({ funcionario, setor }: EmployeeCardProps) {
   const [isOpen, setIsOpen] = useState(false);
+  const firestore = useFirestore();
+  const settingsRef = useMemoFirebase(() => doc(firestore, "settings", "appearance"), [firestore]);
+  const { data: settings } = useDoc<SystemSettings>(settingsRef);
+
+  // Fallbacks de Layout
+  const textAlign = settings?.cardTextAlign || 'center';
+  const padding = settings?.cardPadding ?? 24;
+  const borderRadius = settings?.cardBorderRadius ?? 12;
+  const showShadow = settings?.cardShowShadow ?? true;
+  const photoSize = settings?.cardPhotoSize ?? 75;
+  const aspectRatio = settings?.cardPhotoAspectRatio || '3/4';
+  const showBadge = settings?.cardShowBadge ?? true;
+  const badgePos = settings?.cardBadgePosition || 'bottom';
+
+  const badgeContent = (
+    <div className={cn("pt-2", badgePos === 'top' && "pt-0 mb-4")}>
+      <Badge 
+        variant="secondary" 
+        className="text-[9px] font-black uppercase tracking-widest px-3 h-5 border-none rounded-full"
+        style={{ backgroundColor: 'var(--accent)', color: 'var(--primary)' }}
+      >
+        {funcionario.subcategoria && funcionario.subcategoria !== "Geral" 
+          ? funcionario.subcategoria 
+          : (setor?.nome || "Setor")}
+      </Badge>
+    </div>
+  );
 
   return (
     <>
       <Card 
         onClick={() => setIsOpen(true)}
-        className="overflow-hidden group cursor-pointer hover:shadow-lg transition-all duration-300 border border-slate-100 bg-white h-full flex flex-col shadow-sm"
+        className={cn(
+          "overflow-hidden group cursor-pointer hover:shadow-lg transition-all duration-300 border border-slate-100 bg-white h-full flex flex-col",
+          showShadow ? "shadow-sm" : "shadow-none"
+        )}
+        style={{ 
+          padding: `${padding}px`,
+          borderRadius: `${borderRadius}px`,
+          textAlign: textAlign as any
+        }}
       >
-        <CardContent className="p-6 flex flex-col items-center text-center flex-1 space-y-4">
-          {/* Container da Foto (3:4 aspect ratio) */}
-          <div className="relative w-3/4 aspect-[3/4] rounded-md overflow-hidden bg-slate-100 border border-slate-200">
+        <CardContent className="p-0 flex flex-col items-stretch text-inherit flex-1">
+          {showBadge && badgePos === 'top' && badgeContent}
+
+          {/* Container da Foto */}
+          <div className={cn(
+            "relative mx-auto mb-4 rounded-md overflow-hidden bg-slate-100 border border-slate-200",
+            aspectRatio === '3/4' ? "aspect-[3/4]" : "aspect-square"
+          )} style={{ width: `${photoSize}%` }}>
             <Image
               src={funcionario.foto_url || "https://picsum.photos/seed/placeholder/400/533"}
               alt={funcionario.nome}
@@ -49,8 +92,8 @@ export function EmployeeCard({ funcionario, setor }: EmployeeCardProps) {
           </div>
 
           {/* Informações do Colaborador */}
-          <div className="space-y-1 w-full">
-            <h3 className="font-bold text-lg text-primary leading-tight">
+          <div className="space-y-1 w-full flex-1">
+            <h3 className="font-bold text-lg leading-tight" style={{ color: 'var(--primary)' }}>
               {funcionario.nome}
             </h3>
             <p className="text-sm text-slate-500 font-medium">
@@ -58,17 +101,7 @@ export function EmployeeCard({ funcionario, setor }: EmployeeCardProps) {
             </p>
           </div>
 
-          {/* Badge do Setor no Rodapé (Igual ao modelo) */}
-          <div className="pt-2">
-            <Badge 
-              variant="secondary" 
-              className="text-[9px] font-bold uppercase tracking-widest px-3 h-5 bg-blue-50 text-blue-600 border-none rounded-full"
-            >
-              {funcionario.subcategoria && funcionario.subcategoria !== "Geral" 
-                ? funcionario.subcategoria 
-                : (setor?.nome || "Setor")}
-            </Badge>
-          </div>
+          {showBadge && badgePos === 'bottom' && badgeContent}
         </CardContent>
       </Card>
 

@@ -6,9 +6,9 @@ import { PublicNavbar } from "@/components/layout/PublicNavbar";
 import { EmployeeCard } from "@/components/carometro/EmployeeCard";
 import { Input } from "@/components/ui/input";
 import { Search, Filter, Loader2 } from "lucide-react";
-import { useMemoFirebase, useCollection, useFirestore } from "@/firebase";
-import { collection, query, where } from "firebase/firestore";
-import { Funcionario, Setor } from "@/types";
+import { useMemoFirebase, useCollection, useFirestore, useDoc } from "@/firebase";
+import { collection, query, where, doc } from "firebase/firestore";
+import { Funcionario, Setor, SystemSettings } from "@/types";
 import {
   Select,
   SelectContent,
@@ -22,6 +22,9 @@ export default function Home() {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedSetor, setSelectedSetor] = useState("all");
   const firestore = useFirestore();
+
+  const settingsRef = useMemoFirebase(() => doc(firestore, "settings", "appearance"), [firestore]);
+  const { data: settings } = useDoc<SystemSettings>(settingsRef);
 
   const activeEmployeesQuery = useMemoFirebase(() => {
     return query(collection(firestore, "employees"), where("status", "==", "ativo"));
@@ -97,6 +100,9 @@ export default function Home() {
     }
   };
 
+  const headerStyle = settings?.headerStyle || 'line_right';
+  const headerFontSize = settings?.headerFontSize || 24;
+
   return (
     <div className="min-h-screen flex flex-col bg-slate-50/30">
       <PublicNavbar />
@@ -104,7 +110,7 @@ export default function Home() {
       <main className="flex-1 container mx-auto px-4 py-8 space-y-10">
         <div className="flex flex-col md:flex-row gap-4 items-center justify-between bg-white p-6 rounded-xl shadow-sm border border-slate-100">
           <div className="space-y-1">
-            <h1 className="text-2xl font-bold text-primary tracking-tight">Equipe Corporativa</h1>
+            <h1 className="text-2xl font-bold text-primary tracking-tight">{settings?.systemName || "Equipe Corporativa"}</h1>
             <p className="text-muted-foreground text-sm">Consulte ramais e informações dos colaboradores.</p>
           </div>
           
@@ -147,12 +153,16 @@ export default function Home() {
             {groupedEmployees.length > 0 ? (
               groupedEmployees.map(sectorGroup => (
                 <section key={sectorGroup.id} className="space-y-6">
-                  {/* Cabeçalho do Setor (Igual ao modelo) */}
-                  <div className="flex items-center gap-4">
-                    <h2 className="text-2xl font-bold text-primary tracking-tight">
+                  {/* Cabeçalho do Setor Configurável */}
+                  <div className={cn(
+                    "flex items-center gap-4 transition-all",
+                    headerStyle === 'box_background' && "bg-primary text-primary-foreground p-4 rounded-xl",
+                    headerStyle === 'full_underline' && "border-b-2 border-primary pb-2"
+                  )}>
+                    <h2 className="font-black tracking-tight" style={{ fontSize: headerFontSize, color: headerStyle === 'box_background' ? 'white' : 'var(--primary)' }}>
                       {sectorGroup.nome}
                     </h2>
-                    <div className="h-px flex-1 bg-slate-200" />
+                    {headerStyle === 'line_right' && <div className="h-px flex-1 bg-slate-200" />}
                   </div>
                   
                   {/* Grid das Subcategorias */}
@@ -205,7 +215,7 @@ export default function Home() {
       <footer className="border-t bg-white py-8 mt-16">
         <div className="container mx-auto px-4 text-center">
           <p className="text-[10px] font-bold text-slate-300 uppercase tracking-widest">
-            &copy; {new Date().getFullYear()} PessoasEmpresa &bull; Carômetro
+            &copy; {new Date().getFullYear()} {settings?.systemName || "PessoasEmpresa"} &bull; Carômetro
           </p>
         </div>
       </footer>

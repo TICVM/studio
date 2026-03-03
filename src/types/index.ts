@@ -44,4 +44,15 @@ export interface SystemSettings {
   sidebarForegroundColor?: string;
   logoStyle: 'square_with_name' | 'rectangular_no_name';
   logoHeight?: number;
+  // Novos campos de Layout
+  cardPadding?: number;
+  cardBorderRadius?: number;
+  cardShowShadow?: boolean;
+  cardTextAlign?: 'left' | 'center';
+  cardPhotoSize?: number;
+  cardPhotoAspectRatio?: '3/4' | '1/1' | '4/5' | '2/3';
+  cardShowBadge?: boolean;
+  cardBadgePosition?: 'top' | 'bottom';
+  headerStyle?: 'line_right' | 'full_underline' | 'box_background';
+  headerFontSize?: number;
 }
