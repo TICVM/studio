@@ -5,10 +5,11 @@ import { useState, useMemo } from "react";
 import { PublicNavbar } from "@/components/layout/PublicNavbar";
 import { EmployeeCard } from "@/components/carometro/EmployeeCard";
 import { Input } from "@/components/ui/input";
-import { Search, Filter, Loader2, MapPin, Building } from "lucide-react";
+import { Search, Filter, Loader2, MapPin, X } from "lucide-react";
 import { useMemoFirebase, useCollection, useFirestore, useDoc } from "@/firebase";
 import { collection, query, where, doc } from "firebase/firestore";
 import { Funcionario, Setor, SystemSettings } from "@/types";
+import { Button } from "@/components/ui/button";
 import {
   Select,
   SelectContent,
@@ -57,6 +58,14 @@ export default function Home() {
       return matchesSearch && matchesSetor && matchesUnidade;
     });
   }, [employees, searchTerm, selectedSetor, selectedUnidade]);
+
+  const hasActiveFilters = searchTerm !== "" || selectedSetor !== "all" || selectedUnidade !== "all";
+
+  const clearFilters = () => {
+    setSearchTerm("");
+    setSelectedSetor("all");
+    setSelectedUnidade("all");
+  };
 
   const groupedEmployees = useMemo(() => {
     if (!sectors) return [];
@@ -124,28 +133,41 @@ export default function Home() {
             <h1 className="text-2xl font-bold tracking-tight" style={{ color: 'hsl(var(--primary))' }}>
               {settings?.systemName || "Equipe Corporativa"}
             </h1>
-            <p className="text-sm" style={{ color: 'hsl(var(--foreground))' }}>
-              Consulte ramais e informações dos colaboradores.
-            </p>
+            <div className="flex items-center gap-2">
+              <p className="text-sm" style={{ color: 'hsl(var(--foreground))' }}>
+                {filteredEmployees.length} colaboradores encontrados.
+              </p>
+              {hasActiveFilters && (
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  onClick={clearFilters}
+                  className="h-7 px-2 text-[10px] font-bold uppercase text-destructive hover:bg-destructive/10"
+                >
+                  <X className="mr-1 h-3 w-3" />
+                  Limpar Filtros
+                </Button>
+              )}
+            </div>
           </div>
           
           <div className="flex flex-col sm:flex-row gap-3 w-full lg:w-auto items-center">
             <div className="relative w-full sm:flex-1 lg:w-64">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input 
-                placeholder="Buscar por nome ou cargo..." 
+                placeholder="Nome ou cargo..." 
                 className="pl-9 h-11"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
             </div>
             
-            <div className="flex gap-2 w-full sm:w-auto">
-              <div className="w-full sm:w-48">
+            <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+              <div className="w-full sm:w-44">
                 <Select value={selectedSetor} onValueChange={setSelectedSetor}>
                   <SelectTrigger className="h-11">
-                    <div className="flex items-center gap-2">
-                      <Filter className="h-4 w-4 text-muted-foreground" />
+                    <div className="flex items-center gap-2 truncate">
+                      <Filter className="h-4 w-4 text-muted-foreground shrink-0" />
                       <SelectValue placeholder="Setor" />
                     </div>
                   </SelectTrigger>
@@ -158,16 +180,16 @@ export default function Home() {
                 </Select>
               </div>
 
-              <div className="w-full sm:w-48">
+              <div className="w-full sm:w-44">
                 <Select value={selectedUnidade} onValueChange={setSelectedUnidade}>
                   <SelectTrigger className="h-11">
-                    <div className="flex items-center gap-2">
-                      <MapPin className="h-4 w-4 text-muted-foreground" />
+                    <div className="flex items-center gap-2 truncate">
+                      <MapPin className="h-4 w-4 text-muted-foreground shrink-0" />
                       <SelectValue placeholder="Unidade" />
                     </div>
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">Todas as Unidades</SelectItem>
+                    <SelectItem value="all">Todas Unidades</SelectItem>
                     {unidadesDisponiveis.map(u => (
                       <SelectItem key={u} value={u}>{u}</SelectItem>
                     ))}
@@ -221,7 +243,7 @@ export default function Home() {
                           </h3>
                         )}
 
-                        {/* Grade de Funcionários - Sincronizada com o layout do setor */}
+                        {/* Grade de Funcionários */}
                         <div className={cn(
                           "grid gap-8",
                           sectorGroup.layoutSubcategorias === 'grid'
@@ -247,6 +269,9 @@ export default function Home() {
                 <Search className="h-10 w-10 text-slate-200 mx-auto mb-3" />
                 <h3 className="text-lg font-bold text-slate-400">Nenhum resultado</h3>
                 <p className="text-slate-300 text-sm">Refine sua busca ou filtros por setor e unidade.</p>
+                <Button variant="link" onClick={clearFilters} className="mt-4 text-primary">
+                  Ver todos os colaboradores
+                </Button>
               </div>
             )}
           </div>
