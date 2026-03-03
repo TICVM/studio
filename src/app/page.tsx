@@ -98,33 +98,33 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-slate-50/50">
+    <div className="min-h-screen flex flex-col bg-slate-50/30">
       <PublicNavbar />
       
-      <main className="flex-1 container mx-auto px-4 py-8 space-y-12">
-        <div className="flex flex-col md:flex-row gap-6 items-center justify-between bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
-          <div className="space-y-1 text-center md:text-left">
-            <h1 className="text-3xl font-bold text-primary tracking-tight">Equipe Corporativa</h1>
-            <p className="text-muted-foreground text-sm font-medium">Encontre colaboradores, ramais e informações de contato.</p>
+      <main className="flex-1 container mx-auto px-4 py-8 space-y-10">
+        <div className="flex flex-col md:flex-row gap-4 items-center justify-between bg-white p-6 rounded-xl shadow-sm border border-slate-100">
+          <div className="space-y-1">
+            <h1 className="text-2xl font-bold text-primary tracking-tight">Equipe Corporativa</h1>
+            <p className="text-muted-foreground text-sm">Consulte ramais e informações dos colaboradores.</p>
           </div>
           
           <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
-            <div className="relative w-full sm:w-80">
+            <div className="relative w-full sm:w-64">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input 
-                placeholder="Nome ou cargo..." 
-                className="pl-10 h-11 rounded-xl"
+                placeholder="Buscar..." 
+                className="pl-9 h-10"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
             </div>
             
-            <div className="w-full sm:w-56">
+            <div className="w-full sm:w-48">
               <Select value={selectedSetor} onValueChange={setSelectedSetor}>
-                <SelectTrigger className="w-full h-11 rounded-xl">
+                <SelectTrigger className="h-10">
                   <div className="flex items-center gap-2">
                     <Filter className="h-4 w-4 text-muted-foreground" />
-                    <SelectValue placeholder="Filtrar Setor" />
+                    <SelectValue placeholder="Setor" />
                   </div>
                 </SelectTrigger>
                 <SelectContent>
@@ -139,47 +139,44 @@ export default function Home() {
         </div>
 
         {(loadingEmployees || loadingSectors) ? (
-          <div className="flex justify-center py-24">
-            <Loader2 className="h-12 w-12 animate-spin text-primary opacity-50" />
+          <div className="flex justify-center py-20">
+            <Loader2 className="h-10 w-10 animate-spin text-primary opacity-40" />
           </div>
         ) : (
-          <div className="space-y-20">
+          <div className="space-y-16">
             {groupedEmployees.length > 0 ? (
               groupedEmployees.map(sectorGroup => (
-                <section key={sectorGroup.id} className="space-y-10">
+                <section key={sectorGroup.id} className="space-y-6">
                   {/* Cabeçalho do Setor */}
-                  <div className="flex items-center gap-6">
-                    <h2 className="text-2xl font-black text-primary pr-2 whitespace-nowrap uppercase tracking-tighter border-b-4 border-primary/20 pb-2">
+                  <div className="flex items-center gap-4">
+                    <h2 className="text-xl font-black text-primary uppercase tracking-tight border-l-4 border-primary pl-3">
                       {sectorGroup.nome}
                     </h2>
-                    <div className="h-px w-full bg-slate-200/60" />
+                    <div className="h-px flex-1 bg-slate-200" />
                   </div>
                   
                   {/* Grid das Subcategorias */}
                   <div className={cn(
-                    "gap-x-10 gap-y-16",
+                    "gap-6",
                     sectorGroup.layoutSubcategorias === 'grid' 
                       ? cn("grid grid-cols-1", getGridColsClass(sectorGroup.colunasGrid))
                       : "flex flex-col"
                   )}>
                     {sectorGroup.subGroups.map(sub => (
-                      <div key={sub.name} className="space-y-8">
+                      <div key={sub.name} className="space-y-4">
                         {/* Título da Subcategoria */}
                         {sub.name !== "Geral" && (
-                          <div className="flex items-center gap-3">
-                            <div className="h-2 w-2 rounded-full bg-primary" />
-                            <h3 className="text-xs font-black text-slate-400 uppercase tracking-[0.2em]">
-                              {sub.name}
-                            </h3>
-                          </div>
+                          <h3 className="text-[11px] font-black text-slate-400 uppercase tracking-widest pl-1">
+                            {sub.name}
+                          </h3>
                         )}
 
                         {/* Grade de Funcionários */}
                         <div className={cn(
-                          "grid gap-8",
+                          "grid gap-6",
                           sectorGroup.layoutSubcategorias === 'grid'
                             ? "grid-cols-1" 
-                            : "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5"
+                            : "grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6"
                         )}>
                           {sub.funcionarios.map(f => (
                             <EmployeeCard 
@@ -195,22 +192,20 @@ export default function Home() {
                 </section>
               ))
             ) : (
-              <div className="text-center py-24 space-y-4 bg-white rounded-3xl border border-dashed">
-                <div className="inline-flex h-20 w-20 items-center justify-center rounded-full bg-slate-50">
-                  <Search className="h-10 w-10 text-slate-300" />
-                </div>
-                <h3 className="text-xl font-bold text-slate-400">Nenhum colaborador encontrado</h3>
-                <p className="text-slate-400 text-sm">Tente outro nome ou mude os filtros de setor.</p>
+              <div className="text-center py-20 bg-white rounded-xl border border-dashed">
+                <Search className="h-10 w-10 text-slate-200 mx-auto mb-3" />
+                <h3 className="text-lg font-bold text-slate-400">Nenhum resultado</h3>
+                <p className="text-slate-300 text-sm">Refine sua busca ou filtros.</p>
               </div>
             )}
           </div>
         )}
       </main>
 
-      <footer className="border-t bg-white py-12 mt-20">
+      <footer className="border-t bg-white py-8 mt-16">
         <div className="container mx-auto px-4 text-center">
-          <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">
-            &copy; {new Date().getFullYear()} PessoasEmpresa &bull; Carômetro Interno
+          <p className="text-[10px] font-bold text-slate-300 uppercase tracking-widest">
+            &copy; {new Date().getFullYear()} PessoasEmpresa &bull; Carômetro
           </p>
         </div>
       </footer>
