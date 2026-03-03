@@ -131,7 +131,7 @@ export default function Home() {
         <div className="flex flex-col lg:flex-row gap-6 items-center justify-between p-6 rounded-xl shadow-sm border border-slate-100" style={{ backgroundColor: 'hsl(var(--card))' }}>
           <div className="space-y-1 flex-shrink-0">
             <h1 className="text-2xl font-bold tracking-tight" style={{ color: 'hsl(var(--primary))' }}>
-              {settings?.systemName || "Equipe Corporativa"}
+              {settings?.heroTitle || settings?.systemName || "Equipe Corporativa"}
             </h1>
             <div className="flex items-center gap-2">
               <p className="text-sm" style={{ color: 'hsl(var(--foreground))' }}>

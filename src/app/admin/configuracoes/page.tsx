@@ -43,6 +43,7 @@ export default function ConfiguracoesPage() {
 
   const [form, setForm] = useState<Partial<SystemSettings>>({
     systemName: "",
+    heroTitle: "",
     logoUrl: "",
     primaryColor: "#3b82f6",
     leadershipColor: "#f59e0b",
@@ -182,11 +183,20 @@ export default function ConfiguracoesPage() {
               <Card>
                 <CardHeader><CardTitle>Marca da Organização</CardTitle></CardHeader>
                 <CardContent className="space-y-6">
-                  <div className="space-y-2">
-                    <Label htmlFor="systemName">Nome do Sistema</Label>
-                    <Input id="systemName" value={form.systemName} onChange={e => setForm({...form, systemName: e.target.value})} placeholder="Ex: PessoasEmpresa" />
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-2">
+                      <Label htmlFor="systemName">Nome do Sistema</Label>
+                      <Input id="systemName" value={form.systemName} onChange={e => setForm({...form, systemName: e.target.value})} placeholder="Ex: PessoasEmpresa" />
+                      <p className="text-[10px] text-muted-foreground">Aparece na barra do navegador e na lateral administrativa.</p>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="heroTitle">Título do Cabeçalho</Label>
+                      <Input id="heroTitle" value={form.heroTitle} onChange={e => setForm({...form, heroTitle: e.target.value})} placeholder="Ex: Retrato Corporativo" />
+                      <p className="text-[10px] text-muted-foreground">O título principal que aparece acima da lista de funcionários.</p>
+                    </div>
                   </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-4 border-t">
                     <div className="space-y-4">
                       <Label>Estilo do Logo</Label>
                       <RadioGroup value={form.logoStyle} onValueChange={(val: any) => setForm({...form, logoStyle: val})} className="grid gap-3">

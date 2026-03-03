@@ -1,3 +1,4 @@
+
 {
   "entities": {
     "Sector": {
@@ -149,29 +150,24 @@
       ]
     },
     "SystemSettings": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "SystemSettings",
       "type": "object",
-      "description": "Represents the system appearance and branding settings.",
       "properties": {
         "systemName": { "type": "string" },
+        "heroTitle": { "type": "string", "description": "The main title displayed on the public page." },
         "logoUrl": { "type": "string" },
-        "primaryColor": { "type": "string", "description": "Hex color code for the primary brand color." },
-        "leadershipColor": { "type": "string", "description": "Hex color code for leadership icons and crown." },
-        "backgroundColor": { "type": "string", "description": "Hex color code for page background." },
-        "foregroundColor": { "type": "string", "description": "Hex color code for main text." },
-        "accentColor": { "type": "string", "description": "Hex color code for accent elements like badges." },
-        "sidebarBackgroundColor": { "type": "string", "description": "Hex color code for admin sidebar background." },
-        "sidebarForegroundColor": { "type": "string", "description": "Hex color code for admin sidebar text." },
+        "primaryColor": { "type": "string" },
+        "leadershipColor": { "type": "string" },
+        "backgroundColor": { "type": "string" },
+        "foregroundColor": { "type": "string" },
+        "accentColor": { "type": "string" },
+        "sidebarBackgroundColor": { "type": "string" },
+        "sidebarForegroundColor": { "type": "string" },
         "logoStyle": { 
           "type": "string", 
-          "enum": ["square_with_name", "rectangular_no_name"],
-          "description": "Defines if the logo is a square icon with name or a wide rectangular logo without name text."
+          "enum": ["square_with_name", "rectangular_no_name"]
         },
-        "logoHeight": {
-          "type": "integer",
-          "description": "Custom height for the logo in pixels."
-        }
+        "logoHeight": { "type": "integer" }
       }
     }
   },

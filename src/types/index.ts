@@ -34,6 +34,7 @@ export interface User {
 
 export interface SystemSettings {
   systemName: string;
+  heroTitle?: string;
   logoUrl: string;
   primaryColor: string;
   leadershipColor?: string;
