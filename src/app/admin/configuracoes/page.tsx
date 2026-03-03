@@ -2,7 +2,7 @@
 "use client"
 
 import { useState, useEffect, useRef } from "react";
-import { Settings, Save, Palette, Image as ImageIcon, Type, Loader2, Users, Upload, X, Maximize } from "lucide-react";
+import { Settings, Save, Palette, Image as ImageIcon, Type, Loader2, Users, Upload, X, Maximize, Layout } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -25,6 +25,11 @@ export default function ConfiguracoesPage() {
     systemName: "",
     logoUrl: "",
     primaryColor: "#3b82f6",
+    backgroundColor: "#f8fafc",
+    foregroundColor: "#020617",
+    accentColor: "#f1f5f9",
+    sidebarBackgroundColor: "#0f172a",
+    sidebarForegroundColor: "#f8fafc",
     logoStyle: "square_with_name",
     logoHeight: 48
   });
@@ -36,7 +41,12 @@ export default function ConfiguracoesPage() {
       setForm({
         ...settings,
         logoStyle: settings.logoStyle || "square_with_name",
-        logoHeight: settings.logoHeight || 48
+        logoHeight: settings.logoHeight || 48,
+        backgroundColor: settings.backgroundColor || "#f8fafc",
+        foregroundColor: settings.foregroundColor || "#020617",
+        accentColor: settings.accentColor || "#f1f5f9",
+        sidebarBackgroundColor: settings.sidebarBackgroundColor || "#0f172a",
+        sidebarForegroundColor: settings.sidebarForegroundColor || "#f8fafc",
       });
     }
   }, [settings]);
@@ -109,9 +119,26 @@ export default function ConfiguracoesPage() {
     updateDocumentNonBlocking(settingsRef, form);
     toast({
       title: "Configurações salvas",
-      description: "As alterações foram aplicadas ao sistema.",
+      description: "As alterações visuais foram aplicadas.",
     });
   };
+
+  const ColorPicker = ({ label, id, value, onChange, description }: { label: string, id: string, value: string | undefined, onChange: (v: string) => void, description: string }) => (
+    <div className="flex items-center gap-4">
+      <Input 
+        type="color" 
+        id={id} 
+        value={value || "#000000"} 
+        onChange={e => onChange(e.target.value)}
+        className="w-12 h-12 p-1 cursor-pointer border-2"
+      />
+      <div className="flex-1">
+        <Label htmlFor={id} className="font-bold">{label}</Label>
+        <p className="text-[10px] text-muted-foreground uppercase">{description}</p>
+        <p className="text-xs font-mono mt-0.5">{value}</p>
+      </div>
+    </div>
+  );
 
   if (isLoading) {
     return (
@@ -122,194 +149,254 @@ export default function ConfiguracoesPage() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto space-y-8">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight text-primary">Configurações do Sistema</h1>
-        <p className="text-muted-foreground">Personalize a identidade visual do seu Carômetro.</p>
+    <div className="max-w-6xl mx-auto space-y-8">
+      <div className="flex items-end justify-between">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight text-primary">Identidade Visual</h1>
+          <p className="text-muted-foreground">Personalize as cores e a marca do sistema para refletir sua empresa.</p>
+        </div>
       </div>
 
-      <form onSubmit={handleSave} className="grid grid-cols-1 md:grid-cols-2 gap-8">
-        <div className="space-y-6">
-          <Card className="border-none shadow-sm">
+      <form onSubmit={handleSave} className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="lg:col-span-2 space-y-8">
+          {/* Identidade e Logo */}
+          <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-lg">
-                <Type className="h-5 w-5 text-primary" />
-                Identidade
+                <Layout className="h-5 w-5" />
+                Marca e Logo
               </CardTitle>
-              <CardDescription>Nome e Marca da empresa.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="space-y-2">
-                <Label htmlFor="systemName">Nome do Sistema</Label>
+                <Label htmlFor="systemName">Nome da Organização</Label>
                 <Input 
                   id="systemName" 
                   value={form.systemName} 
                   onChange={e => setForm({...form, systemName: e.target.value})} 
-                  placeholder="Ex: Carômetro Empresa X"
+                  placeholder="Ex: Empresa X"
                 />
               </div>
-              
-              <div className="space-y-4">
-                <Label>Layout do Logotipo</Label>
-                <RadioGroup 
-                  value={form.logoStyle} 
-                  onValueChange={(val: 'square_with_name' | 'rectangular_no_name') => setForm({...form, logoStyle: val})}
-                  className="grid grid-cols-1 gap-4"
-                >
-                  <div className="flex items-center space-x-2 border p-3 rounded-lg hover:bg-slate-50 cursor-pointer">
-                    <RadioGroupItem value="square_with_name" id="style1" />
-                    <Label htmlFor="style1" className="flex-1 cursor-pointer">
-                      <div className="font-bold">Ícone + Nome</div>
-                      <div className="text-xs text-muted-foreground">Logo quadrada acompanhada do nome textual.</div>
-                    </Label>
-                  </div>
-                  <div className="flex items-center space-x-2 border p-3 rounded-lg hover:bg-slate-50 cursor-pointer">
-                    <RadioGroupItem value="rectangular_no_name" id="style2" />
-                    <Label htmlFor="style2" className="flex-1 cursor-pointer">
-                      <div className="font-bold">Logo Retangular</div>
-                      <div className="text-xs text-muted-foreground">Logo larga, sem o nome textual ao lado.</div>
-                    </Label>
-                  </div>
-                </RadioGroup>
-              </div>
 
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <Label className="flex items-center gap-2">
-                    <Maximize size={14} className="text-primary" />
-                    Tamanho do Logo (Altura)
-                  </Label>
-                  <span className="text-xs font-bold bg-primary/10 text-primary px-2 py-1 rounded">{form.logoHeight}px</span>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-4">
+                  <Label>Estilo do Logo</Label>
+                  <RadioGroup 
+                    value={form.logoStyle} 
+                    onValueChange={(val: 'square_with_name' | 'rectangular_no_name') => setForm({...form, logoStyle: val})}
+                    className="grid gap-4"
+                  >
+                    <div className="flex items-center space-x-2 border p-3 rounded-lg cursor-pointer hover:bg-accent/10 transition-colors">
+                      <RadioGroupItem value="square_with_name" id="style1" />
+                      <Label htmlFor="style1" className="cursor-pointer">
+                        <div className="font-bold">Ícone + Nome</div>
+                        <div className="text-[10px] text-muted-foreground">Logotipo quadrado + texto ao lado.</div>
+                      </Label>
+                    </div>
+                    <div className="flex items-center space-x-2 border p-3 rounded-lg cursor-pointer hover:bg-accent/10 transition-colors">
+                      <RadioGroupItem value="rectangular_no_name" id="style2" />
+                      <Label htmlFor="style2" className="cursor-pointer">
+                        <div className="font-bold">Logo Retangular</div>
+                        <div className="text-[10px] text-muted-foreground">Apenas a imagem (ideal se o nome já estiver nela).</div>
+                      </Label>
+                    </div>
+                  </RadioGroup>
                 </div>
-                <Slider 
-                  value={[form.logoHeight || 48]} 
-                  min={24} 
-                  max={80} 
-                  step={2} 
-                  onValueChange={(vals) => setForm({...form, logoHeight: vals[0]})} 
-                />
-                <p className="text-[10px] text-muted-foreground italic">Ajuste a altura do logo para que ele se adapte melhor ao cabeçalho.</p>
-              </div>
 
-              <div className="space-y-2">
-                <Label>Logotipo da Empresa</Label>
-                <div className="flex flex-col gap-4">
-                  {form.logoUrl ? (
-                    <div className="relative border rounded-lg overflow-hidden bg-slate-50 flex items-center justify-center p-2" style={{ height: (form.logoHeight || 48) * 2 }}>
-                      <img src={form.logoUrl} alt="Preview Logo" className="max-w-full max-h-full object-contain" />
-                      <button 
-                        type="button"
-                        onClick={removeLogo}
-                        className="absolute top-1 right-1 bg-destructive text-white p-1 rounded-full shadow-sm hover:bg-destructive/90"
-                      >
-                        <X size={14} />
-                      </button>
-                    </div>
-                  ) : (
-                    <div 
-                      onClick={() => fileInputRef.current?.click()}
-                      className={`w-32 h-32 border-2 border-dashed rounded-lg flex flex-col items-center justify-center gap-2 cursor-pointer hover:bg-slate-50 transition-colors text-muted-foreground`}
-                    >
-                      {isProcessing ? <Loader2 className="h-6 w-6 animate-spin" /> : <Upload size={24} />}
-                      <span className="text-[10px] font-bold uppercase">{isProcessing ? "Processando..." : "Upload"}</span>
-                    </div>
-                  )}
-                  <input 
-                    type="file" 
-                    ref={fileInputRef}
-                    onChange={handleLogoUpload}
-                    accept="image/*"
-                    className="hidden"
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <Label className="flex items-center gap-2">
+                      <Maximize size={14} className="text-primary" />
+                      Altura do Logo
+                    </Label>
+                    <span className="text-xs font-bold bg-primary/10 text-primary px-2 py-1 rounded">{form.logoHeight}px</span>
+                  </div>
+                  <Slider 
+                    value={[form.logoHeight || 48]} 
+                    min={24} 
+                    max={80} 
+                    step={2} 
+                    onValueChange={(vals) => setForm({...form, logoHeight: vals[0]})} 
                   />
-                  <p className="text-[10px] text-muted-foreground italic">Dica: Use logos retangulares se escolher o estilo "Logo Retangular".</p>
+                  
+                  <div className="pt-2">
+                    <Label>Upload do Logo</Label>
+                    <div className="mt-2">
+                      {form.logoUrl ? (
+                        <div className="relative border rounded-lg bg-slate-50 flex items-center justify-center p-2 h-32 overflow-hidden">
+                          <img src={form.logoUrl} alt="Logo Preview" className="max-w-full max-h-full object-contain" />
+                          <button 
+                            type="button"
+                            onClick={removeLogo}
+                            className="absolute top-2 right-2 bg-destructive text-white p-1 rounded-full shadow-md"
+                          >
+                            <X size={14} />
+                          </button>
+                        </div>
+                      ) : (
+                        <div 
+                          onClick={() => fileInputRef.current?.click()}
+                          className="h-32 border-2 border-dashed rounded-lg flex flex-col items-center justify-center gap-2 cursor-pointer hover:bg-slate-50 text-muted-foreground"
+                        >
+                          {isProcessing ? <Loader2 className="h-6 w-6 animate-spin" /> : <Upload size={24} />}
+                          <span className="text-xs font-bold uppercase">{isProcessing ? "Processando..." : "Selecionar Logo"}</span>
+                        </div>
+                      )}
+                      <input 
+                        type="file" 
+                        ref={fileInputRef}
+                        onChange={handleLogoUpload}
+                        accept="image/*"
+                        className="hidden"
+                      />
+                    </div>
+                  </div>
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          <Card className="border-none shadow-sm">
+          {/* Cores do Sistema */}
+          <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-lg">
-                <Palette className="h-5 w-5 text-primary" />
-                Cores e Estilo
+                <Palette className="h-5 w-5" />
+                Cores e Temas
               </CardTitle>
-              <CardDescription>Defina a cor principal da interface.</CardDescription>
+              <CardDescription>Defina a paleta de cores global do sistema.</CardDescription>
             </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <div className="flex items-center gap-4">
-                  <Input 
-                    type="color" 
-                    id="primaryColor" 
-                    value={form.primaryColor} 
-                    onChange={e => setForm({...form, primaryColor: e.target.value})}
-                    className="w-16 h-16 p-1 cursor-pointer"
-                  />
-                  <div className="flex-1">
-                    <Label htmlFor="primaryColor">Cor Primária</Label>
-                    <p className="text-xs text-muted-foreground">Esta cor será aplicada a botões e destaques.</p>
-                    <p className="text-sm font-mono mt-1 font-bold">{form.primaryColor}</p>
-                  </div>
-                </div>
+            <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              <div className="space-y-6">
+                <h3 className="text-xs font-bold uppercase tracking-widest text-muted-foreground border-b pb-2">Interface Principal</h3>
+                <ColorPicker 
+                  label="Cor Primária" 
+                  id="primaryColor" 
+                  value={form.primaryColor} 
+                  onChange={v => setForm({...form, primaryColor: v})}
+                  description="Botões, ícones de liderança e destaques."
+                />
+                <ColorPicker 
+                  label="Cor de Fundo" 
+                  id="backgroundColor" 
+                  value={form.backgroundColor} 
+                  onChange={v => setForm({...form, backgroundColor: v})}
+                  description="A cor de fundo das páginas."
+                />
+                <ColorPicker 
+                  label="Cor do Texto" 
+                  id="foregroundColor" 
+                  value={form.foregroundColor} 
+                  onChange={v => setForm({...form, foregroundColor: v})}
+                  description="Cor principal dos textos e títulos."
+                />
+                <ColorPicker 
+                  label="Cor de Destaque" 
+                  id="accentColor" 
+                  value={form.accentColor} 
+                  onChange={v => setForm({...form, accentColor: v})}
+                  description="Usada em badges e fundos secundários."
+                />
+              </div>
+
+              <div className="space-y-6">
+                <h3 className="text-xs font-bold uppercase tracking-widest text-muted-foreground border-b pb-2">Painel Administrativo</h3>
+                <ColorPicker 
+                  label="Fundo da Sidebar" 
+                  id="sidebarBackgroundColor" 
+                  value={form.sidebarBackgroundColor} 
+                  onChange={v => setForm({...form, sidebarBackgroundColor: v})}
+                  description="Cor de fundo do menu lateral admin."
+                />
+                <ColorPicker 
+                  label="Texto da Sidebar" 
+                  id="sidebarForegroundColor" 
+                  value={form.sidebarForegroundColor} 
+                  onChange={v => setForm({...form, sidebarForegroundColor: v})}
+                  description="Cor dos links e ícones da sidebar."
+                />
               </div>
             </CardContent>
           </Card>
-
-          <Button type="submit" className="w-full h-12 shadow-md" disabled={isProcessing}>
-            <Save className="mr-2 h-5 w-5" />
-            Salvar Alterações
-          </Button>
         </div>
 
+        {/* Pré-visualização Lateral */}
         <div className="space-y-6">
-          <Card className="border-none shadow-sm bg-slate-50 sticky top-8">
-            <CardHeader>
-              <CardTitle className="text-sm uppercase tracking-widest text-muted-foreground">Pré-visualização (Cabeçalho)</CardTitle>
+          <Card className="sticky top-8 overflow-hidden border-none shadow-xl">
+            <CardHeader className="bg-slate-900 text-white p-4">
+              <CardTitle className="text-xs uppercase tracking-widest opacity-70">Pré-visualização do Topo</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-8">
-              <div className="p-4 bg-white rounded-xl shadow-md border space-y-4">
-                <div className="flex items-center gap-3 border-b pb-4" style={{ height: (form.logoHeight || 48) + 32 }}>
+            <CardContent className="p-0">
+              {/* Simulação Navbar */}
+              <div 
+                className="w-full border-b p-4 flex items-center justify-between"
+                style={{ backgroundColor: form.backgroundColor, color: form.foregroundColor }}
+              >
+                <div className="flex items-center gap-3">
                   {form.logoStyle === 'square_with_name' ? (
                     <>
                       <div 
-                        className="rounded-xl flex items-center justify-center text-white overflow-hidden p-1.5 shadow-sm shrink-0"
-                        style={{ backgroundColor: form.primaryColor, width: form.logoHeight, height: form.logoHeight }}
+                        className="rounded-lg flex items-center justify-center text-white overflow-hidden p-1 shadow-sm shrink-0"
+                        style={{ backgroundColor: form.primaryColor, width: (form.logoHeight || 32) * 0.8, height: (form.logoHeight || 32) * 0.8 }}
                       >
                         {form.logoUrl ? (
                           <img src={form.logoUrl} alt="Logo" className="w-full h-full object-contain" />
                         ) : (
-                          <Users size={24} />
+                          <Users size={16} />
                         )}
                       </div>
-                      <span className="font-black tracking-tighter" style={{ color: form.primaryColor, fontSize: (form.logoHeight || 48) * 0.5 }}>
-                        {form.systemName || "Nome do Sistema"}
+                      <span className="font-black tracking-tighter" style={{ color: form.primaryColor, fontSize: (form.logoHeight || 32) * 0.4 }}>
+                        {form.systemName || "Nome"}
                       </span>
                     </>
                   ) : (
-                    <div className="flex items-center justify-start overflow-hidden" style={{ height: form.logoHeight }}>
+                    <div className="flex items-center justify-start overflow-hidden" style={{ height: (form.logoHeight || 32) * 0.8 }}>
                       {form.logoUrl ? (
                         <img src={form.logoUrl} alt="Logo" className="h-full w-auto object-contain" />
                       ) : (
-                        <span className="font-black tracking-tighter" style={{ color: form.primaryColor, fontSize: (form.logoHeight || 48) * 0.5 }}>{form.systemName}</span>
+                        <span className="font-black tracking-tighter" style={{ color: form.primaryColor, fontSize: (form.logoHeight || 32) * 0.4 }}>{form.systemName}</span>
                       )}
                     </div>
                   )}
                 </div>
-                
-                <div className="space-y-3">
-                  <div 
-                    className="h-10 w-full rounded-lg shadow-sm" 
-                    style={{ backgroundColor: form.primaryColor }}
-                  />
-                  <div className="h-4 w-2/3 bg-slate-100 rounded" />
-                </div>
+                <div className="h-8 w-20 rounded-md opacity-50" style={{ backgroundColor: form.primaryColor }} />
               </div>
-              
-              <div className="text-xs text-muted-foreground text-center bg-slate-100 p-4 rounded-lg">
-                <p>O tamanho customizado permite que você ajuste a logo para o melhor equilíbrio visual no menu.</p>
+
+              {/* Simulação Card */}
+              <div className="p-8 space-y-6" style={{ backgroundColor: form.backgroundColor }}>
+                <div className="bg-white rounded-xl shadow-md p-4 border space-y-3">
+                  <div className="flex items-center gap-3">
+                    <div className="h-10 w-8 rounded bg-slate-100 border relative overflow-hidden">
+                      <Users size={16} className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-slate-300" />
+                    </div>
+                    <div className="space-y-1">
+                      <div className="h-3 w-24 rounded" style={{ backgroundColor: form.primaryColor }} />
+                      <div className="h-2 w-16 bg-slate-100 rounded" />
+                    </div>
+                  </div>
+                  <div className="h-8 w-full rounded flex items-center justify-center text-[10px] font-bold uppercase tracking-widest" style={{ backgroundColor: form.accentColor, color: form.foregroundColor }}>
+                    Destaque de Cor
+                  </div>
+                </div>
+
+                {/* Simulação Sidebar */}
+                <div 
+                  className="rounded-lg border p-4 flex gap-4 items-center"
+                  style={{ backgroundColor: form.sidebarBackgroundColor, color: form.sidebarForegroundColor }}
+                >
+                  <div className="h-8 w-8 rounded-full opacity-20" style={{ backgroundColor: form.sidebarForegroundColor }} />
+                  <div className="space-y-1 flex-1">
+                    <div className="h-2 w-full rounded opacity-50" style={{ backgroundColor: form.sidebarForegroundColor }} />
+                    <div className="h-2 w-2/3 rounded opacity-30" style={{ backgroundColor: form.sidebarForegroundColor }} />
+                  </div>
+                </div>
               </div>
             </CardContent>
           </Card>
+          
+          <Button type="submit" className="w-full h-14 shadow-lg text-lg font-bold" disabled={isProcessing}>
+            <Save className="mr-2 h-6 w-6" />
+            Salvar Tudo
+          </Button>
         </div>
       </form>
     </div>

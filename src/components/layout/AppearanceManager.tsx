@@ -41,10 +41,33 @@ export function AppearanceManager() {
     if (settings) {
       document.title = settings.systemName || "Carômetro";
       
+      const root = document.documentElement;
+
       if (settings.primaryColor) {
         const hsl = hexToHsl(settings.primaryColor);
-        document.documentElement.style.setProperty('--primary', hsl);
-        document.documentElement.style.setProperty('--ring', hsl);
+        root.style.setProperty('--primary', hsl);
+        root.style.setProperty('--ring', hsl);
+      }
+
+      if (settings.backgroundColor) {
+        root.style.setProperty('--background', hexToHsl(settings.backgroundColor));
+      }
+
+      if (settings.foregroundColor) {
+        root.style.setProperty('--foreground', hexToHsl(settings.foregroundColor));
+      }
+
+      if (settings.accentColor) {
+        root.style.setProperty('--accent', hexToHsl(settings.accentColor));
+      }
+
+      if (settings.sidebarBackgroundColor) {
+        root.style.setProperty('--sidebar-background', hexToHsl(settings.sidebarBackgroundColor));
+        root.style.setProperty('--sidebar-border', hexToHsl(settings.sidebarBackgroundColor));
+      }
+
+      if (settings.sidebarForegroundColor) {
+        root.style.setProperty('--sidebar-foreground', hexToHsl(settings.sidebarForegroundColor));
       }
     }
   }, [settings]);
