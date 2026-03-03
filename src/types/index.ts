@@ -2,8 +2,8 @@
 export interface Setor {
   id: string;
   nome: string;
-  ordem?: number; // Prioridade numérica para ordenação
-  subcategorias?: string[]; // Lista de subcategorias pré-definidas
+  ordem?: number;
+  subcategorias?: string[];
   data_criacao: string;
 }
 
@@ -28,4 +28,10 @@ export interface User {
   nome: string;
   email: string;
   tipo: 'admin';
+}
+
+export interface SystemSettings {
+  systemName: string;
+  logoUrl: string;
+  primaryColor: string;
 }

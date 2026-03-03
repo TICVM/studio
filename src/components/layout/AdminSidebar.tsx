@@ -3,27 +3,41 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, Users, Grid, LogOut, ChevronRight } from "lucide-react";
+import { LayoutDashboard, Users, Grid, LogOut, ChevronRight, Settings } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { useDoc, useMemoFirebase, useFirestore } from "@/firebase";
+import { doc } from "firebase/firestore";
+import { SystemSettings } from "@/types";
+import NextImage from "next/image";
 
 const NAV_ITEMS = [
   { label: "Dashboard", href: "/admin/dashboard", icon: LayoutDashboard },
   { label: "Funcionários", href: "/admin/funcionarios", icon: Users },
   { label: "Setores", href: "/admin/setores", icon: Grid },
+  { label: "Configurações", href: "/admin/configuracoes", icon: Settings },
 ];
 
 export function AdminSidebar() {
   const pathname = usePathname();
+  const firestore = useFirestore();
+  const settingsRef = useMemoFirebase(() => doc(firestore, "settings", "appearance"), [firestore]);
+  const { data: settings } = useDoc<SystemSettings>(settingsRef);
 
   return (
     <div className="w-64 bg-sidebar flex flex-col h-screen shrink-0 border-r border-sidebar-border transition-all">
       <div className="p-6">
         <Link href="/admin/dashboard" className="flex items-center gap-3">
-          <div className="bg-primary p-2 rounded-lg text-white">
-            <Users size={20} />
+          <div className="bg-primary p-2 rounded-lg text-white relative w-10 h-10 overflow-hidden">
+            {settings?.logoUrl ? (
+              <NextImage src={settings.logoUrl} alt="Logo" fill className="object-contain p-1" />
+            ) : (
+              <Users size={24} />
+            )}
           </div>
-          <span className="text-lg font-bold tracking-tight text-sidebar-foreground">AdminPanel</span>
+          <span className="text-lg font-bold tracking-tight text-sidebar-foreground truncate">
+            {settings?.systemName || "AdminPanel"}
+          </span>
         </Link>
       </div>
 

@@ -1,7 +1,9 @@
+
 import type {Metadata} from 'next';
 import './globals.css';
 import { FirebaseClientProvider } from '@/firebase/client-provider';
 import { Toaster } from '@/components/ui/toaster';
+import { AppearanceManager } from '@/components/layout/AppearanceManager';
 
 export const metadata: Metadata = {
   title: 'PessoasEmpresa - Carômetro',
@@ -22,6 +24,7 @@ export default function RootLayout({
       </head>
       <body className="font-body antialiased">
         <FirebaseClientProvider>
+          <AppearanceManager />
           {children}
           <Toaster />
         </FirebaseClientProvider>
