@@ -25,6 +25,7 @@ export function AdminSidebar() {
   const { data: settings } = useDoc<SystemSettings>(settingsRef);
 
   const logoStyle = settings?.logoStyle || "square_with_name";
+  const logoHeight = settings?.logoHeight || 48;
 
   return (
     <div className="w-64 bg-sidebar flex flex-col h-screen shrink-0 border-r border-sidebar-border transition-all">
@@ -32,23 +33,32 @@ export function AdminSidebar() {
         <Link href="/admin/dashboard" className="flex items-center gap-3">
           {logoStyle === "square_with_name" ? (
             <>
-              <div className="bg-primary p-2 rounded-xl text-white relative w-12 h-12 overflow-hidden shrink-0 shadow-sm">
+              <div 
+                className="bg-primary p-2 rounded-xl text-white relative overflow-hidden shrink-0 shadow-sm"
+                style={{ width: logoHeight, height: logoHeight }}
+              >
                 {settings?.logoUrl ? (
                   <NextImage src={settings.logoUrl} alt="Logo" fill className="object-contain p-1.5" />
                 ) : (
-                  <Users size={24} />
+                  <Users size={logoHeight * 0.5} />
                 )}
               </div>
-              <span className="text-xl font-black tracking-tighter text-sidebar-foreground truncate">
+              <span 
+                className="font-black tracking-tighter text-sidebar-foreground truncate"
+                style={{ fontSize: Math.max(14, logoHeight * 0.4) }}
+              >
                 {settings?.systemName || "AdminPanel"}
               </span>
             </>
           ) : (
-            <div className="h-16 w-full flex items-center justify-start overflow-hidden">
+            <div className="w-full flex items-center justify-start overflow-hidden" style={{ height: logoHeight }}>
               {settings?.logoUrl ? (
                 <img src={settings.logoUrl} alt="Logo" className="h-full w-auto object-contain" />
               ) : (
-                <span className="text-xl font-black tracking-tighter text-sidebar-foreground">
+                <span 
+                  className="font-black tracking-tighter text-sidebar-foreground"
+                  style={{ fontSize: Math.max(14, logoHeight * 0.4) }}
+                >
                   {settings?.systemName || "AdminPanel"}
                 </span>
               )}

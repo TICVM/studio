@@ -35,4 +35,5 @@ export interface SystemSettings {
   logoUrl: string;
   primaryColor: string;
   logoStyle: 'square_with_name' | 'rectangular_no_name';
+  logoHeight?: number;
 }

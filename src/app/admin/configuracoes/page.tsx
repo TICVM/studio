@@ -2,12 +2,13 @@
 "use client"
 
 import { useState, useEffect, useRef } from "react";
-import { Settings, Save, Palette, Image as ImageIcon, Type, Loader2, Users, Upload, X } from "lucide-react";
+import { Settings, Save, Palette, Image as ImageIcon, Type, Loader2, Users, Upload, X, Maximize } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Slider } from "@/components/ui/slider";
 import { useFirestore, useDoc, useMemoFirebase, updateDocumentNonBlocking } from "@/firebase";
 import { doc } from "firebase/firestore";
 import { SystemSettings } from "@/types";
@@ -24,7 +25,8 @@ export default function ConfiguracoesPage() {
     systemName: "",
     logoUrl: "",
     primaryColor: "#3b82f6",
-    logoStyle: "square_with_name"
+    logoStyle: "square_with_name",
+    logoHeight: 48
   });
 
   const [isProcessing, setIsProcessing] = useState(false);
@@ -33,7 +35,8 @@ export default function ConfiguracoesPage() {
     if (settings) {
       setForm({
         ...settings,
-        logoStyle: settings.logoStyle || "square_with_name"
+        logoStyle: settings.logoStyle || "square_with_name",
+        logoHeight: settings.logoHeight || 48
       });
     }
   }, [settings]);
@@ -135,7 +138,7 @@ export default function ConfiguracoesPage() {
               </CardTitle>
               <CardDescription>Nome e Marca da empresa.</CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className="space-y-6">
               <div className="space-y-2">
                 <Label htmlFor="systemName">Nome do Sistema</Label>
                 <Input 
@@ -170,11 +173,29 @@ export default function ConfiguracoesPage() {
                 </RadioGroup>
               </div>
 
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <Label className="flex items-center gap-2">
+                    <Maximize size={14} className="text-primary" />
+                    Tamanho do Logo (Altura)
+                  </Label>
+                  <span className="text-xs font-bold bg-primary/10 text-primary px-2 py-1 rounded">{form.logoHeight}px</span>
+                </div>
+                <Slider 
+                  value={[form.logoHeight || 48]} 
+                  min={24} 
+                  max={80} 
+                  step={2} 
+                  onValueChange={(vals) => setForm({...form, logoHeight: vals[0]})} 
+                />
+                <p className="text-[10px] text-muted-foreground italic">Ajuste a altura do logo para que ele se adapte melhor ao cabeçalho.</p>
+              </div>
+
               <div className="space-y-2">
                 <Label>Logotipo da Empresa</Label>
                 <div className="flex flex-col gap-4">
                   {form.logoUrl ? (
-                    <div className={`relative ${form.logoStyle === 'rectangular_no_name' ? 'w-full h-24' : 'w-32 h-32'} border rounded-lg overflow-hidden bg-slate-50 flex items-center justify-center p-2`}>
+                    <div className="relative border rounded-lg overflow-hidden bg-slate-50 flex items-center justify-center p-2" style={{ height: (form.logoHeight || 48) * 2 }}>
                       <img src={form.logoUrl} alt="Preview Logo" className="max-w-full max-h-full object-contain" />
                       <button 
                         type="button"
@@ -247,12 +268,12 @@ export default function ConfiguracoesPage() {
             </CardHeader>
             <CardContent className="space-y-8">
               <div className="p-4 bg-white rounded-xl shadow-md border space-y-4">
-                <div className="flex items-center gap-3 border-b pb-4 h-16">
+                <div className="flex items-center gap-3 border-b pb-4" style={{ height: (form.logoHeight || 48) + 32 }}>
                   {form.logoStyle === 'square_with_name' ? (
                     <>
                       <div 
-                        className="w-12 h-12 rounded-xl flex items-center justify-center text-white overflow-hidden p-1.5 shadow-sm"
-                        style={{ backgroundColor: form.primaryColor }}
+                        className="rounded-xl flex items-center justify-center text-white overflow-hidden p-1.5 shadow-sm shrink-0"
+                        style={{ backgroundColor: form.primaryColor, width: form.logoHeight, height: form.logoHeight }}
                       >
                         {form.logoUrl ? (
                           <img src={form.logoUrl} alt="Logo" className="w-full h-full object-contain" />
@@ -260,16 +281,16 @@ export default function ConfiguracoesPage() {
                           <Users size={24} />
                         )}
                       </div>
-                      <span className="font-black text-2xl tracking-tighter" style={{ color: form.primaryColor }}>
+                      <span className="font-black tracking-tighter" style={{ color: form.primaryColor, fontSize: (form.logoHeight || 48) * 0.5 }}>
                         {form.systemName || "Nome do Sistema"}
                       </span>
                     </>
                   ) : (
-                    <div className="h-14 flex items-center justify-start overflow-hidden">
+                    <div className="flex items-center justify-start overflow-hidden" style={{ height: form.logoHeight }}>
                       {form.logoUrl ? (
                         <img src={form.logoUrl} alt="Logo" className="h-full w-auto object-contain" />
                       ) : (
-                        <span className="font-black text-2xl tracking-tighter" style={{ color: form.primaryColor }}>{form.systemName}</span>
+                        <span className="font-black tracking-tighter" style={{ color: form.primaryColor, fontSize: (form.logoHeight || 48) * 0.5 }}>{form.systemName}</span>
                       )}
                     </div>
                   )}
@@ -285,7 +306,7 @@ export default function ConfiguracoesPage() {
               </div>
               
               <div className="text-xs text-muted-foreground text-center bg-slate-100 p-4 rounded-lg">
-                <p>O logotipo foi ampliado para garantir uma presença visual mais forte em todas as telas.</p>
+                <p>O tamanho customizado permite que você ajuste a logo para o melhor equilíbrio visual no menu.</p>
               </div>
             </CardContent>
           </Card>

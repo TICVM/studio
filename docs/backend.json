@@ -151,6 +151,10 @@
           "type": "string", 
           "enum": ["square_with_name", "rectangular_no_name"],
           "description": "Defines if the logo is a square icon with name or a wide rectangular logo without name text."
+        },
+        "logoHeight": {
+          "type": "integer",
+          "description": "Custom height for the logo in pixels."
         }
       }
     }

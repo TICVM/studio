@@ -15,30 +15,41 @@ export function PublicNavbar() {
   const { data: settings } = useDoc<SystemSettings>(settingsRef);
 
   const logoStyle = settings?.logoStyle || "square_with_name";
+  const logoHeight = settings?.logoHeight || 48;
+  const navbarHeight = Math.max(80, logoHeight + 32);
 
   return (
-    <nav className="sticky top-0 z-50 w-full border-b bg-white/80 backdrop-blur-md">
-      <div className="container mx-auto px-4 h-20 flex items-center justify-between">
-        <Link href="/" className="flex items-center gap-3 h-full py-3">
+    <nav className="sticky top-0 z-50 w-full border-b bg-white/80 backdrop-blur-md" style={{ height: navbarHeight }}>
+      <div className="container mx-auto px-4 h-full flex items-center justify-between">
+        <Link href="/" className="flex items-center gap-3 h-full py-2">
           {logoStyle === "square_with_name" ? (
             <>
-              <div className="bg-primary p-2 rounded-xl text-white relative w-12 h-12 overflow-hidden shrink-0 shadow-sm">
+              <div 
+                className="bg-primary p-2 rounded-xl text-white relative overflow-hidden shrink-0 shadow-sm"
+                style={{ width: logoHeight, height: logoHeight }}
+              >
                 {settings?.logoUrl ? (
                   <NextImage src={settings.logoUrl} alt="Logo" fill className="object-contain p-1.5" />
                 ) : (
-                  <Users size={24} />
+                  <Users size={logoHeight * 0.5} />
                 )}
               </div>
-              <span className="text-2xl font-black tracking-tighter text-primary truncate max-w-[200px] sm:max-w-md">
+              <span 
+                className="font-black tracking-tighter text-primary truncate max-w-[200px] sm:max-w-md"
+                style={{ fontSize: Math.max(16, logoHeight * 0.5) }}
+              >
                 {settings?.systemName || "PessoasEmpresa"}
               </span>
             </>
           ) : (
-            <div className="relative h-14 flex items-center">
+            <div className="relative flex items-center" style={{ height: logoHeight }}>
               {settings?.logoUrl ? (
                 <img src={settings.logoUrl} alt="Logo" className="h-full w-auto object-contain" />
               ) : (
-                <span className="text-2xl font-black tracking-tighter text-primary">
+                <span 
+                  className="font-black tracking-tighter text-primary"
+                  style={{ fontSize: Math.max(16, logoHeight * 0.5) }}
+                >
                   {settings?.systemName || "PessoasEmpresa"}
                 </span>
               )}
