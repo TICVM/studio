@@ -2,7 +2,7 @@
 "use client"
 
 import { useState, useEffect, useRef } from "react";
-import { Save, Image as ImageIcon, Palette, Layout, Upload, X, CheckCircle2, Loader2, Users, Square, MousePointer2, AlignCenter, AlignLeft, Maximize, MoveHorizontal, Columns, Crown, LayoutGrid, LayoutList, Tags } from "lucide-react";
+import { Save, Image as ImageIcon, Palette, Layout, Upload, X, CheckCircle2, Loader2, Users, Square, MousePointer2, AlignCenter, AlignLeft, Maximize, MoveHorizontal, Columns, Crown, LayoutGrid, LayoutList, Tags, Type, Heading } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -269,15 +269,15 @@ export default function ConfiguracoesPage() {
               <Card>
                 <CardHeader><CardTitle>Arquitetura Visual</CardTitle></CardHeader>
                 <CardContent className="space-y-10">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
                     <div className="space-y-6">
-                      <h4 className="text-[10px] font-black uppercase text-primary">Card do Colaborador</h4>
+                      <h4 className="text-[10px] font-black uppercase text-primary flex items-center gap-2"><Square size={12} /> Card do Colaborador</h4>
                       <div className="space-y-4">
-                        <div className="flex justify-between items-center"><Label className="flex items-center gap-2"><Maximize size={14} /> Padding</Label><span className="text-xs font-bold">{form.cardPadding}px</span></div>
+                        <div className="flex justify-between items-center"><Label className="flex items-center gap-2"><Maximize size={14} /> Espaçamento (Padding)</Label><span className="text-xs font-bold">{form.cardPadding}px</span></div>
                         <Slider value={[form.cardPadding || 24]} min={8} max={48} step={4} onValueChange={(v) => setForm({...form, cardPadding: v[0]})} />
                       </div>
                       <div className="space-y-4">
-                        <div className="flex justify-between items-center"><Label className="flex items-center gap-2"><Square size={14} /> Radius</Label><span className="text-xs font-bold">{form.cardBorderRadius}px</span></div>
+                        <div className="flex justify-between items-center"><Label className="flex items-center gap-2"><Square size={14} /> Cantos (Radius)</Label><span className="text-xs font-bold">{form.cardBorderRadius}px</span></div>
                         <Slider value={[form.cardBorderRadius || 12]} min={0} max={32} step={4} onValueChange={(v) => setForm({...form, cardBorderRadius: v[0]})} />
                       </div>
                       <div className="flex items-center justify-between p-3 border rounded-lg">
@@ -285,7 +285,7 @@ export default function ConfiguracoesPage() {
                         <Switch id="shadow" checked={form.cardShowShadow} onCheckedChange={(v) => setForm({...form, cardShowShadow: v})} />
                       </div>
                       <div className="space-y-3">
-                        <Label className="flex items-center gap-2"><MousePointer2 size={14} /> Alinhamento</Label>
+                        <Label className="flex items-center gap-2"><MousePointer2 size={14} /> Alinhamento do Texto</Label>
                         <RadioGroup value={form.cardTextAlign} onValueChange={(v: any) => setForm({...form, cardTextAlign: v})} className="flex gap-4">
                           <div className="flex items-center space-x-2 border px-3 py-2 rounded-lg cursor-pointer"><RadioGroupItem value="center" id="ta1" /><Label htmlFor="ta1" className="cursor-pointer text-xs font-medium">Centro</Label></div>
                           <div className="flex items-center space-x-2 border px-3 py-2 rounded-lg cursor-pointer"><RadioGroupItem value="left" id="ta2" /><Label htmlFor="ta2" className="cursor-pointer text-xs font-medium">Esquerda</Label></div>
@@ -294,7 +294,7 @@ export default function ConfiguracoesPage() {
                     </div>
 
                     <div className="space-y-6">
-                      <h4 className="text-[10px] font-black uppercase text-primary">Foto e Badges</h4>
+                      <h4 className="text-[10px] font-black uppercase text-primary flex items-center gap-2"><ImageIcon size={12} /> Foto e Badges</h4>
                       <div className="space-y-4">
                         <div className="flex justify-between items-center"><Label>Tamanho Foto (%)</Label><span className="text-xs font-bold">{form.cardPhotoSize}%</span></div>
                         <Slider value={[form.cardPhotoSize || 75]} min={50} max={100} step={5} onValueChange={(v) => setForm({...form, cardPhotoSize: v[0]})} />
@@ -320,6 +320,31 @@ export default function ConfiguracoesPage() {
                         </div>
                       )}
                     </div>
+
+                    <div className="space-y-6">
+                      <h4 className="text-[10px] font-black uppercase text-primary flex items-center gap-2"><Heading size={12} /> Estilo de Cabeçalho</h4>
+                      <div className="space-y-4">
+                        <Label>Modelo de Título de Setor</Label>
+                        <RadioGroup value={form.headerStyle} onValueChange={(v: any) => setForm({...form, headerStyle: v})} className="grid gap-3">
+                          <div className="flex items-center space-x-2 border p-3 rounded-lg cursor-pointer">
+                            <RadioGroupItem value="line_right" id="hs1" />
+                            <Label htmlFor="hs1" className="cursor-pointer font-medium text-sm">Linha à Direita</Label>
+                          </div>
+                          <div className="flex items-center space-x-2 border p-3 rounded-lg cursor-pointer">
+                            <RadioGroupItem value="full_underline" id="hs2" />
+                            <Label htmlFor="hs2" className="cursor-pointer font-medium text-sm">Sublinhado Completo</Label>
+                          </div>
+                          <div className="flex items-center space-x-2 border p-3 rounded-lg cursor-pointer">
+                            <RadioGroupItem value="box_background" id="hs3" />
+                            <Label htmlFor="hs3" className="cursor-pointer font-medium text-sm">Fundo Colorido</Label>
+                          </div>
+                        </RadioGroup>
+                      </div>
+                      <div className="space-y-4">
+                        <div className="flex justify-between items-center"><Label>Tamanho da Fonte</Label><span className="text-xs font-bold">{form.headerFontSize}px</span></div>
+                        <Slider value={[form.headerFontSize || 24]} min={16} max={48} step={2} onValueChange={(v) => setForm({...form, headerFontSize: v[0]})} />
+                      </div>
+                    </div>
                   </div>
                   <Button type="button" onClick={() => handleSave()} className="w-full mt-6" disabled={isSaving}>
                     <Save className="mr-2 h-4 w-4" /> Salvar Layout
@@ -337,17 +362,25 @@ export default function ConfiguracoesPage() {
             </CardHeader>
             <CardContent className="p-0">
               <div className="p-4 space-y-6 scale-[0.85] origin-top" style={{ backgroundColor: form.backgroundColor }}>
-                <div className="flex items-center gap-2">
-                  <div className="rounded-lg flex items-center justify-center text-white overflow-hidden p-1 shadow-sm shrink-0"
-                    style={{ backgroundColor: form.primaryColor, width: 32, height: 32 }}>
-                    {form.logoUrl ? <img src={form.logoUrl} alt="Logo" className="w-full h-full object-contain" /> : <Users size={14} />}
-                  </div>
-                  <span className="font-black tracking-tighter truncate" style={{ color: form.primaryColor, fontSize: 14 }}>{form.systemName || "Nome"}</span>
+                {/* Cabeçalho Amostra */}
+                <div className={cn(
+                  "flex items-center gap-2 mb-4",
+                  form.headerStyle === 'box_background' && "p-2 rounded-lg",
+                  form.headerStyle === 'full_underline' && "border-b pb-1"
+                )} style={{ 
+                  backgroundColor: form.headerStyle === 'box_background' ? form.primaryColor : 'transparent',
+                  borderBottomColor: form.headerStyle === 'full_underline' ? form.primaryColor : 'transparent'
+                }}>
+                  <h3 className="font-black truncate" style={{ 
+                    fontSize: (form.headerFontSize || 24) * 0.6,
+                    color: form.headerStyle === 'box_background' ? 'white' : form.sectorHeaderColor || form.primaryColor
+                  }}>Setor Exemplo</h3>
+                  {form.headerStyle === 'line_right' && <div className="h-px flex-1 bg-slate-200" />}
                 </div>
 
                 <div className="flex flex-col items-center">
                   <div className={cn(
-                    "w-full transition-all border border-transparent hover:shadow-xl",
+                    "w-full transition-all border border-transparent",
                     form.cardShowShadow && "shadow-lg"
                   )} style={{ 
                     padding: (form.cardPadding || 24) * 0.7, 
@@ -357,7 +390,7 @@ export default function ConfiguracoesPage() {
                     borderColor: form.cardShowShadow ? 'transparent' : '#e2e8f0',
                   }}>
                     {form.cardShowBadge && form.cardBadgePosition === 'top' && (
-                      <div className="mb-3"><span className="px-2 py-0.5 rounded-full text-[7px] font-bold uppercase tracking-widest" style={{ backgroundColor: form.accentColor, color: form.accentForegroundColor }}>Setor</span></div>
+                      <div className="mb-3"><span className="px-2 py-0.5 rounded-full text-[7px] font-bold uppercase tracking-widest" style={{ backgroundColor: form.accentColor, color: form.accentForegroundColor }}>Selo</span></div>
                     )}
                     
                     <div className="flex justify-center mb-3">
@@ -375,7 +408,7 @@ export default function ConfiguracoesPage() {
                     </div>
 
                     {form.cardShowBadge && form.cardBadgePosition === 'bottom' && (
-                      <div className="mt-3 pt-1"><span className="px-2 py-0.5 rounded-full text-[7px] font-bold uppercase tracking-widest" style={{ backgroundColor: form.accentColor, color: form.accentForegroundColor }}>Setor</span></div>
+                      <div className="mt-3 pt-1"><span className="px-2 py-0.5 rounded-full text-[7px] font-bold uppercase tracking-widest" style={{ backgroundColor: form.accentColor, color: form.accentForegroundColor }}>Selo</span></div>
                     )}
                   </div>
                 </div>
