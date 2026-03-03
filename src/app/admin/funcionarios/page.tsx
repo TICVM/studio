@@ -380,14 +380,14 @@ export default function FuncionariosPage() {
                     </div>
                     <span className="font-semibold text-sm flex items-center gap-1">
                       {f.nome}
-                      {f.is_lider && <Crown size={12} className="text-amber-500" />}
+                      {f.is_lider && <Crown size={12} style={{ color: 'var(--leadership, #f59e0b)' }} />}
                     </span>
                   </div>
                 </TableCell>
                 <TableCell>
                   <div className="flex flex-col">
                     <span className="text-sm">{f.cargo}</span>
-                    {f.is_lider && <span className="text-[9px] font-black text-amber-600 uppercase tracking-tighter">{f.titulo_lider}</span>}
+                    {f.is_lider && <span className="text-[9px] font-black uppercase tracking-tighter" style={{ color: 'var(--leadership, #d97706)' }}>{f.titulo_lider}</span>}
                   </div>
                 </TableCell>
                 <TableCell>

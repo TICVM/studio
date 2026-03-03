@@ -34,6 +34,7 @@ export interface SystemSettings {
   systemName: string;
   logoUrl: string;
   primaryColor: string;
+  leadershipColor?: string;
   backgroundColor?: string;
   foregroundColor?: string;
   accentColor?: string;

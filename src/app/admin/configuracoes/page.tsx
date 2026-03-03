@@ -2,7 +2,7 @@
 "use client"
 
 import { useState, useEffect, useRef } from "react";
-import { Settings, Save, Palette, Image as ImageIcon, Type, Loader2, Users, Upload, X, Maximize, Layout } from "lucide-react";
+import { Settings, Save, Palette, Image as ImageIcon, Type, Loader2, Users, Upload, X, Maximize, Layout, Crown } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -25,6 +25,7 @@ export default function ConfiguracoesPage() {
     systemName: "",
     logoUrl: "",
     primaryColor: "#3b82f6",
+    leadershipColor: "#f59e0b",
     backgroundColor: "#f8fafc",
     foregroundColor: "#020617",
     accentColor: "#f1f5f9",
@@ -42,6 +43,7 @@ export default function ConfiguracoesPage() {
         ...settings,
         logoStyle: settings.logoStyle || "square_with_name",
         logoHeight: settings.logoHeight || 48,
+        leadershipColor: settings.leadershipColor || "#f59e0b",
         backgroundColor: settings.backgroundColor || "#f8fafc",
         foregroundColor: settings.foregroundColor || "#020617",
         accentColor: settings.accentColor || "#f1f5f9",
@@ -273,7 +275,14 @@ export default function ConfiguracoesPage() {
                   id="primaryColor" 
                   value={form.primaryColor} 
                   onChange={v => setForm({...form, primaryColor: v})}
-                  description="Botões, ícones de liderança e destaques."
+                  description="Botões e destaques visuais."
+                />
+                <ColorPicker 
+                  label="Cor de Liderança" 
+                  id="leadershipColor" 
+                  value={form.leadershipColor} 
+                  onChange={v => setForm({...form, leadershipColor: v})}
+                  description="Ícone da coroa e selo de liderança."
                 />
                 <ColorPicker 
                   label="Cor de Fundo" 
@@ -323,7 +332,7 @@ export default function ConfiguracoesPage() {
         <div className="space-y-6">
           <Card className="sticky top-8 overflow-hidden border-none shadow-xl">
             <CardHeader className="bg-slate-900 text-white p-4">
-              <CardTitle className="text-xs uppercase tracking-widest opacity-70">Pré-visualização do Topo</CardTitle>
+              <CardTitle className="text-xs uppercase tracking-widest opacity-70">Pré-visualização</CardTitle>
             </CardHeader>
             <CardContent className="p-0">
               {/* Simulação Navbar */}
@@ -358,23 +367,29 @@ export default function ConfiguracoesPage() {
                     </div>
                   )}
                 </div>
-                <div className="h-8 w-20 rounded-md opacity-50" style={{ backgroundColor: form.primaryColor }} />
               </div>
 
-              {/* Simulação Card */}
+              {/* Simulação Card com Liderança */}
               <div className="p-8 space-y-6" style={{ backgroundColor: form.backgroundColor }}>
-                <div className="bg-white rounded-xl shadow-md p-4 border space-y-3">
+                <div className="bg-white rounded-xl shadow-md p-4 border space-y-4 relative overflow-hidden">
+                  {/* Coroa de Liderança na Preview */}
+                  <div className="absolute top-2 right-2 p-1.5 rounded-full shadow-sm text-white" style={{ backgroundColor: form.leadershipColor }}>
+                    <Crown size={12} fill="white" />
+                  </div>
+                  
                   <div className="flex items-center gap-3">
-                    <div className="h-10 w-8 rounded bg-slate-100 border relative overflow-hidden">
+                    <div className="h-12 w-10 rounded bg-slate-100 border relative overflow-hidden shrink-0">
                       <Users size={16} className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-slate-300" />
                     </div>
                     <div className="space-y-1">
+                      <div className="text-[10px] font-black uppercase tracking-widest" style={{ color: form.leadershipColor }}>
+                        Líder de Setor
+                      </div>
                       <div className="h-3 w-24 rounded" style={{ backgroundColor: form.primaryColor }} />
-                      <div className="h-2 w-16 bg-slate-100 rounded" />
                     </div>
                   </div>
                   <div className="h-8 w-full rounded flex items-center justify-center text-[10px] font-bold uppercase tracking-widest" style={{ backgroundColor: form.accentColor, color: form.foregroundColor }}>
-                    Destaque de Cor
+                    Badge do Setor
                   </div>
                 </div>
 

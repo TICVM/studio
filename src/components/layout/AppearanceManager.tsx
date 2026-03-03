@@ -49,6 +49,13 @@ export function AppearanceManager() {
         root.style.setProperty('--ring', hsl);
       }
 
+      // Injeção da cor de liderança como variável CSS
+      if (settings.leadershipColor) {
+        root.style.setProperty('--leadership', settings.leadershipColor);
+      } else {
+        root.style.setProperty('--leadership', '#f59e0b'); // Fallback para amber-500
+      }
+
       if (settings.backgroundColor) {
         root.style.setProperty('--background', hexToHsl(settings.backgroundColor));
       }

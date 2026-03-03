@@ -25,7 +25,7 @@ export function EmployeeCard({ funcionario, setor }: EmployeeCardProps) {
     <>
       <Card 
         onClick={() => setIsOpen(true)}
-        className={`overflow-hidden group cursor-pointer hover:shadow-xl transition-all duration-300 border-none bg-white ${funcionario.is_lider ? 'ring-2 ring-amber-100' : ''}`}
+        className={`overflow-hidden group cursor-pointer hover:shadow-xl transition-all duration-300 border-none bg-white ${funcionario.is_lider ? 'ring-2 ring-primary/10' : ''}`}
       >
         <CardContent className="p-6 flex flex-col items-center text-center space-y-4">
           <div className="relative w-36 aspect-[3/4] rounded-lg overflow-hidden border-2 border-muted group-hover:border-primary transition-all duration-300 shadow-sm bg-slate-50">
@@ -37,7 +37,10 @@ export function EmployeeCard({ funcionario, setor }: EmployeeCardProps) {
               data-ai-hint="employee photo"
             />
             {funcionario.is_lider && (
-              <div className="absolute top-2 right-2 bg-amber-500 text-white p-1.5 rounded-full shadow-lg z-10">
+              <div 
+                className="absolute top-2 right-2 text-white p-1.5 rounded-full shadow-lg z-10"
+                style={{ backgroundColor: 'var(--leadership, #f59e0b)' }}
+              >
                 <Crown size={14} fill="white" />
               </div>
             )}
@@ -45,7 +48,10 @@ export function EmployeeCard({ funcionario, setor }: EmployeeCardProps) {
           <div className="space-y-1">
             <div className="flex flex-col items-center gap-1">
               {funcionario.is_lider && (
-                <span className="text-[10px] font-black text-amber-600 uppercase tracking-widest mb-1">
+                <span 
+                  className="text-[10px] font-black uppercase tracking-widest mb-1"
+                  style={{ color: 'var(--leadership, #d97706)' }}
+                >
                   {funcionario.titulo_lider || "Líder de Setor"}
                 </span>
               )}
