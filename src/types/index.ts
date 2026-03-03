@@ -50,6 +50,7 @@ export interface SystemSettings {
   jobTitleColor?: string;
   sectorHeaderColor?: string;
   subCategoryColor?: string;
+  subCategoryFontSize?: number;
   sidebarBackgroundColor?: string;
   sidebarForegroundColor?: string;
   logoStyle: 'square_with_name' | 'rectangular_no_name';

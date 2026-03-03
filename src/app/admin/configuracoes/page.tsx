@@ -59,6 +59,7 @@ export default function ConfiguracoesPage() {
     jobTitleColor: "#64748b",
     sectorHeaderColor: "#1e293b",
     subCategoryColor: "#3b82f6",
+    subCategoryFontSize: 14,
     sidebarBackgroundColor: "#0f172a",
     sidebarForegroundColor: "#f8fafc",
     logoStyle: "square_with_name",
@@ -96,6 +97,7 @@ export default function ConfiguracoesPage() {
         jobTitleColor: settings.jobTitleColor || "#64748b",
         sectorHeaderColor: settings.sectorHeaderColor || settings.primaryColor || "#1e293b",
         subCategoryColor: settings.subCategoryColor || settings.primaryColor || "#3b82f6",
+        subCategoryFontSize: settings.subCategoryFontSize ?? 14,
         sidebarBackgroundColor: settings.sidebarBackgroundColor || "#0f172a",
         sidebarForegroundColor: settings.sidebarForegroundColor || "#f8fafc",
         cardPadding: settings.cardPadding ?? 24,
@@ -338,7 +340,7 @@ export default function ConfiguracoesPage() {
                       </div>
                       <div className="flex items-center justify-between p-3 border rounded-lg bg-slate-50">
                         <Label className="flex items-center gap-2 cursor-pointer" htmlFor="badge">Exibir Selo do Setor</Label>
-                        <Switch id="badge" checked={form.cardShowBadge} onCheckedChange={(v) => setForm({...form, cardShowBadge: v})} />
+                        <Switch id="badge" checked={form.cardShowBadge} onCheckedChange={(v) => setForm({...form, cardShowShadow: v})} />
                       </div>
                       {form.cardShowBadge && (
                         <div className="space-y-3 pl-4 border-l-2">
@@ -352,27 +354,33 @@ export default function ConfiguracoesPage() {
                     </div>
 
                     <div className="space-y-6">
-                      <h4 className="text-[10px] font-black uppercase text-primary flex items-center gap-2"><Heading size={12} /> Estilo de Cabeçalho</h4>
-                      <div className="space-y-4">
-                        <Label>Modelo de Título de Setor</Label>
-                        <RadioGroup value={form.headerStyle} onValueChange={(v: any) => setForm({...form, headerStyle: v})} className="grid gap-3">
-                          <div className="flex items-center space-x-2 border p-3 rounded-lg cursor-pointer">
-                            <RadioGroupItem value="line_right" id="hs1" />
-                            <Label htmlFor="hs1" className="cursor-pointer font-medium text-sm">Linha à Direita</Label>
-                          </div>
-                          <div className="flex items-center space-x-2 border p-3 rounded-lg cursor-pointer">
-                            <RadioGroupItem value="full_underline" id="hs2" />
-                            <Label htmlFor="hs2" className="cursor-pointer font-medium text-sm">Sublinhado Completo</Label>
-                          </div>
-                          <div className="flex items-center space-x-2 border p-3 rounded-lg cursor-pointer">
-                            <RadioGroupItem value="box_background" id="hs3" />
-                            <Label htmlFor="hs3" className="cursor-pointer font-medium text-sm">Fundo Colorido</Label>
-                          </div>
-                        </RadioGroup>
-                      </div>
-                      <div className="space-y-4">
-                        <div className="flex justify-between items-center"><Label>Tamanho da Fonte</Label><span className="text-xs font-bold">{form.headerFontSize}px</span></div>
-                        <Slider value={[form.headerFontSize || 24]} min={16} max={48} step={2} onValueChange={(v) => setForm({...form, headerFontSize: v[0]})} />
+                      <h4 className="text-[10px] font-black uppercase text-primary flex items-center gap-2"><Heading size={12} /> Estilos de Texto</h4>
+                      <div className="space-y-6">
+                        <div className="space-y-4">
+                          <Label>Modelo de Título de Setor</Label>
+                          <RadioGroup value={form.headerStyle} onValueChange={(v: any) => setForm({...form, headerStyle: v})} className="grid gap-3">
+                            <div className="flex items-center space-x-2 border p-3 rounded-lg cursor-pointer">
+                              <RadioGroupItem value="line_right" id="hs1" />
+                              <Label htmlFor="hs1" className="cursor-pointer font-medium text-sm">Linha à Direita</Label>
+                            </div>
+                            <div className="flex items-center space-x-2 border p-3 rounded-lg cursor-pointer">
+                              <RadioGroupItem value="full_underline" id="hs2" />
+                              <Label htmlFor="hs2" className="cursor-pointer font-medium text-sm">Sublinhado Completo</Label>
+                            </div>
+                            <div className="flex items-center space-x-2 border p-3 rounded-lg cursor-pointer">
+                              <RadioGroupItem value="box_background" id="hs3" />
+                              <Label htmlFor="hs3" className="cursor-pointer font-medium text-sm">Fundo Colorido</Label>
+                            </div>
+                          </RadioGroup>
+                        </div>
+                        <div className="space-y-4">
+                          <div className="flex justify-between items-center"><Label>Fonte Setor (px)</Label><span className="text-xs font-bold text-primary">{form.headerFontSize}px</span></div>
+                          <Slider value={[form.headerFontSize || 24]} min={16} max={48} step={2} onValueChange={(v) => setForm({...form, headerFontSize: v[0]})} />
+                        </div>
+                        <div className="space-y-4 pt-4 border-t">
+                          <div className="flex justify-between items-center"><Label>Fonte Subcategoria (px)</Label><span className="text-xs font-bold text-primary">{form.subCategoryFontSize}px</span></div>
+                          <Slider value={[form.subCategoryFontSize || 14]} min={10} max={24} step={1} onValueChange={(v) => setForm({...form, subCategoryFontSize: v[0]})} />
+                        </div>
                       </div>
                     </div>
                   </div>

@@ -105,6 +105,12 @@ export function AppearanceManager() {
         root.style.setProperty('--subcategory-color', hexToHsl(settings.primaryColor));
       }
 
+      if (settings.subCategoryFontSize) {
+        root.style.setProperty('--subcategory-font-size', `${settings.subCategoryFontSize}px`);
+      } else {
+        root.style.setProperty('--subcategory-font-size', '14px');
+      }
+
       if (settings.sidebarBackgroundColor) {
         root.style.setProperty('--sidebar-background', hexToHsl(settings.sidebarBackgroundColor));
         root.style.setProperty('--sidebar-border', hexToHsl(settings.sidebarBackgroundColor));
