@@ -3,7 +3,7 @@
 
 import { useState, useMemo, useEffect } from "react";
 import NextImage from "next/image";
-import { Users, Plus, Edit2, Trash2, Search, FileText, Loader2, Upload, Crown, MapPin, Filter, X } from "lucide-react";
+import { Users, Plus, Edit2, Trash2, Search, FileText, Loader2, Upload, Crown, MapPin, Filter, X, Cake } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -101,8 +101,9 @@ export default function FuncionariosPage() {
   const filteredEmployees = useMemo(() => {
     return (employees || [])
       .filter(f => {
-        const matchesSearch = f.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                            f.cargo.toLowerCase().includes(searchTerm.toLowerCase());
+        const nameMatch = f.nome?.toLowerCase().includes(searchTerm.toLowerCase());
+        const jobMatch = f.cargo?.toLowerCase().includes(searchTerm.toLowerCase());
+        const matchesSearch = nameMatch || jobMatch;
         const matchesUnidade = filterUnidade === "all" || f.unidade === filterUnidade;
         return matchesSearch && matchesUnidade;
       })
@@ -158,6 +159,7 @@ export default function FuncionariosPage() {
       email: formData.get("email") as string,
       ramal: formData.get("ramal") as string,
       unidade: formData.get("unidade") as string,
+      data_nascimento: formData.get("data_nascimento") as string || "",
       foto_url: (formData.get("foto_url") as string) || `https://picsum.photos/seed/${Math.random()}/400/533`,
     };
 
@@ -217,6 +219,7 @@ export default function FuncionariosPage() {
               email: row.Email || "",
               ramal: row.Ramal || "",
               unidade: row.Unidade || "",
+              data_nascimento: row.DataNascimento || "",
               data_criacao: new Date().toISOString(),
               createdAt: serverTimestamp(),
             });
@@ -385,9 +388,17 @@ export default function FuncionariosPage() {
                     </div>
                   </div>
 
-                  <div className="grid gap-2">
-                    <Label htmlFor="unidade">Unidade / Localização</Label>
-                    <Input id="unidade" name="unidade" defaultValue={editingFunc?.unidade} placeholder="Ex: Unidade I, Unidade II, Matriz..." />
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="grid gap-2">
+                      <Label htmlFor="unidade">Unidade / Localização</Label>
+                      <Input id="unidade" name="unidade" defaultValue={editingFunc?.unidade} placeholder="Ex: Unidade I, Unidade II, Matriz..." />
+                    </div>
+                    <div className="grid gap-2">
+                      <Label htmlFor="data_nascimento" className="flex items-center gap-2">
+                        <Cake size={14} className="text-primary" /> Data de Nascimento
+                      </Label>
+                      <Input id="data_nascimento" name="data_nascimento" type="date" defaultValue={editingFunc?.data_nascimento} />
+                    </div>
                   </div>
                   
                   <div className="space-y-4 bg-slate-50 p-4 rounded-lg border">

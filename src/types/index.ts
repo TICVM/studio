@@ -22,6 +22,7 @@ export interface Funcionario {
   email?: string;
   ramal?: string;
   unidade?: string;
+  data_nascimento?: string; // Formato YYYY-MM-DD
   data_criacao: string;
 }
 
@@ -37,6 +38,7 @@ export interface SystemSettings {
   heroTitle?: string;
   countLabel?: string;
   showCount?: boolean;
+  showBirthdays?: boolean;
   logoUrl: string;
   primaryColor: string;
   leadershipColor?: string;

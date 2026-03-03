@@ -5,7 +5,7 @@ import { useState, useMemo } from "react";
 import { PublicNavbar } from "@/components/layout/PublicNavbar";
 import { EmployeeCard } from "@/components/carometro/EmployeeCard";
 import { Input } from "@/components/ui/input";
-import { Search, Filter, Loader2, MapPin, X, Building2 } from "lucide-react";
+import { Search, Filter, Loader2, MapPin, X, Cake, Sparkles } from "lucide-react";
 import { useMemoFirebase, useCollection, useFirestore, useDoc } from "@/firebase";
 import { collection, query, where, doc } from "firebase/firestore";
 import { Funcionario, Setor, SystemSettings } from "@/types";
@@ -18,6 +18,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
+import NextImage from "next/image";
 
 export default function Home() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -39,7 +40,9 @@ export default function Home() {
   const { data: employees, isLoading: loadingEmployees } = useCollection<Funcionario>(activeEmployeesQuery);
   const { data: sectors, isLoading: loadingSectors } = useCollection<Setor>(sectorsQuery);
 
-  // Extrair unidades únicas dos funcionários para o filtro
+  const currentMonth = new Date().getMonth(); // 0-11
+
+  // Extrair unidades únicas
   const unidadesDisponiveis = useMemo(() => {
     if (!employees) return [];
     const units = employees
@@ -48,11 +51,26 @@ export default function Home() {
     return Array.from(new Set(units)).sort();
   }, [employees]);
 
+  // Aniversariantes do Mês
+  const anniversaries = useMemo(() => {
+    if (!employees || !settings?.showBirthdays) return [];
+    return employees.filter(f => {
+      if (!f.data_nascimento) return false;
+      const birthMonth = new Date(f.data_nascimento).getUTCMonth();
+      return birthMonth === currentMonth;
+    }).sort((a, b) => {
+      const dayA = new Date(a.data_nascimento!).getUTCDate();
+      const dayB = new Date(b.data_nascimento!).getUTCDate();
+      return dayA - dayB;
+    });
+  }, [employees, settings?.showBirthdays, currentMonth]);
+
   const filteredEmployees = useMemo(() => {
     if (!employees) return [];
     return employees.filter((f) => {
-      const matchesSearch = f.nome.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                           f.cargo.toLowerCase().includes(searchTerm.toLowerCase());
+      const nameMatch = f.nome?.toLowerCase().includes(searchTerm.toLowerCase());
+      const jobMatch = f.cargo?.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesSearch = nameMatch || jobMatch;
       const matchesSetor = selectedSetor === "all" || f.setor_id === selectedSetor;
       const matchesUnidade = selectedUnidade === "all" || f.unidade === selectedUnidade;
       return matchesSearch && matchesSetor && matchesUnidade;
@@ -123,11 +141,56 @@ export default function Home() {
   const headerStyle = settings?.headerStyle || 'line_right';
   const headerFontSize = settings?.headerFontSize || 24;
 
+  const monthNames = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
+
   return (
     <div className="min-h-screen flex flex-col" style={{ backgroundColor: 'hsl(var(--background))' }}>
       <PublicNavbar />
       
       <main className="flex-1 container mx-auto px-4 py-8 space-y-10">
+        {/* Aniversariantes do Mês */}
+        {settings?.showBirthdays && anniversaries.length > 0 && !hasActiveFilters && (
+          <section className="bg-gradient-to-r from-pink-500/10 via-purple-500/10 to-blue-500/10 p-6 rounded-3xl border border-pink-100 shadow-sm animate-in fade-in slide-in-from-top-4 duration-700">
+            <div className="flex items-center justify-between mb-8">
+              <div className="space-y-1">
+                <div className="flex items-center gap-2 text-pink-600">
+                  <Cake size={20} className="animate-bounce" />
+                  <span className="text-xs font-black uppercase tracking-widest">Destaque do Mês</span>
+                </div>
+                <h2 className="text-2xl font-black tracking-tight text-slate-800">
+                  Aniversariantes de <span className="text-pink-600">{monthNames[currentMonth]}</span>
+                </h2>
+              </div>
+              <div className="hidden sm:flex items-center gap-2 bg-white/60 px-4 py-2 rounded-full border border-pink-100/50">
+                <Sparkles size={16} className="text-amber-500" />
+                <span className="text-xs font-bold text-slate-600">Celebrando talentos</span>
+              </div>
+            </div>
+
+            <div className="flex gap-4 overflow-x-auto pb-4 scrollbar-hide -mx-2 px-2">
+              {anniversaries.map(f => (
+                <div key={f.id} className="flex-shrink-0 group">
+                  <div className="relative w-32 h-44 rounded-2xl overflow-hidden border-2 border-white shadow-md group-hover:scale-105 transition-transform duration-300">
+                    <NextImage 
+                      src={f.foto_url || "https://picsum.photos/seed/placeholder/400/533"} 
+                      alt={f.nome} 
+                      fill 
+                      className="object-cover"
+                    />
+                    <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 to-transparent p-2">
+                      <p className="text-[10px] font-black text-white truncate">{f.nome.split(' ')[0]}</p>
+                      <div className="flex items-center gap-1 text-[9px] font-bold text-pink-300">
+                        <Cake size={8} />
+                        Dia {new Date(f.data_nascimento!).getUTCDate()}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
+
         <div className="flex flex-col lg:flex-row gap-6 items-center justify-between p-6 rounded-xl shadow-sm border border-slate-100" style={{ backgroundColor: 'hsl(var(--card))' }}>
           <div className="space-y-1 flex-shrink-0">
             <h1 className="text-2xl font-bold tracking-tight" style={{ color: 'hsl(var(--primary))' }}>

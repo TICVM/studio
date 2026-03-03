@@ -2,7 +2,7 @@
 "use client"
 
 import { useState, useEffect, useRef } from "react";
-import { Save, Image as ImageIcon, Palette, Layout, Upload, X, CheckCircle2, Loader2, Users, Square, MousePointer2, AlignCenter, AlignLeft, Maximize, MoveHorizontal, Columns, Crown, LayoutGrid, LayoutList, Tags, Type, Heading } from "lucide-react";
+import { Save, Image as ImageIcon, Palette, Layout, Upload, X, CheckCircle2, Loader2, Users, Square, MousePointer2, AlignCenter, AlignLeft, Maximize, MoveHorizontal, Columns, Crown, LayoutGrid, LayoutList, Tags, Type, Heading, Cake } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -46,6 +46,7 @@ export default function ConfiguracoesPage() {
     heroTitle: "",
     countLabel: "",
     showCount: true,
+    showBirthdays: true,
     logoUrl: "",
     primaryColor: "#3b82f6",
     leadershipColor: "#f59e0b",
@@ -86,6 +87,7 @@ export default function ConfiguracoesPage() {
         logoStyle: settings.logoStyle || "square_with_name",
         logoHeight: settings.logoHeight || 48,
         showCount: settings.showCount ?? true,
+        showBirthdays: settings.showBirthdays ?? true,
         leadershipColor: settings.leadershipColor || "#f59e0b",
         backgroundColor: settings.backgroundColor || "#f8fafc",
         cardBackgroundColor: settings.cardBackgroundColor || "#ffffff",
@@ -192,29 +194,42 @@ export default function ConfiguracoesPage() {
                     <div className="space-y-2">
                       <Label htmlFor="systemName">Nome do Sistema</Label>
                       <Input id="systemName" value={form.systemName} onChange={e => setForm({...form, systemName: e.target.value})} placeholder="Ex: PessoasEmpresa" />
-                      <p className="text-[10px] text-muted-foreground">Aparece na barra do navegador e na lateral administrativa.</p>
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="heroTitle">Título do Cabeçalho</Label>
                       <Input id="heroTitle" value={form.heroTitle} onChange={e => setForm({...form, heroTitle: e.target.value})} placeholder="Ex: Retrato Corporativo" />
-                      <p className="text-[10px] text-muted-foreground">O título principal que aparece acima da lista de funcionários.</p>
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="countLabel">Rótulo de Contagem</Label>
                       <Input id="countLabel" value={form.countLabel} onChange={e => setForm({...form, countLabel: e.target.value})} placeholder="Ex: colaboradores encontrados" />
-                      <p className="text-[10px] text-muted-foreground">O texto que aparece após o número total de colaboradores.</p>
                     </div>
                     
-                    <div className="flex items-center justify-between p-3 border rounded-lg bg-slate-50">
-                      <div className="space-y-0.5">
-                        <Label htmlFor="showCount" className="cursor-pointer font-medium">Exibir Número</Label>
-                        <p className="text-[10px] text-muted-foreground uppercase">Mostra ou oculta apenas o numeral do total de colaboradores.</p>
+                    <div className="grid grid-cols-1 gap-4">
+                      <div className="flex items-center justify-between p-3 border rounded-lg bg-slate-50">
+                        <div className="space-y-0.5">
+                          <Label htmlFor="showCount" className="cursor-pointer font-medium">Exibir Número</Label>
+                          <p className="text-[10px] text-muted-foreground uppercase">Mostra ou oculta o numeral do total de colaboradores.</p>
+                        </div>
+                        <Switch 
+                          id="showCount" 
+                          checked={form.showCount ?? true} 
+                          onCheckedChange={(v) => setForm({...form, showCount: v})} 
+                        />
                       </div>
-                      <Switch 
-                        id="showCount" 
-                        checked={form.showCount ?? true} 
-                        onCheckedChange={(v) => setForm({...form, showCount: v})} 
-                      />
+
+                      <div className="flex items-center justify-between p-3 border rounded-lg bg-pink-50/30 border-pink-100">
+                        <div className="space-y-0.5">
+                          <Label htmlFor="showBirthdays" className="cursor-pointer font-medium flex items-center gap-2">
+                            <Cake className="h-4 w-4 text-pink-500" /> Aniversariantes do Mês
+                          </Label>
+                          <p className="text-[10px] text-muted-foreground uppercase">Exibe seção especial com aniversariantes no topo.</p>
+                        </div>
+                        <Switch 
+                          id="showBirthdays" 
+                          checked={form.showBirthdays ?? true} 
+                          onCheckedChange={(v) => setForm({...form, showBirthdays: v})} 
+                        />
+                      </div>
                     </div>
                   </div>
                   
@@ -340,7 +355,7 @@ export default function ConfiguracoesPage() {
                       </div>
                       <div className="flex items-center justify-between p-3 border rounded-lg bg-slate-50">
                         <Label className="flex items-center gap-2 cursor-pointer" htmlFor="badge">Exibir Selo do Setor</Label>
-                        <Switch id="badge" checked={form.cardShowBadge} onCheckedChange={(v) => setForm({...form, cardShowShadow: v})} />
+                        <Switch id="badge" checked={form.cardShowBadge} onCheckedChange={(v) => setForm({...form, cardShowBadge: v})} />
                       </div>
                       {form.cardShowBadge && (
                         <div className="space-y-3 pl-4 border-l-2">

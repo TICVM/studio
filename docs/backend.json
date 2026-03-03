@@ -65,6 +65,11 @@
           "type": "string",
           "description": "The job title or position of the employee."
         },
+        "birthDate": {
+          "type": "string",
+          "description": "The birth date of the employee.",
+          "format": "date"
+        },
         "email": {
           "type": "string",
           "description": "The email address of the employee.",
@@ -157,6 +162,7 @@
         "heroTitle": { "type": "string", "description": "The main title displayed on the public page." },
         "countLabel": { "type": "string", "description": "The label following the employee count." },
         "showCount": { "type": "boolean", "description": "Whether to display the employee count on the public page." },
+        "showBirthdays": { "type": "boolean", "description": "Whether to display the birthdays of the month section." },
         "logoUrl": { "type": "string" },
         "primaryColor": { "type": "string" },
         "leadershipColor": { "type": "string" },
