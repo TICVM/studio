@@ -1,8 +1,8 @@
 
 "use client"
 
-import { useState } from "react";
-import { Grid, Plus, Edit2, Trash2, Search, Loader2, FileText, Upload, Tags, LayoutList, LayoutGrid } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Grid, Plus, Edit2, Trash2, Search, Loader2, FileText, Upload, Tags, LayoutList, LayoutGrid, Columns } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -35,6 +35,13 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useMemoFirebase, useCollection, useFirestore, addDocumentNonBlocking, updateDocumentNonBlocking, deleteDocumentNonBlocking } from "@/firebase";
 import { collection, doc, serverTimestamp } from "firebase/firestore";
 import { Setor, Funcionario } from "@/types";
@@ -52,12 +59,23 @@ export default function SetoresPage() {
   const [excelFile, setExcelFile] = useState<File | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [layoutMode, setLayoutMode] = useState<'stack' | 'grid'>('stack');
+  const [gridColumns, setGridColumns] = useState<string>("2");
 
   const sectorsRef = useMemoFirebase(() => collection(firestore, "sectors"), [firestore]);
   const employeesRef = useMemoFirebase(() => collection(firestore, "employees"), [firestore]);
 
   const { data: sectors, isLoading: loadingSectors } = useCollection<Setor>(sectorsRef);
   const { data: employees } = useCollection<Funcionario>(employeesRef);
+
+  useEffect(() => {
+    if (editingSector) {
+      setLayoutMode(editingSector.layoutSubcategorias || 'stack');
+      setGridColumns(String(editingSector.colunasGrid || "2"));
+    } else {
+      setLayoutMode('stack');
+      setGridColumns("2");
+    }
+  }, [editingSector]);
 
   const filteredSetores = (sectors || [])
     .filter(s => s.nome.toLowerCase().includes(searchTerm.toLowerCase()))
@@ -83,7 +101,8 @@ export default function SetoresPage() {
       nome, 
       ordem,
       subcategorias,
-      layoutSubcategorias: layoutMode
+      layoutSubcategorias: layoutMode,
+      colunasGrid: layoutMode === 'grid' ? Number(gridColumns) : 1
     };
 
     if (editingSector) {
@@ -104,7 +123,6 @@ export default function SetoresPage() {
 
   const openEdit = (setor: Setor) => {
     setEditingSector(setor);
-    setLayoutMode(setor.layoutSubcategorias || 'stack');
     setIsDialogOpen(true);
   };
 
@@ -137,6 +155,7 @@ export default function SetoresPage() {
               ordem: Number(row.Ordem) || 0,
               subcategorias: row.Subcategorias?.split(',').map((s: string) => s.trim()) || [],
               layoutSubcategorias: 'stack',
+              colunasGrid: 1,
               data_criacao: new Date().toISOString(),
               createdAt: serverTimestamp(),
             });
@@ -195,7 +214,6 @@ export default function SetoresPage() {
             setIsDialogOpen(open);
             if (!open) {
               setEditingSector(null);
-              setLayoutMode('stack');
             }
           }}>
             <DialogTrigger asChild>
@@ -219,7 +237,7 @@ export default function SetoresPage() {
                     </div>
                   </div>
 
-                  <div className="space-y-3">
+                  <div className="space-y-4">
                     <Label>Layout das Subcategorias</Label>
                     <RadioGroup 
                       value={layoutMode} 
@@ -241,6 +259,26 @@ export default function SetoresPage() {
                         </Label>
                       </div>
                     </RadioGroup>
+
+                    {layoutMode === 'grid' && (
+                      <div className="flex items-center gap-4 bg-slate-50 p-4 rounded-lg border border-dashed">
+                        <div className="flex-1 space-y-1">
+                          <Label className="flex items-center gap-2"><Columns size={14} /> Colunas (Desktop)</Label>
+                          <p className="text-[10px] text-muted-foreground">Quantas subcategorias lado a lado?</p>
+                        </div>
+                        <Select value={gridColumns} onValueChange={setGridColumns}>
+                          <SelectTrigger className="w-24">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="1">1 Coluna</SelectItem>
+                            <SelectItem value="2">2 Colunas</SelectItem>
+                            <SelectItem value="3">3 Colunas</SelectItem>
+                            <SelectItem value="4">4 Colunas</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    )}
                   </div>
 
                   <div className="grid gap-2">
@@ -297,11 +335,16 @@ export default function SetoresPage() {
                     </div>
                   </TableCell>
                   <TableCell>
-                    <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                      {setor.layoutSubcategorias === 'grid' ? (
-                        <><LayoutGrid size={14} /> Ao Lado</>
-                      ) : (
-                        <><LayoutList size={14} /> Abaixo</>
+                    <div className="flex flex-col gap-0.5">
+                      <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                        {setor.layoutSubcategorias === 'grid' ? (
+                          <><LayoutGrid size={14} /> Ao Lado</>
+                        ) : (
+                          <><LayoutList size={14} /> Abaixo</>
+                        )}
+                      </div>
+                      {setor.layoutSubcategorias === 'grid' && (
+                        <span className="text-[10px] font-bold text-primary">{setor.colunasGrid || 2} colunas</span>
                       )}
                     </div>
                   </TableCell>

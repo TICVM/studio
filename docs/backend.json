@@ -1,4 +1,3 @@
-
 {
   "entities": {
     "Sector": {
@@ -23,6 +22,12 @@
           "type": "string",
           "enum": ["stack", "grid"],
           "description": "Determines if subcategories are stacked vertically or displayed side-by-side."
+        },
+        "colunasGrid": {
+          "type": "integer",
+          "description": "Number of columns for subcategories when layout is 'grid'.",
+          "minimum": 1,
+          "maximum": 4
         },
         "subcategorias": {
           "type": "array",
@@ -152,6 +157,12 @@
         "systemName": { "type": "string" },
         "logoUrl": { "type": "string" },
         "primaryColor": { "type": "string", "description": "Hex color code for the primary brand color." },
+        "leadershipColor": { "type": "string", "description": "Hex color code for leadership icons and crown." },
+        "backgroundColor": { "type": "string", "description": "Hex color code for page background." },
+        "foregroundColor": { "type": "string", "description": "Hex color code for main text." },
+        "accentColor": { "type": "string", "description": "Hex color code for accent elements like badges." },
+        "sidebarBackgroundColor": { "type": "string", "description": "Hex color code for admin sidebar background." },
+        "sidebarForegroundColor": { "type": "string", "description": "Hex color code for admin sidebar text." },
         "logoStyle": { 
           "type": "string", 
           "enum": ["square_with_name", "rectangular_no_name"],

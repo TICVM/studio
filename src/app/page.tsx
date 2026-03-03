@@ -88,6 +88,16 @@ export default function Home() {
     }).filter(group => group.subGroups.some(sg => sg.funcionarios.length > 0));
   }, [filteredEmployees, sectors, selectedSetor]);
 
+  const getGridColsClass = (cols: number | undefined) => {
+    switch(cols) {
+      case 1: return "lg:grid-cols-1";
+      case 2: return "lg:grid-cols-2";
+      case 3: return "lg:grid-cols-3";
+      case 4: return "lg:grid-cols-4";
+      default: return "lg:grid-cols-2";
+    }
+  };
+
   return (
     <div className="min-h-screen flex flex-col">
       <PublicNavbar />
@@ -148,7 +158,7 @@ export default function Home() {
                   <div className={cn(
                     "gap-x-8 gap-y-12",
                     sectorGroup.layoutSubcategorias === 'grid' 
-                      ? "grid grid-cols-1 lg:grid-cols-2" 
+                      ? cn("grid grid-cols-1", getGridColsClass(sectorGroup.colunasGrid))
                       : "flex flex-col"
                   )}>
                     {sectorGroup.subGroups.map(sub => (
