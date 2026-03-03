@@ -3,7 +3,7 @@
 
 import { useState, useMemo, useEffect } from "react";
 import NextImage from "next/image";
-import { Users, Plus, Edit2, Trash2, Search, FileText, Loader2, Upload, Crown } from "lucide-react";
+import { Users, Plus, Edit2, Trash2, Search, FileText, Loader2, Upload, Crown, MapPin, CheckSquare, Square } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -56,11 +56,16 @@ export default function FuncionariosPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isBulkDialogOpen, setIsBulkDialogOpen] = useState(false);
+  const [isMassUpdateOpen, setIsMassUpdateOpen] = useState(false);
   const [editingFunc, setEditingFunc] = useState<Funcionario | null>(null);
   const [excelFile, setExcelFile] = useState<File | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [isLiderChecked, setIsLiderChecked] = useState(false);
   const [selectedSectorId, setSelectedSectorId] = useState<string>("");
+  
+  // Estados para seleção em massa
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [massUnidade, setMassUnidade] = useState("");
 
   const employeesRef = useMemoFirebase(() => collection(firestore, "employees"), [firestore]);
   const sectorsRef = useMemoFirebase(() => collection(firestore, "sectors"), [firestore]);
@@ -97,6 +102,38 @@ export default function FuncionariosPage() {
         return a.nome.localeCompare(b.nome);
       });
   }, [employees, searchTerm]);
+
+  // Funções de Seleção
+  const toggleSelect = (id: string) => {
+    setSelectedIds(prev => 
+      prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
+    );
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedIds.length > 0) {
+      setSelectedIds([]);
+    } else {
+      setSelectedIds(filteredEmployees.map(f => f.id));
+    }
+  };
+
+  const handleMassUnidadeUpdate = () => {
+    if (!massUnidade) return;
+    
+    selectedIds.forEach(id => {
+      updateDocumentNonBlocking(doc(firestore, "employees", id), { unidade: massUnidade });
+    });
+
+    toast({ 
+      title: "Atualização Concluída", 
+      description: `${selectedIds.length} colaboradores alterados para a unidade "${massUnidade}".` 
+    });
+
+    setSelectedIds([]);
+    setIsMassUpdateOpen(false);
+    setMassUnidade("");
+  };
 
   const handleSave = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -199,9 +236,50 @@ export default function FuncionariosPage() {
   return (
     <div className="space-y-8">
       <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight text-primary">Funcionários</h1>
-          <p className="text-muted-foreground">Gerencie sua equipe e informações de contato.</p>
+        <div className="flex items-center gap-4">
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight text-primary">Funcionários</h1>
+            <p className="text-muted-foreground">Gerencie sua equipe e informações de contato.</p>
+          </div>
+          
+          {selectedIds.length > 0 && (
+            <div className="flex items-center gap-3 bg-primary/5 px-4 py-2 rounded-full border border-primary/20 animate-in fade-in zoom-in duration-300">
+              <span className="text-xs font-bold text-primary uppercase tracking-wider">{selectedIds.length} selecionados</span>
+              <div className="h-4 w-px bg-primary/20" />
+              <Dialog open={isMassUpdateOpen} onOpenChange={setIsMassUpdateOpen}>
+                <DialogTrigger asChild>
+                  <Button size="sm" variant="outline" className="h-8 border-primary/30 text-primary hover:bg-primary hover:text-white transition-all">
+                    <MapPin className="mr-1.5 h-3.5 w-3.5" />
+                    Mudar Unidade
+                  </Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Alteração em Massa</DialogTitle>
+                    <DialogDescription>
+                      Defina a nova unidade para os {selectedIds.length} colaboradores selecionados.
+                    </DialogDescription>
+                  </DialogHeader>
+                  <div className="py-6 space-y-4">
+                    <div className="grid gap-2">
+                      <Label htmlFor="mass_unidade">Nome da Unidade / Localização</Label>
+                      <Input 
+                        id="mass_unidade" 
+                        placeholder="Ex: Matriz, Filial Norte, Home Office..." 
+                        value={massUnidade}
+                        onChange={(e) => setMassUnidade(e.target.value)}
+                      />
+                    </div>
+                  </div>
+                  <DialogFooter>
+                    <Button variant="ghost" onClick={() => setIsMassUpdateOpen(false)}>Cancelar</Button>
+                    <Button onClick={handleMassUnidadeUpdate} disabled={!massUnidade}>Aplicar Mudança</Button>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
+              <Button size="sm" variant="ghost" onClick={() => setSelectedIds([])} className="h-8 text-xs hover:bg-transparent hover:underline">Limpar</Button>
+            </div>
+          )}
         </div>
         
         <div className="flex gap-2">
@@ -343,7 +421,7 @@ export default function FuncionariosPage() {
       </div>
 
       <div className="bg-white rounded-xl shadow-sm border overflow-hidden">
-        <div className="p-4 border-b">
+        <div className="p-4 border-b flex items-center justify-between gap-4">
           <div className="relative w-full max-w-sm">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input 
@@ -358,9 +436,16 @@ export default function FuncionariosPage() {
         <Table>
           <TableHeader>
             <TableRow className="bg-slate-50">
+              <TableHead className="w-12 px-4">
+                <Checkbox 
+                  checked={selectedIds.length > 0 && selectedIds.length === filteredEmployees.length}
+                  onCheckedChange={toggleSelectAll}
+                />
+              </TableHead>
               <TableHead>Colaborador</TableHead>
               <TableHead>Cargo</TableHead>
               <TableHead>Setor / Sub</TableHead>
+              <TableHead>Unidade</TableHead>
               <TableHead>Status</TableHead>
               <TableHead className="text-right">Ações</TableHead>
             </TableRow>
@@ -368,6 +453,12 @@ export default function FuncionariosPage() {
           <TableBody>
             {filteredEmployees.map((f) => (
               <TableRow key={f.id} className="group">
+                <TableCell className="px-4">
+                  <Checkbox 
+                    checked={selectedIds.includes(f.id)}
+                    onCheckedChange={() => toggleSelect(f.id)}
+                  />
+                </TableCell>
                 <TableCell>
                   <div className="flex items-center gap-3">
                     <div className="h-16 w-12 relative rounded-sm overflow-hidden border bg-slate-50 shrink-0 shadow-sm aspect-[3/4]">
@@ -397,6 +488,13 @@ export default function FuncionariosPage() {
                     </span>
                     {f.subcategoria && <span className="text-[10px] text-muted-foreground italic">{f.subcategoria}</span>}
                   </div>
+                </TableCell>
+                <TableCell>
+                   <span className="text-xs text-slate-600 flex items-center gap-1">
+                    {f.unidade ? (
+                      <><MapPin size={10} className="text-muted-foreground" /> {f.unidade}</>
+                    ) : "-"}
+                   </span>
                 </TableCell>
                 <TableCell>
                   <Badge variant={f.status === 'ativo' ? 'default' : 'secondary'} className="text-[10px] uppercase font-black">
