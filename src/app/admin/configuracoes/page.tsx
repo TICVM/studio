@@ -17,7 +17,6 @@ import { SystemSettings } from "@/types";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 
-// Componente definido fora para evitar recriação e fechamento do seletor de cores
 const ColorPickerField = ({ label, id, value, onChange, description }: { label: string, id: string, value: string | undefined, onChange: (v: string) => void, description: string }) => (
   <div className="flex items-center gap-4 group">
     <Input 
@@ -25,11 +24,11 @@ const ColorPickerField = ({ label, id, value, onChange, description }: { label: 
       id={id} 
       value={value || "#000000"} 
       onChange={e => onChange(e.target.value)} 
-      className="w-12 h-12 p-1 cursor-pointer border-2 hover:border-primary transition-colors" 
+      className="w-12 h-12 p-1 cursor-pointer border-2 hover:border-primary transition-colors shrink-0" 
     />
-    <div className="flex-1">
-      <Label htmlFor={id} className="font-bold cursor-pointer">{label}</Label>
-      <p className="text-[10px] text-muted-foreground uppercase">{description}</p>
+    <div className="flex-1 min-w-0">
+      <Label htmlFor={id} className="font-bold cursor-pointer block truncate">{label}</Label>
+      <p className="text-[10px] text-muted-foreground uppercase truncate">{description}</p>
       <p className="text-xs font-mono mt-0.5">{value}</p>
     </div>
   </div>
@@ -51,6 +50,9 @@ export default function ConfiguracoesPage() {
     cardBackgroundColor: "#ffffff",
     foregroundColor: "#020617",
     accentColor: "#f1f5f9",
+    nameColor: "#3b82f6",
+    jobTitleColor: "#64748b",
+    sectorHeaderColor: "#1e293b",
     sidebarBackgroundColor: "#0f172a",
     sidebarForegroundColor: "#f8fafc",
     logoStyle: "square_with_name",
@@ -81,6 +83,9 @@ export default function ConfiguracoesPage() {
         cardBackgroundColor: settings.cardBackgroundColor || "#ffffff",
         foregroundColor: settings.foregroundColor || "#020617",
         accentColor: settings.accentColor || "#f1f5f9",
+        nameColor: settings.nameColor || settings.primaryColor || "#3b82f6",
+        jobTitleColor: settings.jobTitleColor || "#64748b",
+        sectorHeaderColor: settings.sectorHeaderColor || settings.primaryColor || "#1e293b",
         sidebarBackgroundColor: settings.sidebarBackgroundColor || "#0f172a",
         sidebarForegroundColor: settings.sidebarForegroundColor || "#f8fafc",
         cardPadding: settings.cardPadding ?? 24,
@@ -194,7 +199,7 @@ export default function ConfiguracoesPage() {
           <Tabs defaultValue="marca" className="space-y-6">
             <TabsList className="grid grid-cols-3 w-full max-w-md bg-slate-100 p-1">
               <TabsTrigger value="marca">Marca e Logo</TabsTrigger>
-              <TabsTrigger value="cores">Cores</TabsTrigger>
+              <TabsTrigger value="cores">Cores e Textos</TabsTrigger>
               <TabsTrigger value="layout">Layout dos Cards</TabsTrigger>
             </TabsList>
 
@@ -242,37 +247,41 @@ export default function ConfiguracoesPage() {
                       </div>
                     </div>
                   </div>
-                  <Button type="button" onClick={() => handleSave()} className="w-full mt-6" disabled={isSaving || isProcessing}>
-                    {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
-                    Salvar Marca
-                  </Button>
                 </CardContent>
               </Card>
             </TabsContent>
 
             <TabsContent value="cores" className="space-y-6">
               <Card>
-                <CardHeader><CardTitle className="text-lg">Paleta de Cores do Sistema</CardTitle></CardHeader>
-                <CardContent className="space-y-8">
+                <CardHeader><CardTitle className="text-lg">Paleta Cromática Detalhada</CardTitle></CardHeader>
+                <CardContent className="space-y-10">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
                     <div className="space-y-6">
-                      <h3 className="text-xs font-black uppercase tracking-widest text-muted-foreground border-b pb-2">Ambiente do Carômetro</h3>
-                      <ColorPickerField label="Cor Primária" id="pc" value={form.primaryColor} onChange={v => setForm({...form, primaryColor: v})} description="Botões, títulos e destaques." />
-                      <ColorPickerField label="Cor de Fundo da Página" id="bc" value={form.backgroundColor} onChange={v => setForm({...form, backgroundColor: v})} description="Fundo principal do site." />
-                      <ColorPickerField label="Cor de Fundo dos Cards" id="cbc" value={form.cardBackgroundColor} onChange={v => setForm({...form, cardBackgroundColor: v})} description="Fundo dos cartões dos funcionários." />
-                      <ColorPickerField label="Cor do Texto" id="fc" value={form.foregroundColor} onChange={v => setForm({...form, foregroundColor: v})} description="Títulos e informações." />
-                      <ColorPickerField label="Cor de Acento (Badges)" id="ac" value={form.accentColor} onChange={v => setForm({...form, accentColor: v})} description="Cor suave para selos e tags." />
+                      <h3 className="text-xs font-black uppercase tracking-widest text-primary border-b pb-2">Ambiente e Cartões</h3>
+                      <ColorPickerField label="Fundo da Página" id="bc" value={form.backgroundColor} onChange={v => setForm({...form, backgroundColor: v})} description="Fundo principal do carômetro." />
+                      <ColorPickerField label="Fundo dos Cards" id="cbc" value={form.cardBackgroundColor} onChange={v => setForm({...form, cardBackgroundColor: v})} description="Fundo interno de cada colaborador." />
+                      <ColorPickerField label="Cor de Acento (Badges)" id="ac" value={form.accentColor} onChange={v => setForm({...form, accentColor: v})} description="Fundo das tags de setor/subcategoria." />
+                      <ColorPickerField label="Destaque Liderança" id="lc" value={form.leadershipColor} onChange={v => setForm({...form, leadershipColor: v})} description="Coroa e cargos de gestão." />
                     </div>
                     <div className="space-y-6">
-                      <h3 className="text-xs font-black uppercase tracking-widest text-muted-foreground border-b pb-2">Destaques e Admin</h3>
-                      <ColorPickerField label="Destaque Liderança" id="lc" value={form.leadershipColor} onChange={v => setForm({...form, leadershipColor: v})} description="Coroa e cargos de gestão." />
-                      <ColorPickerField label="Fundo da Sidebar Admin" id="sbc" value={form.sidebarBackgroundColor} onChange={v => setForm({...form, sidebarBackgroundColor: v})} description="Cor do menu lateral administrativo." />
-                      <ColorPickerField label="Texto da Sidebar Admin" id="sfc" value={form.sidebarForegroundColor} onChange={v => setForm({...form, sidebarForegroundColor: v})} description="Links e ícones da sidebar." />
+                      <h3 className="text-xs font-black uppercase tracking-widest text-primary border-b pb-2">Cores dos Textos</h3>
+                      <ColorPickerField label="Cor do Nome" id="nc" value={form.nameColor} onChange={v => setForm({...form, nameColor: v})} description="Destaque para o nome do colaborador." />
+                      <ColorPickerField label="Cor do Cargo" id="jtc" value={form.jobTitleColor} onChange={v => setForm({...form, jobTitleColor: v})} description="Subtítulo informativo do cargo." />
+                      <ColorPickerField label="Cor do Título do Setor" id="shc" value={form.sectorHeaderColor} onChange={v => setForm({...form, sectorHeaderColor: v})} description="Títulos principais de cada departamento." />
+                      <ColorPickerField label="Cor Geral / Infos" id="fc" value={form.foregroundColor} onChange={v => setForm({...form, foregroundColor: v})} description="Demais informações e textos básicos." />
+                    </div>
+                  </div>
+                  
+                  <div className="space-y-6 pt-6 border-t">
+                    <h3 className="text-xs font-black uppercase tracking-widest text-primary border-b pb-2">Painel Administrativo</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+                      <ColorPickerField label="Fundo da Sidebar" id="sbc" value={form.sidebarBackgroundColor} onChange={v => setForm({...form, sidebarBackgroundColor: v})} description="Cor do menu lateral admin." />
+                      <ColorPickerField label="Texto da Sidebar" id="sfc" value={form.sidebarForegroundColor} onChange={v => setForm({...form, sidebarForegroundColor: v})} description="Links e ícones da sidebar." />
                     </div>
                   </div>
                   <Button type="button" onClick={() => handleSave()} className="w-full mt-6" disabled={isSaving || isProcessing}>
                     {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
-                    Salvar Cores
+                    Salvar Paleta
                   </Button>
                 </CardContent>
               </Card>
@@ -354,12 +363,15 @@ export default function ConfiguracoesPage() {
                             <p className="text-[10px] font-black uppercase text-muted-foreground mb-4">Prévia do Cabeçalho:</p>
                             <div className={cn(
                               "flex items-center gap-4 transition-all",
-                              form.headerStyle === 'box_background' && "bg-primary text-white p-3 rounded-lg",
-                              form.headerStyle === 'full_underline' && "border-b-2 border-primary pb-2"
-                            )}>
+                              form.headerStyle === 'box_background' && "p-3 rounded-lg",
+                              form.headerStyle === 'full_underline' && "border-b-2 pb-2"
+                            )} style={{ 
+                                backgroundColor: form.headerStyle === 'box_background' ? form.primaryColor : 'transparent',
+                                borderBottomColor: form.headerStyle === 'full_underline' ? form.primaryColor : 'transparent'
+                            }}>
                               <h2 className="font-bold tracking-tight" style={{ 
                                 fontSize: form.headerFontSize, 
-                                color: form.headerStyle === 'box_background' ? 'white' : form.primaryColor 
+                                color: form.headerStyle === 'box_background' ? 'white' : form.sectorHeaderColor 
                               }}>DEPARTAMENTO</h2>
                               {form.headerStyle === 'line_right' && <div className="h-px flex-1 bg-slate-200" />}
                             </div>
@@ -425,8 +437,8 @@ export default function ConfiguracoesPage() {
                     </div>
 
                     <div className="space-y-0.5">
-                      <h3 className="font-black text-xs leading-tight" style={{ color: form.primaryColor }}>João Silva</h3>
-                      <p className="text-[9px] font-medium text-slate-500">Diretor Executivo</p>
+                      <h3 className="font-black text-xs leading-tight" style={{ color: form.nameColor }}>João Silva</h3>
+                      <p className="text-[9px] font-medium" style={{ color: form.jobTitleColor }}>Diretor Executivo</p>
                     </div>
 
                     {form.cardShowBadge && form.cardBadgePosition === 'bottom' && (
@@ -439,13 +451,11 @@ export default function ConfiguracoesPage() {
           </Card>
           
           <div className="p-4 bg-slate-50 rounded-xl border border-dashed text-center">
-            <p className="text-[10px] text-muted-foreground uppercase font-bold">Resumo da Paleta</p>
-            <div className="mt-2 flex justify-center gap-1.5 flex-wrap">
-              <div className="h-4 w-4 rounded-full border shadow-sm" style={{ backgroundColor: form.primaryColor }} title="Primária" />
-              <div className="h-4 w-4 rounded-full border shadow-sm" style={{ backgroundColor: form.leadershipColor }} title="Liderança" />
-              <div className="h-4 w-4 rounded-full border shadow-sm" style={{ backgroundColor: form.backgroundColor }} title="Fundo" />
-              <div className="h-4 w-4 rounded-full border shadow-sm" style={{ backgroundColor: form.cardBackgroundColor }} title="Card" />
-              <div className="h-4 w-4 rounded-full border shadow-sm" style={{ backgroundColor: form.accentColor }} title="Destaque" />
+            <p className="text-[10px] text-muted-foreground uppercase font-bold">Amostra de Textos</p>
+            <div className="mt-2 space-y-2">
+               <div className="flex items-center gap-2 text-[10px] font-bold"><div className="h-3 w-3 rounded shadow-sm border" style={{ backgroundColor: form.nameColor }} /> Nome</div>
+               <div className="flex items-center gap-2 text-[10px] font-bold"><div className="h-3 w-3 rounded shadow-sm border" style={{ backgroundColor: form.jobTitleColor }} /> Cargo</div>
+               <div className="flex items-center gap-2 text-[10px] font-bold"><div className="h-3 w-3 rounded shadow-sm border" style={{ backgroundColor: form.sectorHeaderColor }} /> Título Setor</div>
             </div>
           </div>
         </div>

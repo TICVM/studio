@@ -41,6 +41,9 @@ export interface SystemSettings {
   cardBackgroundColor?: string;
   foregroundColor?: string;
   accentColor?: string;
+  nameColor?: string;
+  jobTitleColor?: string;
+  sectorHeaderColor?: string;
   sidebarBackgroundColor?: string;
   sidebarForegroundColor?: string;
   logoStyle: 'square_with_name' | 'rectangular_no_name';

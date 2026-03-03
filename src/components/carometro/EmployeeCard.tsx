@@ -97,10 +97,10 @@ export function EmployeeCard({ funcionario, setor }: EmployeeCardProps) {
 
           {/* Informações do Colaborador */}
           <div className="space-y-1 w-full flex-1">
-            <h3 className="font-bold text-lg leading-tight" style={{ color: 'hsl(var(--primary))' }}>
+            <h3 className="font-bold text-lg leading-tight" style={{ color: 'hsl(var(--name-color, var(--primary)))' }}>
               {funcionario.nome}
             </h3>
-            <p className="text-sm font-medium opacity-70" style={{ color: 'hsl(var(--foreground))' }}>
+            <p className="text-sm font-medium" style={{ color: 'hsl(var(--job-color, var(--foreground)))' }}>
               {funcionario.cargo}
             </p>
           </div>
@@ -144,7 +144,7 @@ export function EmployeeCard({ funcionario, setor }: EmployeeCardProps) {
                     {funcionario.cargo}
                   </Badge>
                   {funcionario.subcategoria && (
-                    <Badge variant="outline" className="text-[10px] font-bold uppercase">
+                    <Badge variant="outline" className="text-[10px] font-bold uppercase" style={{ color: 'hsl(var(--foreground))' }}>
                       {funcionario.subcategoria}
                     </Badge>
                   )}

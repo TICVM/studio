@@ -113,7 +113,7 @@ export default function Home() {
             <h1 className="text-2xl font-bold tracking-tight" style={{ color: 'hsl(var(--primary))' }}>
               {settings?.systemName || "Equipe Corporativa"}
             </h1>
-            <p className="text-sm opacity-70" style={{ color: 'hsl(var(--foreground))' }}>
+            <p className="text-sm" style={{ color: 'hsl(var(--foreground))' }}>
               Consulte ramais e informações dos colaboradores.
             </p>
           </div>
@@ -168,7 +168,7 @@ export default function Home() {
                   }}>
                     <h2 className="font-black tracking-tight" style={{ 
                       fontSize: headerFontSize, 
-                      color: headerStyle === 'box_background' ? 'white' : 'hsl(var(--primary))' 
+                      color: headerStyle === 'box_background' ? 'white' : 'hsl(var(--sector-header-color, var(--primary)))' 
                     }}>
                       {sectorGroup.nome}
                     </h2>

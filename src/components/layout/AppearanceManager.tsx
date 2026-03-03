@@ -49,7 +49,6 @@ export function AppearanceManager() {
         root.style.setProperty('--ring', hsl);
       }
 
-      // Injeção da cor de liderança como variável CSS
       if (settings.leadershipColor) {
         root.style.setProperty('--leadership', settings.leadershipColor);
       } else {
@@ -60,7 +59,6 @@ export function AppearanceManager() {
         root.style.setProperty('--background', hexToHsl(settings.backgroundColor));
       }
 
-      // Injeção da cor de fundo dos cards (usando card-background customizado ou fallback)
       if (settings.cardBackgroundColor) {
         root.style.setProperty('--card', hexToHsl(settings.cardBackgroundColor));
       }
@@ -71,6 +69,23 @@ export function AppearanceManager() {
 
       if (settings.accentColor) {
         root.style.setProperty('--accent', hexToHsl(settings.accentColor));
+      }
+
+      // Novas variáveis específicas de texto
+      if (settings.nameColor) {
+        root.style.setProperty('--name-color', hexToHsl(settings.nameColor));
+      } else if (settings.primaryColor) {
+        root.style.setProperty('--name-color', hexToHsl(settings.primaryColor));
+      }
+
+      if (settings.jobTitleColor) {
+        root.style.setProperty('--job-color', hexToHsl(settings.jobTitleColor));
+      }
+
+      if (settings.sectorHeaderColor) {
+        root.style.setProperty('--sector-header-color', hexToHsl(settings.sectorHeaderColor));
+      } else if (settings.primaryColor) {
+        root.style.setProperty('--sector-header-color', hexToHsl(settings.primaryColor));
       }
 
       if (settings.sidebarBackgroundColor) {
